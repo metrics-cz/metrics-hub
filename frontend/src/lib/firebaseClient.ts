@@ -4,18 +4,16 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 import { getFunctions, connectFunctionsEmulator} from 'firebase/functions';
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyDMXIp4PWrFAMjhjN9dTsOMpMBIXs9pOQE',
-  authDomain: 'metrics-hub-c0jvl.firebaseapp.com',
-  projectId: 'metrics-hub-c0jvl',
-  databaseURL:
-    process.env.NEXT_PUBLIC_EMULATORS === 'true'
-      ? 'http://localhost:9000?ns=metrics-hub-c0jvl'
-      : 'https://metrics-hub-c0jvl-default-rtdb.europe-west1.firebasedatabase.app',
-  storageBucket: 'metrics-hub-c0jvl.appspot.com',
-  messagingSenderId: '351772423524',
-  appId: '1:351772423524:web:3b09c652f0c95573b43671',
-};
+
+export const firebaseConfig = {
+    apiKey:             process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
+    authDomain:         process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+    projectId:          process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+    storageBucket:      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+    messagingSenderId:  process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+    appId:              process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+    databaseURL:        process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL!,
+  };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 

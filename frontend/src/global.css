@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* globální drobnosti */
-html,body { @apply h-full bg-bg-light text-neutral-900 overflow-hidden font-inter; }
-.dark      { @apply bg-bg-dark text-neutral-100; }
+/* ---------- Project preflight override ---------- */
+@layer base {
+
+    html,
+    body {
+        @apply h-full bg-bg-light text-neutral-900 font-inter;
+    }
+
+    /* material-U look pro input + button (fallback, před pluginem forms) */
+    input,
+    button,
+    select,
+    textarea {
+        @apply rounded-md border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary/50;
+    }
+}
