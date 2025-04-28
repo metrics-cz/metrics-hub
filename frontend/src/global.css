@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* globální drobnosti */
+html,body { @apply h-full bg-bg-light text-neutral-900 overflow-hidden font-inter; }
+.dark      { @apply bg-bg-dark text-neutral-100; }
