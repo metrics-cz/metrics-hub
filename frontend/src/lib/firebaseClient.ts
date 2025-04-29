@@ -45,7 +45,11 @@ export const getClientStorage = () => {
     return _storage;
 };
 
-if (process.env.NEXT_PUBLIC_EMULATORS === 'true') {
+const useEmu = process.env.NEXT_PUBLIC_EMULATORS === 'true'
+            && typeof window !== 'undefined'
+            && location.hostname === 'localhost';
+
+if (useEmu) {
     connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
     connectFirestoreEmulator(db, 'localhost', 8080);
     connectDatabaseEmulator(rtdb, 'localhost', 9000);

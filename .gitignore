@@ -83,3 +83,5 @@ firebase-debug.log*
 .idea
 .vscode
 EOF
+
+*.local
