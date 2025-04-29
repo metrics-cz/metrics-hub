@@ -1,4 +1,3 @@
-// features/auth/SignInForm.tsx
 'use client';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -15,30 +14,41 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function SignInForm() {
-  const { register, handleSubmit, formState: { errors } } =
-    useForm<FormData>({ resolver: zodResolver(schema) });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({ resolver: zodResolver(schema), mode: 'onBlur' });
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const onSubmit = async (data: FormData) => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       router.replace('/');
     } catch (e: any) {
       setError(e.message);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label className="text-sm font-medium">E-mail</label>
-        <input type="email" {...register('email')}
+        <input
+          type="email"
+          {...register('email')}
           className="mt-1 w-full form-input px-3 py-2"
         />
-        {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
+        {errors.email && (
+          <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>
+        )}
       </div>
 
       <div>
@@ -46,9 +56,11 @@ export default function SignInForm() {
         <input
           type="password"
           {...register('password')}
-          className="mt-1 w-full rounded border px-3 py-2"
+          className="mt-1 w-full form-input px-3 py-2"
         />
-        {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}
+        {errors.password && (
+          <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>
+        )}
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

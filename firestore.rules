@@ -5,7 +5,15 @@ service cloud.firestore {
     /* ---------- USERS ---------- */
     match /users/{uid} {
       allow read:  if request.auth != null && request.auth.uid == uid;
-      allow write: if false; // jen backend
+      /* uživatel může měnit jen některá vlastní pole -------------- */
+      allow update: if request.auth != null
+                 && request.auth.uid == uid
+                 /* povol jen photoURL, displayName, preferences */
+                 && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['photoURL', 'displayName', 'preferences']);
+
+      /* create/delete dál jen přes backend */
+      allow create, delete: if false;
     }
 
     /* ---------- COMPANIES ---------- */

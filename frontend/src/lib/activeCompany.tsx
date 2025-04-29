@@ -1,71 +1,79 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { auth, db } from '@/lib/firebaseClient';
+'use client';
+
 import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  where,
-  getDocs,
-  type DocumentData,
+  createContext, useCallback, useContext, useEffect, useState,
+} from 'react';
+import {
+  collection, doc, getDocs, onSnapshot, getDoc, QueryDocumentSnapshot,
 } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth, db } from '@/lib/firebaseClient';
 
-/* ---------- typy ---------- */
-export interface Company extends DocumentData {
-  id: string;
-  name: string;
-}
+type Company = { id: string; name: string; logoURL?: string };
 
-type Ctx = {
+interface Ctx {
   companies: Company[];
-  active  : Company | null;
+  active: Company | null;
   setActive: (c: Company) => void;
-};
+}
 const ActiveCompanyContext = createContext<Ctx | undefined>(undefined);
 
-/* ---------- provider ---------- */
+/* --------------------------- PROVIDER ---------------------------- */
 export function ActiveCompanyProvider({ children }: { children: React.ReactNode }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [active, setActive]       = useState<Company | null>(null);
 
-  /*--- load companies for current user ---*/
+  /* --- 1) posloucháme změny v /​users/{uid}.companies ------------- */
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
       if (!user) { setCompanies([]); setActive(null); return; }
 
-      // firemní role, kde mám dokument /companies/{cid}/roles/{uid}
-      const q = query(collection(db, 'companies'), where(`roles.${user.uid}`, 'in', ['owner','admin','reader']));
-      const snap = await getDocs(q);
+      const userDoc = doc(db, 'users', user.uid);
 
-      const list: Company[] = [];
-      snap.forEach((d) => list.push({ id: d.id, ...(d.data() as any) }));
-      setCompanies(list);
+      const unsubUser = onSnapshot(userDoc, async (snap) => {
+        const ids: string[] = snap.data()?.companies ?? [];
+      
+        if (!ids.length) { setCompanies([]); setActive(null); return; }
+      
+        // načti metadata – ignoruj příp. permission-denied
+        const docs = await Promise.all(ids.map(async (id) => {
+          try     { return await getDoc(doc(db, 'companies', id)); }
+          catch { return null; }         // uživatel zatím nemá role → skip
+        }));
+      
+        const list: Company[] = docs
+          .filter((s): s is QueryDocumentSnapshot => !!s && s.exists())
+          .map((s) => ({ id: s.id, ...(s.data() as any) }));
+      
+        setCompanies(list);
+      
+        const last = localStorage.getItem('mh:lastCompany');
+        setActive(list.find((c) => c.id === last) ?? null);
+      });
 
-      // z localStorage, jinak první
-      const stored = localStorage.getItem('activeCompanyId');
-      const found  = list.find((c) => c.id === stored) ?? list[0] ?? null;
-      setActive(found);
+      // úklid
+      return () => unsubUser();
     });
 
-    return unsub;
+    return () => unsubAuth();
   }, []);
 
-  /*--- persist selection ---*/
-  const setActivePersist = (c: Company) => {
-    localStorage.setItem('activeCompanyId', c.id);
+  /* --- 2) změna aktivní firmy ------------------------------------ */
+  const handleSetActive = useCallback((c: Company) => {
     setActive(c);
-  };
+    localStorage.setItem('mh:lastCompany', c.id);
+  }, []);
 
   return (
-    <ActiveCompanyContext.Provider value={{ companies, active, setActive: setActivePersist }}>
+    <ActiveCompanyContext.Provider value={{ companies, active, setActive: handleSetActive }}>
       {children}
     </ActiveCompanyContext.Provider>
   );
 }
 
-/* ---------- hook ---------- */
+/* --------------------------- HOOK ---------------------------- */
 export function useActiveCompany() {
   const ctx = useContext(ActiveCompanyContext);
-  if (!ctx) throw new Error('useActiveCompany must be used inside <ActiveCompanyProvider>');
+  if (!ctx) throw new Error('ActiveCompanyProvider missing');
   return ctx;
 }

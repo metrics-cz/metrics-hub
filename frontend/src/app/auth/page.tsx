@@ -11,7 +11,7 @@ export default function AuthPage() {
 
   /* už je přihlášen → domů */
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => u && router.replace('/'));
+    const unsub = onAuthStateChanged(auth, (u) => u && router.replace('/app'));
     return unsub;
   }, [router]);
 

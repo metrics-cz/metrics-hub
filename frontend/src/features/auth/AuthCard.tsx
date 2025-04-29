@@ -1,24 +1,25 @@
-// features/auth/AuthCard.tsx
 'use client';
-import { ReactNode, useState } from 'react';
+
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebaseClient';
 import SignInForm from './SignInForm';
 import SignUpForm from './SignUpForm';
 import clsx from 'classnames';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function AuthCard() {
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const router = useRouter();
 
-  // už přihlášený => pryč
+  // pokud už je někdo přihlášený, přesměruj
   onAuthStateChanged(auth, (u) => u && router.replace('/'));
 
   return (
-    <div className="w-full max-w-sm mx-auto">
+    <div className="w-full max-w-md mx-auto">
       <div className="bg-white shadow-lg rounded-2xl overflow-hidden ring-1 ring-black/5">
-        {/* záhlaví + přepínač */}
+        {/* přepínač */}
         <nav className="flex">
           {(['login', 'register'] as const).map((t) => (
             <button
@@ -36,8 +37,33 @@ export default function AuthCard() {
           ))}
         </nav>
 
-        <div className="p-6">
-          {tab === 'login' ? <SignInForm /> : <SignUpForm switchToLogin={() => setTab('login')} />}
+        {/* obsah s animací fade/slide */}
+        <div className="relative h-full min-h-[420px]">
+          <AnimatePresence mode="wait">
+            {tab === 'login' ? (
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.25 }}
+                className="p-6 absolute inset-0"
+              >
+                <SignInForm />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="register"
+                initial={{ opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.25 }}
+                className="p-6 absolute inset-0"
+              >
+                <SignUpForm switchToLogin={() => setTab('login')} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

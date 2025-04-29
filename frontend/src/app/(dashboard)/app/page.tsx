@@ -6,11 +6,11 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebaseClient';
 
 /**
- * Root route = pouhý guard:
- *  – není login  ➜ /auth
- *  – login       ➜ /app
+ * Když uživatel navštíví / :
+ *  – je-li signed-in ➜ /app (dashboard)
+ *  – jinak          ➜ /auth
  */
-export default function IndexGuard() {
+export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
@@ -20,5 +20,6 @@ export default function IndexGuard() {
     return unsub;
   }, [router]);
 
-  return null; // nikdy nic nevykreslujeme
+  /* nic nezobrazujeme – pouze přesměrujeme */
+  return null;
 }
