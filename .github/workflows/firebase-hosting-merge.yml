@@ -34,6 +34,8 @@ jobs:
           echo "NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}"               >> $GITHUB_ENV
           echo "NEXT_PUBLIC_FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}"   >> $GITHUB_ENV
 
+      - name: Export build metadata
+        run:  echo "NEXT_PUBLIC_APP_VERSION=${{ github.sha }}" >> $GITHUB_ENV
       # 4) Instalace a build front-endu
       - run: pnpm install --frozen-lockfile && pnpm --filter frontend run build
 

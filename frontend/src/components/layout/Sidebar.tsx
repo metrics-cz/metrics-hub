@@ -10,6 +10,8 @@ import { MAIN_NAV, ADMIN_NAV } from '@/lib/nav';
 import CompanySwitcher from '@/components/CompanySwitcher';
 import { useActiveCompany } from '@/lib/activeCompany';
 import clsx from 'classnames';
+import BuildInfo from '@/components/BuildInfo'; 
+
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -122,6 +124,9 @@ export default function Sidebar() {
           <LogOut size={18} />
           {!collapsed && <span>Odhlásit se</span>}
         </button>
+        <div className="text-center mt-3">
+          <BuildInfo />
+        </div>
       </div>
     </aside>
   );
