@@ -3,31 +3,33 @@
     "private": true,
     "type": "module",
     "main": "lib/index.js",
+  
     "engines": {
-        "node": "20"
+      "node": "20"
     },
+  
     "scripts": {
-        "lint": "eslint --ext .ts src",
-        "build": "tsc",
-        "watch": "tsc -w --preserveWatchOutput",
-        "serve": "pnpm run watch & firebase emulators:start --inspect-functions --only auth,functions,firestore,database,storage,pubsub",
-        "deploy": "pnpm run build && firebase deploy"
+      "lint": "eslint --ext .ts src",
+      "build": "tsc",
+      "watch": "tsc -w --preserveWatchOutput",
+      "serve": "pnpm run watch & firebase emulators:start --inspect-functions --only auth,functions,firestore,database,storage,pubsub",
+      "deploy": "pnpm run build && firebase deploy"
     },
+  
     "dependencies": {
-        "firebase-admin": "11.11.0",
-        "firebase-functions": "6.3.2",
-        "uuid": "^11.1.0"
+      "firebase-admin": "11.11.0",
+      "firebase-functions": "4.5.0",
+      "uuid": "11.1.0"
     },
+  
     "devDependencies": {
-        "@types/uuid": "^10",
-        "@typescript-eslint/eslint-plugin": "^7.18.0",
-        "@typescript-eslint/parser": "^7.18.0",
-        "eslint": "8.57.0",
-        "eslint-config-google": "^0.14.0",
-        "eslint-plugin-import": "^2.29.1",
-        "typescript": "^5.4.0"
-    },
-    "overrides": {
-        "eslint": "8.57.0"
+      "@types/uuid": "^10",
+      "@typescript-eslint/eslint-plugin": "^7.18.0",
+      "@typescript-eslint/parser": "^7.18.0",
+      "eslint": "8.57.0",
+      "eslint-config-google": "^0.14.0",
+      "eslint-plugin-import": "^2.29.1",
+      "typescript": "^5.4.0"
     }
-}
+  }
+  

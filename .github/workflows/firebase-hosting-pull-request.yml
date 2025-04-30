@@ -11,23 +11,24 @@ jobs:
   build_and_preview:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
+
     steps:
+      # 0) checkout
       - uses: actions/checkout@v4
 
-      # Node bez pnpm cache
+      # 1) Node
       - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+        with: { node-version: 20 }
 
-      # pnpm 10 + cache
+      # 2) pnpm + cache
       - uses: pnpm/action-setup@v2
         with:
           version: 10.10.0
           run_install: false
           cache: true
 
-      # Veřejné env proměnné (pokud jsou v buildu potřeba)
-      - name: Export Firebase env vars
+      # 3) veřejné env proměnné pro build
+      - name: Export env
         run: |
           echo "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}"             >> $GITHUB_ENV
           echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}"     >> $GITHUB_ENV
@@ -36,13 +37,18 @@ jobs:
           echo "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}"               >> $GITHUB_ENV
           echo "NEXT_PUBLIC_FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}"   >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_APP_VERSION=${{ github.sha }}"                                >> $GITHUB_ENV
 
-      # instalace + build
+      # 4) instalace + build front-endu
       - run: pnpm install --frozen-lockfile && pnpm --filter frontend run build
 
-      # preview deploy (bot vloží URL do PR)
+      # 5) preview deploy (bot přidá URL do PR)
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken:              ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_METRICS_HUB_C0JVL }}
           projectId:              metrics-hub-c0jvl
+          expires:                7d   # náhledové kanály se po 7 dnech smažou
+
+      # 6) Firestore rules se na preview obvykle neposílají,
+      #    ale můžeš přidat stejný krok jako výše, pokud chceš.

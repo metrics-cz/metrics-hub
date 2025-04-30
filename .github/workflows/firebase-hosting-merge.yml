@@ -7,24 +7,24 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # 0) Repo
+      # 0) checkout
       - uses: actions/checkout@v4
 
-      # 1) Node 20 (bez pnpm cache)
+      # 1) Node
       - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+        with: { node-version: 20 }
 
-      # 2) pnpm 10 + cache
+      # 2) pnpm + cache
       - uses: pnpm/action-setup@v2
         with:
           version: 10.10.0
           run_install: false
-          cache: true          # <-- pnpm store bude cachován
+          cache: true
 
-      # 3) Build env proměnné pro Next.js
-      - name: Export Firebase env vars
+      # 3) Next.js env + build-hash
+      - name: Export env
         run: |
           echo "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}"             >> $GITHUB_ENV
           echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}"     >> $GITHUB_ENV
@@ -33,16 +33,21 @@ jobs:
           echo "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}"               >> $GITHUB_ENV
           echo "NEXT_PUBLIC_FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}"   >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_APP_VERSION=${{ github.sha }}"                                >> $GITHUB_ENV
 
-      - name: Export build metadata
-        run:  echo "NEXT_PUBLIC_APP_VERSION=${{ github.sha }}" >> $GITHUB_ENV
-      # 4) Instalace a build front-endu
+      # 4) instalace + build front-endu
       - run: pnpm install --frozen-lockfile && pnpm --filter frontend run build
 
-      # 5) Deploy na produkční kanál „live“
+      # 5) deploy Hosting PROD
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken:              ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_METRICS_HUB_C0JVL }}
-          channelId: live
-          projectId: metrics-hub-c0jvl
+          channelId:              live
+          projectId:              metrics-hub-c0jvl
+
+      # 6) deploy Firestore rules (+ indexy, kdybys je měl v repo)
+      - name: Deploy Firestore (rules & indexes)
+        run: |
+          firebase deploy --only firestore --project metrics-hub-c0jvl \
+            --token "${{ secrets.FIREBASE_CLI_TOKEN }}"
