@@ -36,7 +36,7 @@ export const getClientStorage = () => {
     _storage = getStorage(app);
 
     if (
-        process.env.NEXT_PUBLIC_EMULATORS === 'true' &&
+        process.env.NEXT_PUBLIC_USE_EMULATORS === 'true' &&
         // aby se nepřipojovalo opakovaně
         (_storage as any)._delegate?.host !== 'localhost'
     ) {
