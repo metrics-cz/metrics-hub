@@ -48,6 +48,5 @@ jobs:
       # 6) Firestore rules & indexy
       - name: Deploy Firestore (rules & indexes)
         run: |
-          npm i -g firebase-tools@14     # nebo: npx firebase-tools …
-          firebase deploy --only firestore --project metrics-hub-c0jvl \
-            --token "${{ secrets.FIREBASE_CLI_TOKEN }}"
+          npx --yes firebase-tools@14 \
+            deploy --only firestore --project metrics-hub-c0jvl --non-interactive
