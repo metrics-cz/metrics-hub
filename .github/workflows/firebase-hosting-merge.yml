@@ -9,21 +9,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 0) checkout
+      # 0) repo
       - uses: actions/checkout@v4
 
-      # 1) Node
+      # 1) Node 20
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
 
-      # 2) pnpm + cache
+      # 2) pnpm + cache (nová syntaxe)
       - uses: pnpm/action-setup@v2
         with:
           version: 10.10.0
-          run_install: false
-          cache: true
+          run_install: false          # = nechceme „pnpm install“ hned
 
-      # 3) Next.js env + build-hash
+      # 3) veřejné env proměnné pro Next build
       - name: Export env
         run: |
           echo "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}"             >> $GITHUB_ENV
@@ -35,10 +34,10 @@ jobs:
           echo "NEXT_PUBLIC_FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}"   >> $GITHUB_ENV
           echo "NEXT_PUBLIC_APP_VERSION=${{ github.sha }}"                                >> $GITHUB_ENV
 
-      # 4) instalace + build front-endu
+      # 4) instalace + build FE
       - run: pnpm install --frozen-lockfile && pnpm --filter frontend run build
 
-      # 5) deploy Hosting PROD
+      # 5) Hosting → kanál live
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken:              ${{ secrets.GITHUB_TOKEN }}
@@ -46,8 +45,9 @@ jobs:
           channelId:              live
           projectId:              metrics-hub-c0jvl
 
-      # 6) deploy Firestore rules (+ indexy, kdybys je měl v repo)
+      # 6) Firestore rules & indexy
       - name: Deploy Firestore (rules & indexes)
         run: |
+          npm i -g firebase-tools@14     # nebo: npx firebase-tools …
           firebase deploy --only firestore --project metrics-hub-c0jvl \
             --token "${{ secrets.FIREBASE_CLI_TOKEN }}"
