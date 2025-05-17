@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import { httpsCallable } from 'firebase/functions';
-import { fnc } from './firebaseClient';
+import { httpsCallable } from "firebase/functions";
+import { fnc } from "./firebaseClient";
 
 /** callable: createCompany – vrací { companyId } */
 export const callCreateCompany = async (params: {
   name: string;
   billingEmail?: string;
 }) => {
-  const fn = httpsCallable(fnc, 'createCompany');
+  const fn = httpsCallable(fnc, "createCompany");
   const res = await fn(params);
+  console.log("RES: " + res.data);
   return res.data as { companyId: string };
 };

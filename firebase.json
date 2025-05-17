@@ -7,8 +7,8 @@
     "rules": "database.rules.json"
   },
   "storage": {
-      "rules": "storage.rules"
-    },
+    "rules": "storage.rules"
+  },
   "functions": [
     {
       "source": "backend",
@@ -21,21 +21,18 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "predeploy": [
-        "pnpm --prefix \"$RESOURCE_DIR\" run build"
-      ]
+      "predeploy": ["pnpm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ],
   "hosting": {
     "public": "frontend/out",
     "cleanUrls": true,
-    "ignore": [
-      "**/.*"
-    ],
+    "ignore": ["**/.*"],
     "rewrites": [
       {
         "source": "/api/**",
-        "function": "api"
+        "function": "api",
+        "region": "europe-west1"
       },
       {
         "source": "/**",
@@ -48,7 +45,13 @@
       "port": 9099
     },
     "functions": {
-      "port": 5001
+      "port": 5001,
+      "host": "localhost",
+      "cors": {
+        "origin": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allowHeaders": ["Content-Type", "Authorization"]
+      }
     },
     "firestore": {
       "port": 8080
