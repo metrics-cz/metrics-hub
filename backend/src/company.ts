@@ -61,3 +61,8 @@ export const createCompany = fn
     await batch.commit();
     return { companyId: id };
   });
+
+/*───────────────────────────── callable:test ─────────────────────*/
+export const testCallable = fn.https.onCall((data) => {
+  return { received: data };
+});

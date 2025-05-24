@@ -16,7 +16,6 @@ export const firebaseConfig = {
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
-console.log("Loaded API Key:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
@@ -47,8 +46,7 @@ export const getClientStorage = () => {
 };
 
 if (
-  process.env.NEXT_PUBLIC_USE_EMULATORS === "true" ||
-  window.location.hostname === "localhost"
+  process.env.NEXT_PUBLIC_USE_EMULATORS === "true"
 ) {
   connectAuthEmulator(auth, "http://localhost:9099");
   connectFirestoreEmulator(db, "localhost", 8080);

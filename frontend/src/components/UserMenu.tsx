@@ -2,7 +2,7 @@
 
 import { LogOut } from 'lucide-react';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebaseClient';
+import { auth } from '@/lib/firebase/firebaseClient';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 

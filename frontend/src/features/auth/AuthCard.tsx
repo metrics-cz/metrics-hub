@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebaseClient';
+import { auth } from '@/lib/firebase/firebaseClient';
 import SignInForm from './SignInForm';
 import SignUpForm from './SignUpForm';
 import clsx from 'classnames';

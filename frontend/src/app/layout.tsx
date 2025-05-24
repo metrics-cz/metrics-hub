@@ -1,4 +1,5 @@
 // src/app/layout.tsx
+import AuthProvider from '@/components/AuthProvider';
 import '@/global.css'
 import type { ReactNode } from 'react';
 
@@ -18,7 +19,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="h-full antialiased bg-bg-light text-neutral-900">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

@@ -9,25 +9,25 @@ import {
   fetchSignInMethodsForEmail,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebaseClient';
+import { auth } from '@/lib/firebase/firebaseClient';
 import { motion } from 'framer-motion';
 import clsx from 'classnames';
 
 /* ----------------------------- validátor ------------------------------ */
-const pwdRegexUpper   = /[A-Z]/;
-const pwdRegexNumber  = /[0-9]/;
+const pwdRegexUpper = /[A-Z]/;
+const pwdRegexNumber = /[0-9]/;
 const pwdRegexSpecial = /[!-/:-@[-`{-~_]/; // includes _
 
 const schema = z
   .object({
     firstName: z.string().min(2, 'Min. 2 znaky'),
-    lastName:  z.string().min(2, 'Min. 2 znaky'),
-    email:     z.string().email('Neplatný e-mail'),
-    password:  z
+    lastName: z.string().min(2, 'Min. 2 znaky'),
+    email: z.string().email('Neplatný e-mail'),
+    password: z
       .string()
       .min(8, 'Min. 8 znaků')
-      .refine((v) => pwdRegexUpper.test(v),   { message: 'Alespoň 1 velké písmeno' })
-      .refine((v) => pwdRegexNumber.test(v),  { message: 'Alespoň 1 číslice' })
+      .refine((v) => pwdRegexUpper.test(v), { message: 'Alespoň 1 velké písmeno' })
+      .refine((v) => pwdRegexNumber.test(v), { message: 'Alespoň 1 číslice' })
       .refine((v) => pwdRegexSpecial.test(v), { message: 'Alespoň 1 speciální znak' }),
     password2: z.string(),
   })

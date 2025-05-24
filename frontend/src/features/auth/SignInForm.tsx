@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebaseClient';
+import { auth } from '@/lib/firebase/firebaseClient';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 

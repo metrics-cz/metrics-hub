@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   auth,
   db,
-} from "@/lib/firebaseClient";
+} from "@/lib/firebase/firebaseClient";
 import {
   updateProfile,
   updateEmail,
@@ -23,11 +23,12 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { getClientStorage } from "@/lib/firebaseClient";
+import { getClientStorage } from "@/lib/firebase/firebaseClient";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "classnames";
+import { FilePlus2 } from "lucide-react";
 
 /* ---------------- schema & types ---------------- */
 const nameSchema = z.object({
@@ -135,10 +136,10 @@ export default function ProfilePage() {
 
     try {
       const file = e.target.files[0];
-      const ref  = storageRef(storage, `avatars/${user.uid}`);
+      const ref = storageRef(storage, `avatars/${user.uid}`);
       await uploadBytes(ref, file);
-      const url  = await getDownloadURL(ref);
-  
+      const url = await getDownloadURL(ref);
+
       await updateProfile(user, { photoURL: url });
       await updateDoc(doc(db, 'users', user.uid), { photoURL: url });
     } catch (err) {
@@ -167,11 +168,21 @@ export default function ProfilePage() {
 
         <div className="flex items-center gap-6">
           <label className="relative cursor-pointer">
-            <img
-              src={user?.photoURL ?? "/avatar.svg"}
-              alt="avatar"
-              className="w-28 h-28 rounded-full object-cover ring-2 ring-primary/50"
-            />
+            {
+              user?.photoURL ?
+                (
+                  <img
+                    src={user?.photoURL}
+                    className="w-28 h-28 rounded-full object-cover ring-2 ring-primary/50"
+                  />
+                )
+                :
+                (
+                  <div className="w-28 h-28 flex justify-center items-center bg-gray-400 rounded-full">
+                    <FilePlus2 size={48} color="white" />
+                  </div>
+                )
+            }
             <input
               type="file"
               accept="image/*"
