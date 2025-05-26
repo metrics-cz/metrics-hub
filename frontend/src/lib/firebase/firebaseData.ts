@@ -11,12 +11,29 @@ import { userSchema, companySchema } from '../validation/firebaseSchemas';
 
 export async function fetchUsersByCompany(companyId: string) {
   try {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('companies', 'array-contains', companyId));
-    const snapshot = await getDocs(q);
+    const currentUser = firebaseAuth.currentUser;
 
-    const users = snapshot.docs.map((doc) => {
-      const rawData = { id: doc.id, ...doc.data() };
+    if (!currentUser) {
+      throw new Error('User is not authenticated');
+    }
+
+    const idToken = await currentUser.getIdToken();
+
+    const res = await fetch(`/api/company/${companyId}/users`, {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Failed to fetch users');
+    }
+
+    const usersRaw = await res.json();
+
+    // Optional validation
+    const users = usersRaw.map((rawData: any) => {
       const parsed = userSchema.safeParse(rawData);
       if (!parsed.success) {
         console.warn('Invalid user data:', parsed.error);
@@ -25,9 +42,9 @@ export async function fetchUsersByCompany(companyId: string) {
       return parsed.data;
     });
 
-    return users.filter(Boolean); // Remove nulls
+    return users.filter(Boolean);
   } catch (error) {
-    console.error('Error fetching users by company:', error);
+    console.error('Error calling API:', error);
     return [];
   }
 }

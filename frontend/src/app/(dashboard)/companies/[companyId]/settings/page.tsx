@@ -14,8 +14,6 @@ export default function CompanySettingsLayout({ children, params }: { children: 
     }
   }, [companyId]);
 
-  console.log("Company ID:", companyId);
-  console.log("Company data:", company);
   return (
     <main className="max-w-full mx-auto px-6 py-8">
       <h1 className="text-3xl font-semibold mb-8">Nastavení firmy</h1>

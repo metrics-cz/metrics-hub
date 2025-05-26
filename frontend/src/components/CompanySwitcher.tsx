@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronDown, Plus, Building } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
-import { useCompanyList } from '@/lib/companyList';   // ← new lean provider
+import { useCompanyList } from '@/lib/companyList';
 import clsx from 'classnames';
 import CreateCompanyForm from '@/components/CreateCompanyForm';
 
-export default function CompanySwitcher() {
-  const companies = useCompanyList();                 // array only
+type Props = {
+  collapsed?: boolean;
+};
+
+export default function CompanySwitcher({ collapsed = false }: Props) {
+  const companies = useCompanyList();
   const { companyId } = useParams<{ companyId?: string }>();
   const active = companies.find((c) => c.id === companyId) ?? null;
 
@@ -19,11 +23,20 @@ export default function CompanySwitcher() {
 
   const label = active ? active.name : 'Vybrat / vytvořit…';
 
+  // 🔒 Close dropdown when sidebar collapses
+  useEffect(() => {
+    if (collapsed) {
+      setOpen(false);
+    }
+  }, [collapsed]);
+
   return (
     <>
       {/* ---------- trigger button ---------- */}
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          if (!collapsed) setOpen((o) => !o);
+        }}
         className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10"
       >
         {/* avatar / fallback icon */}
@@ -38,11 +51,15 @@ export default function CompanySwitcher() {
           </div>
         )}
 
-        <span className="flex-1 text-left font-medium truncate">{label}</span>
-        <ChevronDown
-          size={18}
-          className={clsx('transition-transform', open && 'rotate-180')}
-        />
+        {!collapsed && (
+          <>
+            <span className="flex-1 text-left font-medium truncate">{label}</span>
+            <ChevronDown
+              size={18}
+              className={clsx('transition-transform', open && 'rotate-180')}
+            />
+          </>
+        )}
       </button>
 
       {/* ---------- dropdown panel ---------- */}
@@ -53,11 +70,11 @@ export default function CompanySwitcher() {
               key={c.id}
               onClick={() => {
                 setOpen(false);
-                router.push(`/companies/${c.id}`);      // ← URL drives state
+                router.push(`/companies/${c.id}`);
               }}
               className={clsx(
                 'flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10',
-                c.id === companyId && 'bg-white/5',
+                c.id === companyId && 'bg-white/5'
               )}
             >
               {c.logoURL ? (

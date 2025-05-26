@@ -14,6 +14,8 @@ export const companySchema = z.object({
   plan: z.enum(['free', 'pro', 'enterprise']).default('free'), // adjust to match your plans
 });
 
+export type Company = z.infer<typeof companySchema>;
+
 export const userSchema = z.object({
   id: z.string(), // from doc.id
   email: z.string().email(),
@@ -24,3 +26,4 @@ export const userSchema = z.object({
   pendingInvites: z.array(z.string()).optional(),
   preferences: z.any().optional(), // fill in if you know the structure
 });
+export type User = z.infer<typeof userSchema>;

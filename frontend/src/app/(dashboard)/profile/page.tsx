@@ -221,7 +221,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={savingName}
-            className="col-span-2 bg-primary text-white rounded py-2 disabled:opacity-50"
+            className="col-span-2 bg-primary text-white rounded-md py-2 disabled:opacity-50"
           >
             Uložit změny
           </button>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={savingEmail}
-            className="bg-primary text-white rounded py-2 disabled:opacity-50"
+            className="bg-primary text-white rounded-md py-2 disabled:opacity-50"
           >
             Aktualizovat e‑mail
           </button>
@@ -284,7 +284,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={savingPwd}
-            className="bg-primary text-white rounded py-2 disabled:opacity-50"
+            className="bg-primary text-white rounded-md py-2 disabled:opacity-50"
           >
             Změnit heslo
           </button>
@@ -296,7 +296,7 @@ export default function ProfilePage() {
         <h3 className="font-medium text-red-600">Nebezpečná zóna</h3>
         <button
           onClick={handleDelete}
-          className="bg-red-600 text-white px-4 py-2 rounded shadow-md hover:bg-red-700"
+          className="bg-red-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-700"
         >
           Smazat účet
         </button>

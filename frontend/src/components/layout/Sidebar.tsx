@@ -26,7 +26,7 @@ export default function Sidebar() {
     label,
     icon: Icon,
   }: (typeof MAIN_NAV)[number]) => (
-    href = `/companies/${active?.id}/${href}`,
+    href = `/companies/${active?.id}${href}`,
     <Link
       href={disabled ? '#' : href}
       className={clsx(
@@ -47,7 +47,7 @@ export default function Sidebar() {
     <aside
       className={clsx(
         'h-full bg-[#121212] text-white flex flex-col shadow-lg transition-all duration-300',
-        collapsed ? 'w-20' : 'w-64',
+        collapsed ? 'w-15' : 'w-64',
       )}
     >
       {/* collapse / expand */}
@@ -60,7 +60,8 @@ export default function Sidebar() {
 
       {/* company switcher */}
       <div className="px-2">
-        <CompanySwitcher />
+        <CompanySwitcher collapsed={collapsed} />
+
       </div>
 
       <div className="my-4 h-px bg-white/10 mx-4" />
@@ -109,7 +110,7 @@ export default function Sidebar() {
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (
-            <CircleUserRound size={20} />
+            <CircleUserRound size={18} />
           )}
           {!collapsed && (
             <span className="truncate">

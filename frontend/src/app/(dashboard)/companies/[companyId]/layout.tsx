@@ -8,8 +8,6 @@ import React from 'react';
 export default function CompanyLayout({ children, params }: { children: React.ReactNode; params: Promise<{ companyId: string }> }) {
   const { companyId } = React.use(params);
   const company = getCompanyById(companyId);
-  console.log('Company:', company);
-  console.log('Company ID:', companyId);
 
   if (!company) {
     return <BlockingScreen companyId={companyId} />;

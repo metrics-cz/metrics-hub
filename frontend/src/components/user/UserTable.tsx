@@ -1,6 +1,6 @@
 'use client';
 
-import { User } from '@/lib/validation/userSchema';
+import { User } from '@/lib/validation/firebaseSchemas';
 import UserRow from './UserRow';
 
 type Props = {
@@ -8,9 +8,11 @@ type Props = {
 };
 
 export default function UserTable({ users }: Props) {
+
+  console.log("Users data:", users);
   return (
     <table className="w-full text-left border-separate border-spacing-y-2">
-      <thead className="text-sm text-gray-500">
+      <thead className="text-sm text-gray-500 border-b border-gray-400">
         <tr>
           <th className="px-4 py-2">Uživatel</th>
           <th className="px-4 py-2">Role</th>
