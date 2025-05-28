@@ -1,4 +1,5 @@
 import path from 'path';
+import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig = {
   // ➜ vypneme lint při build-time
@@ -11,4 +12,8 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap your existing nextConfig with the next-intl plugin
+const withNextIntl = createNextIntlPlugin();
+
+// Export the merged configuration
+export default withNextIntl(nextConfig);

@@ -3,10 +3,13 @@ import { getAuth } from 'firebase-admin/auth';
 import { adminDb as db } from '@/lib/firebase/firebaseAdmin';
 import { userSchema } from '@/lib/validation/firebaseSchemas';
 
+type RouteContext = { params: Promise<{ companyId: string }> };
+
 export async function GET(
   req: NextRequest,
-  { params }: { params: { companyId: string } }
+  { params } : RouteContext 
 ) {
+   const {companyId} = await params;
   try {
     const authHeader = req.headers.get('authorization');
     const token = authHeader?.split('Bearer ')[1];
@@ -19,7 +22,7 @@ export async function GET(
 
     const snapshot = await db
       .collection('users')
-      .where('companies', 'array-contains', params.companyId)
+      .where('companies', 'array-contains', companyId)
       .get();
 
     const users = snapshot.docs

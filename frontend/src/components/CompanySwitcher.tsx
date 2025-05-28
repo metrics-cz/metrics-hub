@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useCompanyList } from '@/lib/companyList';
 import clsx from 'classnames';
 import CreateCompanyForm from '@/components/CreateCompanyForm';
+import { useTranslations } from 'next-intl';
 
 type Props = {
   collapsed?: boolean;
@@ -17,11 +18,12 @@ export default function CompanySwitcher({ collapsed = false }: Props) {
   const active = companies.find((c) => c.id === companyId) ?? null;
 
   const router = useRouter();
+  const t = useTranslations();
 
   const [open, setOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
-  const label = active ? active.name : 'Vybrat / vytvořit…';
+  const label = active ? active.name : t('companySwitcher.selectOrCreate');
 
   // 🔒 Close dropdown when sidebar collapses
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function CompanySwitcher({ collapsed = false }: Props) {
             className="flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10 text-primary"
           >
             <Plus size={18} />
-            Vytvořit novou firmu
+            {t('companySwitcher.createNewCompany')}
           </button>
         </div>
       )}
@@ -110,7 +112,7 @@ export default function CompanySwitcher({ collapsed = false }: Props) {
               onClick={() => setShowCreate(false)}
               className="mt-4 text-sm underline text-primary"
             >
-              Zavřít
+              {t('companySwitcher.close')}
             </button>
           </div>
         </div>

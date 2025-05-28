@@ -30,7 +30,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     return (
         <AuthContext.Provider value={{ user }}>
-            {children}
+            {user ? children : null}
         </AuthContext.Provider>
     );
 }

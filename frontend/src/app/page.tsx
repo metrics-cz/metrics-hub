@@ -11,10 +11,10 @@ export default function IndexRedirect() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        router.replace('/auth');
+        router.replace('/en/auth');
         return;
       }
-        router.replace('/companies');
+      router.replace('/en/companies');
     });
 
     return unsub;

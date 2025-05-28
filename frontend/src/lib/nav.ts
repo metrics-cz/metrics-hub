@@ -4,25 +4,25 @@ import {
   Users,
   Settings,
   CreditCard,
-  Building,          // ⬅️ NEW – Lucide pictogram
+  Building,
   type LucideIcon,
 } from 'lucide-react';
 
 export type NavItem = {
-  label: string;
+  labelKey: string; // changed from label to labelKey
   href: string;
   icon: LucideIcon;
 };
 
 /* ---------- hlavní menu ---------- */
 export const MAIN_NAV: NavItem[] = [
-  { label: 'Aplikace',                 href: '/apps',          icon: LayoutDashboard },
-  { label: 'Integrace a automatizace', href: '/integrations', icon: Workflow        },
+  { labelKey: 'nav.apps',           href: '/apps',          icon: LayoutDashboard },
+  { labelKey: 'nav.integrations',   href: '/integrations',  icon: Workflow        },
 ];
 
 /* ---------- admin sekce ---------- */
 export const ADMIN_NAV: NavItem[] = [
-  { label: 'Správa uživatelů', href: '/users',    icon: Users       },
-  { label: 'Nastavení firmy',  href: '/settings', icon: Settings    },
-  { label: 'Fakturace',        href: `/invoices`,  icon: CreditCard  },
+  { labelKey: 'nav.users',      href: '/users',    icon: Users       },
+  { labelKey: 'nav.settings',   href: '/settings', icon: Settings    },
+  { labelKey: 'nav.invoices',   href: '/invoices', icon: CreditCard  },
 ];

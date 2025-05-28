@@ -1,13 +1,6 @@
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  doc,
-  getDoc,
-} from 'firebase/firestore';
-import { db, auth as firebaseAuth } from './firebaseClient';
-import { userSchema, companySchema } from '../validation/firebaseSchemas';
+
+import { auth as firebaseAuth } from './firebaseClient';
+import { userSchema } from '../validation/firebaseSchemas';
 
 export async function fetchUsersByCompany(companyId: string) {
   try {
@@ -52,7 +45,6 @@ export async function fetchUsersByCompany(companyId: string) {
  export async function getCompanyById(companyId: string) {
   try {
     const currentUser = firebaseAuth.currentUser;
-
     if (!currentUser) {
       throw new Error('User is not authenticated');
     }

@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  auth,
-  db,
-} from "@/lib/firebase/firebaseClient";
+import { auth, db } from "@/lib/firebase/firebaseClient";
 import {
   updateProfile,
   updateEmail,
@@ -14,53 +11,46 @@ import {
   EmailAuthProvider,
   deleteUser,
 } from "firebase/auth";
-import {
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
+import { doc, updateDoc } from "firebase/firestore";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getClientStorage } from "@/lib/firebase/firebaseClient";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "classnames";
 import { FilePlus2 } from "lucide-react";
+import { useTranslations } from "next-intl";  // Assuming react-i18next
 
 /* ---------------- schema & types ---------------- */
-const nameSchema = z.object({
-  firstName: z.string().min(2, "Min. 2 znaky"),
-  lastName: z.string().min(2, "Min. 2 znaky"),
-});
-
-type NameForm = z.infer<typeof nameSchema>;
-
-const emailSchema = z.object({
-  email: z.string().email("Neplatný e‑mail"),
-  password: z.string().min(6, "Heslo pro potvrzení (min. 6 znaků)"),
-});
-
-type EmailForm = z.infer<typeof emailSchema>;
-
-const pwdSchema = z.object({
-  current: z.string().min(6, "Min. 6 znaků"),
-  password: z.string().min(6, "Min. 6 znaků"),
-});
-
-type PwdForm = z.infer<typeof pwdSchema>;
-
-/* ---------------- page component ---------------- */
 export default function ProfilePage() {
+  const t = useTranslations('profile');
+
   const user = auth.currentUser;
   const router = useRouter();
 
-  /* redirect if somehow no user */
   useEffect(() => {
     if (!user) router.replace("/auth");
   }, [user, router]);
+
+  // Validation schemas with i18n messages
+  const nameSchema = z.object({
+    firstName: z.string().min(2, t("validation.min2chars")),
+    lastName: z.string().min(2, t("validation.min2chars")),
+  });
+
+  const emailSchema = z.object({
+    email: z.string().email(t("validation.invalidEmail")),
+    password: z.string().min(6, t("validation.passwordMin6")),
+  });
+
+  const pwdSchema = z.object({
+    current: z.string().min(6, t("validation.passwordMin6")),
+    password: z.string().min(6, t("validation.passwordMin6")),
+  });
+
+  type NameForm = z.infer<typeof nameSchema>;
+  type EmailForm = z.infer<typeof emailSchema>;
+  type PwdForm = z.infer<typeof pwdSchema>;
 
   /* ------------ name form ------------ */
   const {
@@ -81,7 +71,7 @@ export default function ProfilePage() {
     const displayName = `${data.firstName.trim()} ${data.lastName.trim()}`;
     await updateProfile(user, { displayName });
     await updateDoc(doc(db, "users", user.uid), { displayName });
-    resetName(data); // sync form state
+    resetName(data);
   };
 
   /* ------------ email form ------------ */
@@ -129,10 +119,8 @@ export default function ProfilePage() {
     if (!user || !e.target.files?.[0]) return;
     setUploading(true);
 
-    const storage = getClientStorage();
-    if (!storage) return;          // SSR fallback
-
-    setUploading(true);
+    const storage = getClientStorage();https://next-intl.dev/docs/getting-started/app-router
+    if (!storage) return;
 
     try {
       const file = e.target.files[0];
@@ -141,10 +129,10 @@ export default function ProfilePage() {
       const url = await getDownloadURL(ref);
 
       await updateProfile(user, { photoURL: url });
-      await updateDoc(doc(db, 'users', user.uid), { photoURL: url });
+      await updateDoc(doc(db, "users", user.uid), { photoURL: url });
     } catch (err) {
-      console.error('Upload avatar failed:', err);
-      alert('Nahrání fotky se nepovedlo.');
+      console.error("Upload avatar failed:", err);
+      alert(t("uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -153,36 +141,31 @@ export default function ProfilePage() {
   /* ------------ delete account ------------ */
   const handleDelete = async () => {
     if (!user) return;
-    const ok = window.confirm("Opravdu smazat celý účet? Tento krok nelze vrátit.");
+    const ok = window.confirm(t("deleteConfirm"));
     if (!ok) return;
     await deleteUser(user);
     router.replace("/auth");
   };
 
-  /* =================================================================== */
   return (
     <div className="p-10 max-w-3xl mx-auto space-y-12">
-      {/* ---------------- avatar + basic ---------------- */}
+      {/* avatar + basic */}
       <section className="space-y-6">
-        <h2 className="text-xl font-semibold">Profil</h2>
+        <h2 className="text-xl font-semibold">{t("title")}</h2>
 
         <div className="flex items-center gap-6">
           <label className="relative cursor-pointer">
-            {
-              user?.photoURL ?
-                (
-                  <img
-                    src={user?.photoURL}
-                    className="w-28 h-28 rounded-full object-cover ring-2 ring-primary/50"
-                  />
-                )
-                :
-                (
-                  <div className="w-28 h-28 flex justify-center items-center bg-gray-400 rounded-full">
-                    <FilePlus2 size={48} color="white" />
-                  </div>
-                )
-            }
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                className="w-28 h-28 rounded-full object-cover ring-2 ring-primary/50"
+                alt="avatar"
+              />
+            ) : (
+              <div className="w-28 h-28 flex justify-center items-center bg-gray-400 rounded-full">
+                <FilePlus2 size={48} color="white" />
+              </div>
+            )}
             <input
               type="file"
               accept="image/*"
@@ -192,20 +175,20 @@ export default function ProfilePage() {
             />
           </label>
           <div className="text-sm text-neutral-500">
-            <p>Kliknutím nahrajte novou fotku.</p>
-            {uploading && <p className="text-primary">Nahrávám…</p>}
+            <p>{t("uploadPhoto")}</p>
+            {uploading && <p className="text-primary">{t("uploading")}</p>}
           </div>
         </div>
       </section>
 
-      {/* ---------------- jméno ---------------- */}
+      {/* name */}
       <section className="space-y-4">
-        <h3 className="font-medium">Jméno a příjmení</h3>
+        <h3 className="font-medium">{t("name")}</h3>
         <form onSubmit={subName(saveName)} className="grid grid-cols-2 gap-4 max-w-lg">
           <div>
             <input
               {...regName("firstName")}
-              placeholder="Jméno"
+              placeholder={t("firstNamePlaceholder")}
               className={clsx("w-full form-input", nameErr.firstName && "ring-2 ring-red-400")}
             />
             {nameErr.firstName && <p className="text-xs text-red-600">{nameErr.firstName.message}</p>}
@@ -213,7 +196,7 @@ export default function ProfilePage() {
           <div>
             <input
               {...regName("lastName")}
-              placeholder="Příjmení"
+              placeholder={t("lastNamePlaceholder")}
               className={clsx("w-full form-input", nameErr.lastName && "ring-2 ring-red-400")}
             />
             {nameErr.lastName && <p className="text-xs text-red-600">{nameErr.lastName.message}</p>}
@@ -223,17 +206,17 @@ export default function ProfilePage() {
             disabled={savingName}
             className="col-span-2 bg-primary text-white rounded-md py-2 disabled:opacity-50"
           >
-            Uložit změny
+            {t("saveChanges")}
           </button>
         </form>
       </section>
 
-      {/* ---------------- email ---------------- */}
+      {/* email */}
       <section className="space-y-4">
-        <h3 className="font-medium">E‑mail</h3>
+        <h3 className="font-medium">{t("email")}</h3>
         <form onSubmit={subEmail(saveEmail)} className="grid gap-4 max-w-lg">
           <div>
-            <label className="block text-sm mb-1">Nový e‑mail</label>
+            <label className="block text-sm mb-1">{t("newEmail")}</label>
             <input
               {...regEmail("email")}
               className={clsx("w-full form-input", emailErr.email && "ring-2 ring-red-400")}
@@ -241,7 +224,7 @@ export default function ProfilePage() {
             {emailErr.email && <p className="text-xs text-red-600">{emailErr.email.message}</p>}
           </div>
           <div>
-            <label className="block text-sm mb-1">Heslo pro potvrzení</label>
+            <label className="block text-sm mb-1">{t("passwordConfirm")}</label>
             <input
               type="password"
               {...regEmail("password")}
@@ -254,17 +237,17 @@ export default function ProfilePage() {
             disabled={savingEmail}
             className="bg-primary text-white rounded-md py-2 disabled:opacity-50"
           >
-            Aktualizovat e‑mail
+            {t("updateEmail")}
           </button>
         </form>
       </section>
 
-      {/* ---------------- password ---------------- */}
+      {/* password */}
       <section className="space-y-4">
-        <h3 className="font-medium">Změna hesla</h3>
+        <h3 className="font-medium">{t("changePassword")}</h3>
         <form onSubmit={subPwd(savePwd)} className="grid gap-4 max-w-lg">
           <div>
-            <label className="block text-sm mb-1">Aktuální heslo</label>
+            <label className="block text-sm mb-1">{t("currentPassword")}</label>
             <input
               type="password"
               {...regPwd("current")}
@@ -273,7 +256,7 @@ export default function ProfilePage() {
             {pwdErr.current && <p className="text-xs text-red-600">{pwdErr.current.message}</p>}
           </div>
           <div>
-            <label className="block text-sm mb-1">Nové heslo</label>
+            <label className="block text-sm mb-1">{t("newPassword")}</label>
             <input
               type="password"
               {...regPwd("password")}
@@ -286,19 +269,19 @@ export default function ProfilePage() {
             disabled={savingPwd}
             className="bg-primary text-white rounded-md py-2 disabled:opacity-50"
           >
-            Změnit heslo
+            {t("changePasswordButton")}
           </button>
         </form>
       </section>
 
-      {/* ---------------- danger zone ---------------- */}
+      {/* danger zone */}
       <section className="space-y-4">
-        <h3 className="font-medium text-red-600">Nebezpečná zóna</h3>
+        <h3 className="font-medium text-red-600">{t("dangerZone")}</h3>
         <button
           onClick={handleDelete}
           className="bg-red-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-700"
         >
-          Smazat účet
+          {t("deleteAccount")}
         </button>
       </section>
     </div>

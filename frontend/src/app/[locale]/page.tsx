@@ -1,12 +1,7 @@
-import { useTranslations } from 'next-intl';
+import * as React from 'react';
 
-export default function HomePage() {
-  const t = useTranslations();
-
-  return (
-    <main>
-      <h1>{t('welcome')}</h1>
-      {/* other homepage content */}
-    </main>
-  );
+export default async function Page() {
+    return (
+        <h1></h1>
+    );
 }

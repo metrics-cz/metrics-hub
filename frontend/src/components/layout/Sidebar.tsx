@@ -20,13 +20,12 @@ import clsx from 'classnames';
 import BuildInfo from '@/components/BuildInfo';
 import { motion, AnimatePresence } from 'framer-motion';
 import UserInitialsIcon from '../user/UserInitialsIcon';
-/* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
-/* -------------------------------------------------------------------------- */
+import { useLocale, useTranslations } from 'next-intl';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
 }
 
@@ -45,17 +44,19 @@ function NavLink({
 }) {
   const target = `/companies/${activeCompanyId}${item.href}`;
   const Icon = item.icon;
+  const t = useTranslations();
   return (
     <Link
       href={disabled ? '#' : target}
       className={clsx(
-        'flex items-center gap-3 px-3 py-2 rounded',
+        'flex items-center gap-2 rounded',
+        collapsed ? 'px-2 py-1' : 'px-3 py-2',
         disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-white/10',
         pathname === target && !disabled && 'bg-white/10'
       )}
     >
-      <Icon size={18} />
-      {!collapsed && <span>{item.label}</span>}
+      <Icon size={collapsed ? 20 : 18} />
+      {!collapsed && <span>{t(item.labelKey)}</span>}
     </Link>
   );
 }
@@ -68,14 +69,28 @@ function SidebarActions({
   onSignOut: () => Promise<void>;
 }) {
   return (
-    <div className="space-y-2">
-      <button className="w-full h-10 flex items-center justify-center rounded hover:bg-white/10">
-        <Bell size={18} />
-      </button>
+    <div className="space-y-2 px-2 flex flex-col items-center gap-1 mt-2 w-full">
+      {collapsed ? (
+        <div className='flex flex-col items-center gap-3 px-3 py-2'>
+          <LanguageSwitcher collapsed={collapsed} />
+
+          <button className="w-full h-10  flex items-center justify-center rounded hover:bg-white/10">
+            <Bell size={18} />
+          </button>
+        </div>
+      ) : (
+        <div className="w-full flex flex-row" >
+          <LanguageSwitcher collapsed={collapsed} />
+
+          <button className="w-full h-10 flex items-center justify-center rounded hover:bg-white/10 ml-2">
+            <Bell size={18} />
+          </button>
+        </div>
+      )}
 
       <Link
         href="/profile"
-        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10"
+        className="w-full flex items-center gap-3 px-3 rounded hover:bg-white/10"
       >
         {auth.currentUser?.photoURL ? (
           <img
@@ -108,15 +123,15 @@ function SidebarActions({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Component                                                                  */
-/* -------------------------------------------------------------------------- */
-
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const active = useActiveCompany();
   const disabled = !active;
+
+  const t = useTranslations();
+  const locale = useLocale();
+  const locales = ['cz', 'en'];
 
   /* ---------- desktop collapse ---------- */
   const [collapsed, setCollapsed] = useState(false);
@@ -130,9 +145,7 @@ export default function Sidebar() {
     const handle = (e: MediaQueryListEvent | MediaQueryList) => {
       if (e.matches) setMobileOpen(false);
     };
-    // initial check
     handle(mq);
-    // listener
     mq.addEventListener ? mq.addEventListener('change', handle) : mq.addListener(handle);
     return () =>
       mq.removeEventListener
@@ -164,8 +177,8 @@ export default function Sidebar() {
   }, [mobileOpen, escHandler]);
 
   /* ---------- constants for swipe-to-close ---------- */
-  const SWIPE_CLOSE_OFFSET = 120;  // px
-  const SWIPE_CLOSE_VELOCITY = 800;  // px/s
+  const SWIPE_CLOSE_OFFSET = 120; // px
+  const SWIPE_CLOSE_VELOCITY = 800; // px/s
 
   /* ---------- Desktop sidebar ---------- */
   const DesktopSidebar = (
@@ -176,10 +189,13 @@ export default function Sidebar() {
       )}
     >
       <button
-        onClick={() => setCollapsed(c => !c)}
-        className="h-12 flex items-center justify-center hover:bg-white/10"
+        onClick={() => setCollapsed((c) => !c)}
+        className={clsx(
+          'flex items-center justify-center hover:bg-white/10',
+          collapsed ? 'h-10' : 'h-12'
+        )}
       >
-        <Menu size={24} />
+        <Menu size={collapsed ? 20 : 24} />
       </button>
 
       <div className="px-2">
@@ -191,7 +207,7 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto">
         {active && (
           <nav className="px-2 space-y-1">
-            {MAIN_NAV.map(i => (
+            {MAIN_NAV.map((i) => (
               <NavLink
                 key={i.href}
                 item={i}
@@ -202,7 +218,7 @@ export default function Sidebar() {
               />
             ))}
             <div className="my-4 h-px bg-white/10" />
-            {ADMIN_NAV.map(i => (
+            {ADMIN_NAV.map((i) => (
               <NavLink
                 key={i.href}
                 item={i}
@@ -228,7 +244,7 @@ export default function Sidebar() {
 
   /* ---------- Mobile drawer (always expanded) ---------- */
   const MobileSidebar = (
-    <aside className="h-full bg-[#121212] text-white flex flex-col shadow-lg w-screen max-w-screen-sm pr-8">
+    <aside className="h-full bg-[#121212] text-white flex flex-col shadow-lg w-screen max-w-screen-sm">
       {/* header inside drawer */}
       <div className="flex justify-between flex-row h-14 px-4">
         <img src="/logo.png" alt="Metrics Hub logo" className="h-25 w-auto" />
@@ -251,7 +267,7 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto">
         {active && (
           <nav className="px-2 space-y-1">
-            {MAIN_NAV.map(i => (
+            {MAIN_NAV.map((i) => (
               <NavLink
                 key={i.href}
                 item={i}
@@ -262,7 +278,7 @@ export default function Sidebar() {
               />
             ))}
             <div className="my-4 h-px bg-white/10" />
-            {ADMIN_NAV.map(i => (
+            {ADMIN_NAV.map((i) => (
               <NavLink
                 key={i.href}
                 item={i}
@@ -275,6 +291,7 @@ export default function Sidebar() {
           </nav>
         )}
       </div>
+
 
       <SidebarActions
         collapsed={false}
@@ -293,11 +310,12 @@ export default function Sidebar() {
 
       {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#121212] text-white flex items-center justify-between px-4 py-3 shadow">
-        <button className='border-none' onClick={() => setMobileOpen(true)}>
+        <button className="border-none" onClick={() => setMobileOpen(true)}>
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-4">
-          <button className='border-none'>
+          <LanguageSwitcher collapsed={false} isMobileHeader />
+          <button className="border-none">
             <Bell size={20} />
           </button>
           <Link href="/profile">
