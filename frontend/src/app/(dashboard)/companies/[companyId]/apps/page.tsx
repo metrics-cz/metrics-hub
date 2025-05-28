@@ -8,9 +8,9 @@ export default async function Page() {
     const path = usePathname();
     return (
         <div>
-            <div className='flex justify-between mb-2'>
-                <h1 className='text-xl font-semibold'>Aplikace</h1>
-                <button className="col-span-2 bg-primary text-white rounded-md p-2 disabled:opacity-50 inline-flex whitespace-nowrap"
+            <div className='flex justify-between mb-2 p-8'>
+                <h1 className='text-3xl font-semibold mb-4'>Aplikace</h1>
+                <button className="col-span-2 bg-primary text-white rounded-md p-2 disabled:opacity-50 inline-flex items-center gap-2"
                     onClick={() => router.push(`${path}/addApp`)}>
                     <Plus />Přidat aplikace</button>
             </div>

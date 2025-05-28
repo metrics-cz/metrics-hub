@@ -1,7 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Menu, LogOut, Bell, CircleUserRound } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  Menu,
+  LogOut,
+  Bell,
+  CircleUserRound,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -11,130 +18,342 @@ import CompanySwitcher from '@/components/CompanySwitcher';
 import { useActiveCompany } from '@/lib/activeCompany';
 import clsx from 'classnames';
 import BuildInfo from '@/components/BuildInfo';
+import { motion, AnimatePresence } from 'framer-motion';
+import UserInitialsIcon from '../user/UserInitialsIcon';
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
-  const pathname = usePathname();
-  const router = useRouter();
-  const active = useActiveCompany();
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}
 
-  const disabled = !active;
-
-  /* ------------ reusable nav link ------------- */
-  const NavLink = ({
-    href,
-    label,
-    icon: Icon,
-  }: (typeof MAIN_NAV)[number]) => (
-    href = `/companies/${active?.id}${href}`,
+function NavLink({
+  item,
+  activeCompanyId,
+  disabled,
+  collapsed,
+  pathname,
+}: {
+  item: NavItem;
+  activeCompanyId?: string;
+  disabled: boolean;
+  collapsed: boolean;
+  pathname: string;
+}) {
+  const target = `/companies/${activeCompanyId}${item.href}`;
+  const Icon = item.icon;
+  return (
     <Link
-      href={disabled ? '#' : href}
+      href={disabled ? '#' : target}
       className={clsx(
         'flex items-center gap-3 px-3 py-2 rounded',
-        disabled
-          ? 'cursor-not-allowed opacity-40'
-          : 'hover:bg-white/10',
-        pathname === href && !disabled && 'bg-white/10',
+        disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-white/10',
+        pathname === target && !disabled && 'bg-white/10'
       )}
     >
       <Icon size={18} />
-      {!collapsed && <span>{label}</span>}
+      {!collapsed && <span>{item.label}</span>}
     </Link>
   );
+}
 
-  /* -------------- render ----------------------- */
+function SidebarActions({
+  collapsed,
+  onSignOut,
+}: {
+  collapsed: boolean;
+  onSignOut: () => Promise<void>;
+}) {
   return (
+    <div className="space-y-2">
+      <button className="w-full h-10 flex items-center justify-center rounded hover:bg-white/10">
+        <Bell size={18} />
+      </button>
+
+      <Link
+        href="/profile"
+        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10"
+      >
+        {auth.currentUser?.photoURL ? (
+          <img
+            src={auth.currentUser.photoURL}
+            alt="Me"
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        ) : (
+          <UserInitialsIcon name={auth.currentUser?.displayName} />
+        )}
+        {!collapsed && (
+          <span className="truncate">
+            {auth.currentUser?.displayName ?? 'Profil'}
+          </span>
+        )}
+      </Link>
+
+      <button
+        onClick={onSignOut}
+        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 text-red-400"
+      >
+        <LogOut size={18} />
+        {!collapsed && <span>Odhlásit se</span>}
+      </button>
+
+      <div className="text-center mt-3">
+        <BuildInfo />
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                  */
+/* -------------------------------------------------------------------------- */
+
+export default function Sidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const active = useActiveCompany();
+  const disabled = !active;
+
+  /* ---------- desktop collapse ---------- */
+  const [collapsed, setCollapsed] = useState(false);
+
+  /* ---------- mobile drawer ------------ */
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  /* auto-close drawer when screen ≥ md (768px) */
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const handle = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) setMobileOpen(false);
+    };
+    // initial check
+    handle(mq);
+    // listener
+    mq.addEventListener ? mq.addEventListener('change', handle) : mq.addListener(handle);
+    return () =>
+      mq.removeEventListener
+        ? mq.removeEventListener('change', handle)
+        : mq.removeListener(handle);
+  }, []);
+
+  /* Allow ESC key to close the drawer */
+  const escHandler = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.addEventListener('keydown', escHandler);
+      // Prevent body scroll
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.removeEventListener('keydown', escHandler);
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.removeEventListener('keydown', escHandler);
+      document.documentElement.style.overflow = '';
+    };
+  }, [mobileOpen, escHandler]);
+
+  /* ---------- constants for swipe-to-close ---------- */
+  const SWIPE_CLOSE_OFFSET = 120;  // px
+  const SWIPE_CLOSE_VELOCITY = 800;  // px/s
+
+  /* ---------- Desktop sidebar ---------- */
+  const DesktopSidebar = (
     <aside
       className={clsx(
-        'h-full bg-[#121212] text-white flex flex-col shadow-lg transition-all duration-300',
-        collapsed ? 'w-15' : 'w-64',
+        'h-full bg-[#121212] text-white flex flex-col shadow-lg transition-[width] duration-300',
+        collapsed ? 'w-16' : 'w-64'
       )}
     >
-      {/* collapse / expand */}
       <button
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={() => setCollapsed(c => !c)}
         className="h-12 flex items-center justify-center hover:bg-white/10"
       >
         <Menu size={24} />
       </button>
 
-      {/* company switcher */}
       <div className="px-2">
         <CompanySwitcher collapsed={collapsed} />
-
       </div>
 
       <div className="my-4 h-px bg-white/10 mx-4" />
 
-      {/* -------- central scroll area (always flex-1) -------- */}
       <div className="flex-1 overflow-y-auto">
         {active && (
           <nav className="px-2 space-y-1">
-            {MAIN_NAV.map((item) => (
-              <NavLink key={item.href} {...item} />
+            {MAIN_NAV.map(i => (
+              <NavLink
+                key={i.href}
+                item={i}
+                activeCompanyId={active.id}
+                disabled={disabled}
+                collapsed={collapsed}
+                pathname={pathname}
+              />
             ))}
-
             <div className="my-4 h-px bg-white/10" />
-
-            {ADMIN_NAV.map((item) => (
-              <NavLink key={item.href} {...item} />
+            {ADMIN_NAV.map(i => (
+              <NavLink
+                key={i.href}
+                item={i}
+                activeCompanyId={active.id}
+                disabled={disabled}
+                collapsed={collapsed}
+                pathname={pathname}
+              />
             ))}
           </nav>
         )}
       </div>
 
-      {/* -------- bottom actions -------- */}
-      <div className="p-2 space-y-2">
-        {/* notifications */}
+      <SidebarActions
+        collapsed={collapsed}
+        onSignOut={async () => {
+          await signOut(auth);
+          router.push('/auth');
+        }}
+      />
+    </aside>
+  );
+
+  /* ---------- Mobile drawer (always expanded) ---------- */
+  const MobileSidebar = (
+    <aside className="h-full bg-[#121212] text-white flex flex-col shadow-lg w-screen max-w-screen-sm pr-8">
+      {/* header inside drawer */}
+      <div className="flex justify-between flex-row h-14 px-4">
+        <img src="/logo.png" alt="Metrics Hub logo" className="h-25 w-auto" />
+
+        {/* close button */}
         <button
-          className={clsx(
-            'w-full h-10 flex items-center justify-center rounded',
-            'hover:bg-white/10',
-          )}
+          onClick={() => setMobileOpen(false)}
+          className="ml-auto p-1 rounded border-none hover:bg-white/10"
         >
-          <Bell size={18} />
+          <X size={24} />
         </button>
+      </div>
 
-        {/* profile */}
-        <Link
-          href={'/profile'}
-          className={clsx(
-            'w-full flex items-center gap-3 px-3 py-2 rounded',
-            'hover:bg-white/10',
-          )}
-        >
-          {auth.currentUser?.photoURL ? (
-            <img
-              src={auth.currentUser.photoURL}
-              alt="Me"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <CircleUserRound size={18} />
-          )}
-          {!collapsed && (
-            <span className="truncate">
-              {auth.currentUser?.displayName ?? 'Profil'}
-            </span>
-          )}
-        </Link>
+      <div className="px-2">
+        <CompanySwitcher collapsed={false} />
+      </div>
 
-        {/* sign-out */}
-        <button
-          onClick={async () => {
-            await signOut(auth);
-            router.push('/auth');
-          }}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 text-red-400"
-        >
-          <LogOut size={18} />
-          {!collapsed && <span>Odhlásit se</span>}
+      <div className="my-4 h-px bg-white/10 mx-4" />
+
+      <div className="flex-1 overflow-y-auto">
+        {active && (
+          <nav className="px-2 space-y-1">
+            {MAIN_NAV.map(i => (
+              <NavLink
+                key={i.href}
+                item={i}
+                activeCompanyId={active.id}
+                disabled={disabled}
+                collapsed={false}
+                pathname={pathname}
+              />
+            ))}
+            <div className="my-4 h-px bg-white/10" />
+            {ADMIN_NAV.map(i => (
+              <NavLink
+                key={i.href}
+                item={i}
+                activeCompanyId={active.id}
+                disabled={disabled}
+                collapsed={false}
+                pathname={pathname}
+              />
+            ))}
+          </nav>
+        )}
+      </div>
+
+      <SidebarActions
+        collapsed={false}
+        onSignOut={async () => {
+          await signOut(auth);
+          router.push('/auth');
+        }}
+      />
+    </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop & tablet */}
+      <div className="hidden md:block">{DesktopSidebar}</div>
+
+      {/* Mobile top bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#121212] text-white flex items-center justify-between px-4 py-3 shadow">
+        <button className='border-none' onClick={() => setMobileOpen(true)}>
+          <Menu size={24} />
         </button>
-
-        <div className="text-center mt-3">
-          <BuildInfo />
+        <div className="flex items-center gap-4">
+          <button className='border-none'>
+            <Bell size={20} />
+          </button>
+          <Link href="/profile">
+            {auth.currentUser?.photoURL ? (
+              <img
+                src={auth.currentUser.photoURL}
+                alt="Me"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <CircleUserRound size={20} />
+            )}
+          </Link>
         </div>
       </div>
-    </aside>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            key="drawer-wrapper"
+            className="fixed inset-0 z-50 flex justify-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* backdrop */}
+            <div
+              className="flex-1 bg-black/70 backdrop-blur-sm"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* slide-in drawer with drag-to-dismiss */}
+            <motion.div
+              className="relative"
+              drag="x"
+              dragDirectionLock
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_, info) => {
+                const { offset, velocity } = info;
+                if (offset.x > SWIPE_CLOSE_OFFSET || velocity.x > SWIPE_CLOSE_VELOCITY) {
+                  setMobileOpen(false);
+                }
+              }}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.3 }}
+            >
+              {MobileSidebar}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

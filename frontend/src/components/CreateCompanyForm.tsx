@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
-
-import { callCreateCompany } from '@/lib/firebase/callables';
 import { db } from '@/lib/firebase/firebaseClient';
+import createCompany from '@/lib/company/createCompany';
 
 export default function CreateCompanyForm() {
   const router = useRouter();
@@ -24,7 +23,7 @@ export default function CreateCompanyForm() {
 
     try {
       // Cloud Function creates the doc & returns its ID
-      const { companyId } = await callCreateCompany({ name, billingEmail });
+      const { companyId } = await createCompany({ name, billingEmail });
 
       // optional: warm the cache / make sure it exists
       await getDoc(doc(db, 'companies', companyId));

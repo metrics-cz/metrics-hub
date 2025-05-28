@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="cs" className="h-full">
+    <>
       <head>
         {/* Google Fonts – Inter 400/500/700 */}
         <link
@@ -23,6 +23,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {children}
         </AuthProvider>
       </body>
-    </html>
+    </>
   );
 }

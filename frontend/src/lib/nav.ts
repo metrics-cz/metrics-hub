@@ -24,5 +24,5 @@ export const MAIN_NAV: NavItem[] = [
 export const ADMIN_NAV: NavItem[] = [
   { label: 'Správa uživatelů', href: '/users',    icon: Users       },
   { label: 'Nastavení firmy',  href: '/settings', icon: Settings    },
-  { label: 'Fakturace',        href: `/companies/`,  icon: CreditCard  },
+  { label: 'Fakturace',        href: `/invoices`,  icon: CreditCard  },
 ];

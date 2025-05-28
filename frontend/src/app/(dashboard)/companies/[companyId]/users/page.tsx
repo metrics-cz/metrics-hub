@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { fetchUsersByCompany } from '@/lib/firebase/firebaseData';
 import UserTable from '@/components/user/UserTable';
-import { User } from '@/lib/validation/userSchema';
+import { User } from '@/lib/validation/firebaseSchemas';
 import { Plus } from 'lucide-react';
+import SearchBar from '@/components/user/SearchBar';
 
 export default function UsersPage() {
   const { companyId } = useParams();
@@ -24,18 +25,18 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-8">
       <div className="flex justify-between mb-2">
-        <h1 className="text-lg font-semibold mb-4">Uživatelé</h1>
+        <h1 className="text-3xl font-semibold mb-4">Uživatelé</h1>
         <button
           className="col-span-2 bg-primary text-white rounded-md p-2 disabled:opacity-50 inline-flex items-center gap-2"
           onClick={() => setShowModal(true)}
         >
-          <Plus className="w-4 h-4" />
+          <Plus />
           Přidat uživatele
         </button>
       </div>
-
+      <SearchBar />
       <UserTable users={users} />
 
       {showModal && (

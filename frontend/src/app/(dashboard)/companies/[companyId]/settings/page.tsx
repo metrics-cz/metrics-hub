@@ -16,7 +16,7 @@ export default function CompanySettingsLayout({ children, params }: { children: 
 
   return (
     <main className="max-w-full mx-auto px-6 py-8">
-      <h1 className="text-3xl font-semibold mb-8">Nastavení firmy</h1>
+      <h1 className="text-3xl font-semibold mb-4">Nastavení firmy</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[4fr_4fr] gap-8">
         {/* Profil firmy */}

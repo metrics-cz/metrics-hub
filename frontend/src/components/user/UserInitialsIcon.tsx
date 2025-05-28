@@ -21,7 +21,7 @@ type Props = {
 export default function UserInitialsIcon({ name }: Props) {
     const initials = getUserInitials(name);
     return (
-        <div className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-white bg-gray-400 rounded-full">
+        <div className="flex items-center justify-center w-fit h-auto aspect-square text-sm font-semibold text-white bg-gray-400 rounded-full">
             {initials}
         </div>
     )

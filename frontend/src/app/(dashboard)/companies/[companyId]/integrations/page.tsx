@@ -1,8 +1,7 @@
 export default function Page() {
-    return (
-      <div className="p-10 text-neutral-500">
-        (zatím prázdná sekce)
-      </div>
-    );
-  }
-  
+  return (
+    <div className="p-8">
+      <h1 className="text-3xl font-semibold mb-8">Integrace a Automatizace</h1>
+    </div>
+  );
+}

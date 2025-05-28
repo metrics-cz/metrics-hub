@@ -14,7 +14,7 @@ export default function AuthPage() {
     const unsub = onAuthStateChanged(auth, (u) => u && router.replace('/app'));
     return unsub;
   }, [router]);
-
+  console.log('AuthPage mounted');
   return (
     <main className="min-h-screen flex items-center justify-center bg-bg-light px-4 animate-fade">
       <AuthCard />
