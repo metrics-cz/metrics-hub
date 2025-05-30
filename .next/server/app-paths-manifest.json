@@ -1,0 +1,8 @@
+{
+  "/[locale]/(dashboard)/profile/page": "app/[locale]/(dashboard)/profile/page.js",
+  "/[locale]/(dashboard)/companies/page": "app/[locale]/(dashboard)/companies/page.js",
+  "/[locale]/(dashboard)/companies/[companyId]/settings/page": "app/[locale]/(dashboard)/companies/[companyId]/settings/page.js",
+  "/[locale]/(dashboard)/companies/[companyId]/integrations/page": "app/[locale]/(dashboard)/companies/[companyId]/integrations/page.js",
+  "/[locale]/(dashboard)/companies/[companyId]/users/page": "app/[locale]/(dashboard)/companies/[companyId]/users/page.js",
+  "/[locale]/(dashboard)/companies/[companyId]/users/[userId]/edit/page": "app/[locale]/(dashboard)/companies/[companyId]/users/[userId]/edit/page.js"
+}
