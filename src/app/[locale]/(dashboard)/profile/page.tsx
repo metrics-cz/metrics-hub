@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "classnames";
 import { FilePlus2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import Avatar from '@/components/user/Avatar'
 
 /* ---------------- schema & types ---------------- */
 export default function ProfilePage() {
@@ -181,7 +181,7 @@ export default function ProfilePage() {
   };
 
   /* --- delete account --- */
-   const handleDelete = async () => {
+  const handleDelete = async () => {
     if (!user) return;
     if (!confirm(t("deleteConfirm"))) return;
 
@@ -207,21 +207,18 @@ export default function ProfilePage() {
     <div className="p-10 max-w-3xl mx-auto space-y-12">
       {/* avatar + basic */}
       <section className="space-y-6">
-        <h2 className="text-xl font-semibold">{t("title")}</h2>
+        <h2 className="text-xl font-semibold">{t('title')}</h2>
 
         <div className="flex items-center gap-6">
+          {/* clickable avatar / placeholder */}
           <label className="relative cursor-pointer">
-            {user?.user_metadata?.avatar_url ? (
-              <img
-                src={user.user_metadata.avatar_url}
-                className="w-28 h-28 rounded-full object-cover ring-2 ring-primary/50"
-                alt="avatar"
-              />
-            ) : (
-              <div className="w-28 h-28 flex justify-center items-center bg-gray-400 rounded-full">
-                <FilePlus2 size={48} color="white" />
-              </div>
-            )}
+            <Avatar
+              src={user?.user_metadata?.avatar_url ?? null}
+              name={user?.user_metadata?.full_name ?? ''}
+              size={112}        /*  112 px == w-28 h-28  */
+              className="ring-2 ring-primary/50"
+            />
+
             <input
               type="file"
               accept="image/*"
@@ -229,13 +226,22 @@ export default function ProfilePage() {
               onChange={handleAvatar}
               disabled={uploading}
             />
+
+            {/* overlay “plus” icon only when no avatar yet */}
+            {!user?.user_metadata?.avatar_url && (
+              <div className="absolute inset-0 grid place-items-center text-white">
+                <FilePlus2 size={48} />
+              </div>
+            )}
           </label>
+
           <div className="text-sm text-neutral-500">
-            <p>{t("uploadPhoto")}</p>
-            {uploading && <p className="text-primary">{t("uploading")}</p>}
+            <p>{t('uploadPhoto')}</p>
+            {uploading && <p className="text-primary">{t('uploading')}</p>}
           </div>
         </div>
       </section>
+
 
       {/* name */}
       <section className="space-y-4">
