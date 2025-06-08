@@ -1,35 +1,63 @@
+// src/app/api/company/[companyId]/users/[userId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { adminDb } from '@/lib/firebase/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { createClient } from '@supabase/supabase-js';
 
+/**
+ * DELETE /api/company/[companyId]/users/[userId]
+ * Removes `userId` from the company in `company_users`.
+ * Only owners/admins of that company are allowed.
+ */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { companyId: string; userId: string } }
+  { params }: { params: { companyId: string; userId: string } } 
 ) {
-  try {
-    const authHeader = req.headers.get('authorization');
-    const token = authHeader?.split('Bearer ')[1];
+  const { companyId, userId } = params;
 
-    if (!token) {
-      return NextResponse.json({ error: 'Missing token' }, { status: 401 });
-    }
-
-    const decoded = await getAuth().verifyIdToken(token);
-    const requestingUserId = decoded.uid;
-
-    // Optionally validate that `requestingUserId` has admin rights
-    // You can fetch the company or user doc and check role/permissions here
-
-    const userRef = adminDb.collection('users').doc(params.userId);
-
-    await userRef.update({
-      companies: FieldValue.arrayRemove(params.companyId),
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('Error removing user from company:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+  /* 1. Grab and verify the bearer token */
+  const bearer = req.headers.get('authorization') ?? '';
+  const token  = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
+  if (!token) {
+    return NextResponse.json({ error: 'Missing token' }, { status: 401 });
   }
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,                // server-only
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  );
+
+  const {
+    data: { user },
+    error: authErr
+  } = await supabase.auth.getUser(token);
+
+  if (authErr || !user) {
+    return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+  }
+
+  /* 2. Ensure caller is owner/admin of the company */
+  const { data: roleRow, error: roleErr } = await supabase
+    .from('company_users')
+    .select('role')
+    .eq('company_id', companyId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (roleErr || !roleRow || !['owner', 'admin'].includes(roleRow.role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  /* 3. Remove the target user from the company */
+  const { error: delErr } = await supabase
+    .from('company_users')
+    .delete()
+    .eq('company_id', companyId)
+    .eq('user_id', userId);
+
+  if (delErr) {
+    console.error('Delete failed:', delErr.message);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }
