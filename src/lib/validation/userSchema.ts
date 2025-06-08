@@ -3,11 +3,12 @@ import { z } from 'zod';
 
 export const UserSchema = z.object({
   id: z.string().min(1),
-  name: z.string().min(1),
+  full_name: z.string().min(1),
+  email: z.string().email(),
   role: z.string().min(1),
   lastLogin: z.string().optional().default(''),
   status: z.enum(['active', 'pending']),
-  avatarUrl: z.string().url().optional(),
+  avatar_url: z.string().url().optional(),
 });
 
 export const UsersArraySchema = z.array(UserSchema);

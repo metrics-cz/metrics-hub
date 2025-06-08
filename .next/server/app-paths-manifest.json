@@ -1,9 +1,4 @@
 {
-  "/[locale]/auth/callback/page": "app/[locale]/auth/callback/page.js",
-  "/[locale]/page": "app/[locale]/page.js",
-  "/[locale]/(dashboard)/profile/page": "app/[locale]/(dashboard)/profile/page.js",
-  "/[locale]/(dashboard)/companies/page": "app/[locale]/(dashboard)/companies/page.js",
-  "/[locale]/(dashboard)/companies/[companyId]/page": "app/[locale]/(dashboard)/companies/[companyId]/page.js",
-  "/[locale]/(dashboard)/companies/[companyId]/apps/page": "app/[locale]/(dashboard)/companies/[companyId]/apps/page.js",
-  "/[locale]/(dashboard)/companies/[companyId]/users/page": "app/[locale]/(dashboard)/companies/[companyId]/users/page.js"
+  "/[locale]/(dashboard)/companies/[companyId]/users/page": "app/[locale]/(dashboard)/companies/[companyId]/users/page.js",
+  "/[locale]/(dashboard)/companies/[companyId]/integrations/page": "app/[locale]/(dashboard)/companies/[companyId]/integrations/page.js"
 }

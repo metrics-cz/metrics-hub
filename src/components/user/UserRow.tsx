@@ -1,6 +1,6 @@
 'use client';
 
-import { CompanyUserMini as User } from '@/lib/company/companyUserMini';
+import { CompanyUserMini as User } from '@/lib/validation/companyUserMiniSchema';
 import { useState } from 'react';
 import UserInitialsIcon from './UserInitialsIcon';
 import { useParams, useRouter } from 'next/navigation';

@@ -1,32 +1,8 @@
 // src/lib/company/companyUserMini.ts
 import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
+import { type CompanyUserMini, companyUserMiniSchema} from '../validation/companyUserMiniSchema';
 
-/* ---------- Zod schemas ---------- */
-
-/* ---------- Zod schema ---------- */
-const rowSchema = z.object({
-  company_id      : z.string().uuid(),
-  role            : z.string(),
-  id              : z.string().uuid(),
-  email           : z.string().email(),
-  last_sign_in_at : z.coerce.date().nullable(),
-  full_name       : z.string().nullable(),
-  avatar_url      : z.string().url().nullable()           
-});
-
-/* ---------- Type used by your React UI ---------- */
-export type CompanyUserMini = {
-  id: string;
-  email: string;
-  fullName: string;
-  avatarUrl: string | null;      
-  lastSignIn: Date | null;
-  role: string;
-};
-
-
-/* ---------- fetch helper ---------- */
 export async function fetchUsersByCompanyMini(
   companyId: string
 ): Promise<CompanyUserMini[]> {
@@ -42,7 +18,7 @@ export async function fetchUsersByCompanyMini(
   }
 
   return data.flatMap(row => {
-    const parsed = rowSchema.safeParse(row);
+    const parsed = companyUserMiniSchema.safeParse(row);
     if (!parsed.success) {
       console.warn('Invalid row skipped', parsed.error.flatten());
       return [];

@@ -1,17 +1,35 @@
-import { User } from '@/lib/validation/firebaseSchemas';
+'use client';
+
+import * as React from 'react';
 import { Search } from 'lucide-react';
 
-type Props = { users: User[] };
-/* { users }: Props */
-export default function SearchBar(){
+type SearchBarProps = {
+    /** Current query value (controlled input). */
+    searchTerm: string;
+    /** Setter that updates the query in the parent. */
+    onSearch: (value: string) => void;
+};
+
+/**
+ * Simple search bar with a magnifying-glass button.
+ * The button is purely cosmetic for now (no `onSubmit`);
+ * you can wire it up later if needed.
+ */
+export default function SearchBar({ searchTerm, onSearch }: SearchBarProps) {
     return (
-        <div className="flex w-full items-center border border-gray-400 rounded p-1 focus-within:border-blue-500">
+        <div className="flex w-full items-center rounded border border-gray-400 p-1 focus-within:border-blue-500">
             <input
                 type="text"
+                value={searchTerm}
+                onChange={(e) => onSearch(e.target.value)}
                 placeholder="Search…"
-                className="flex-grow px-2 py-1 bg-transparent border-none outline-none"
+                className="flex-grow border-none bg-transparent px-2 py-1 outline-none"
             />
-            <button className="flex-shrink-0 px-3 py-1 border border-blue-600 bg-blue-600 text-white hover:bg-blue-700">
+            <button
+                type="button"
+                className="flex-shrink-0 rounded border border-blue-600 bg-blue-600 px-3 py-1 text-white hover:bg-blue-700"
+                aria-label="Search"
+            >
                 <Search size={16} />
             </button>
         </div>

@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import UserTable from '@/components/user/UserTable';
 import { Plus } from 'lucide-react';
 import SearchBar from '@/components/user/SearchBar';
-import { fetchUsersByCompanyMini, type CompanyUserMini } from '@/lib/company/companyUserMini';
+import { fetchUsersByCompanyMini } from '@/lib/company/companyUserMini';
+import { type CompanyUserMini } from '@/lib/validation/companyUserMiniSchema'
 
 export default function UsersPage() {
   const { companyId } = useParams<{ companyId: string }>();
@@ -42,12 +43,12 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm} />
+      <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm} /> 
       <UserTable users={filtered} />
 
-      {showModal && (
+     {/*  {showModal && (
         <InviteUserModal onSend={handleSendInvite} onClose={() => setShowModal(false)} />
-      )}
+      )} */}
     </div>
   );
 }

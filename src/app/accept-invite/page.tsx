@@ -1,45 +1,65 @@
 'use client';
-import { useSearchParams, useRouter } from 'next/navigation';
+
 import { useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase/firebaseClient';
-import { getIdToken } from 'firebase/auth';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+
+/** UI status */
+type InviteStatus = 'idle' | 'verifying' | 'done' | 'error';
 
 export default function AcceptInvitePage() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
   const router = useRouter();
-  const [status, setStatus] = useState<'idle' | 'verifying' | 'done' | 'error'>('idle');
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');      // invite token from e-mail
+  const [status, setStatus] = useState<InviteStatus>('idle');
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) return;                                // no token in URL → stay idle
 
-    const acceptInvite = async () => {
-      setStatus('verifying');
+    const run = async () => {
+      /* ───── 1. Ensure the visitor is signed-in ───── */
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        router.push('/auth?redirect=accept-invite&token=' + token);
+      if (!session) {
+        // redirect to /auth and come back here afterwards
+        router.replace(`/auth?redirect=accept-invite&token=${token}`);
         return;
       }
 
-      const idToken = await currentUser.getIdToken();
+      /* ───── 2. Call our API to accept the invite ─── */
+      setStatus('verifying');
+
       const res = await fetch('/api/accept-invite', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${idToken}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ token }),
       });
 
-      setStatus(res.ok ? 'done' : 'error');
+      /* ───── 3. Handle result ─────────────────────── */
+      if (res.ok) {
+        setStatus('done');
+        // send the user to dashboard after 1.5 s
+        setTimeout(() => router.replace('/companies'), 1500);
+      } else {
+        setStatus('error');
+      }
     };
 
-    acceptInvite();
+    run();
   }, [token, router]);
 
+  /* ───── 4. Very simple feedback UI ──────────────── */
   return (
-    <div className="p-4">
-      {status === 'verifying' && <p>Verifying invitation…</p>}
-      {status === 'done' && <p>Invitation accepted! Redirecting…</p>}
-      {status === 'error' && <p>Invitation expired or invalid.</p>}
-    </div>
+    <main className="p-4 text-center">
+      {status === 'idle' && <p>Čekám na pozvánku…</p>}
+      {status === 'verifying' && <p>Ověřuji pozvánku…</p>}
+      {status === 'done' && <p>Pozvánka přijata! Přesměrovávám…</p>}
+      {status === 'error' && <p>Pozvánka vypršela nebo je neplatná.</p>}
+    </main>
   );
 }

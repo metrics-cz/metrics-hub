@@ -3,7 +3,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig = {
   // ➜ vypneme lint při build-time
-  eslint: { ignoreDuringBuilds: true },
+/*   eslint: { ignoreDuringBuilds: true }, */
 
   // alias @
   webpack: (config) => {
