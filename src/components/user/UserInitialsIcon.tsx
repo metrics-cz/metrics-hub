@@ -1,28 +1,47 @@
 'use client';
 
+import * as React from 'react';
+import clsx from 'classnames';
 
-function getUserInitials(fullName?: string): string {
-    if (!fullName) return '??';
-
-    const nameParts = fullName.trim().split(/\s+/);
-
-    if (nameParts.length >= 2) {
-        return `${nameParts[0][0]} ${nameParts[1][0]}`.toUpperCase();
-    }
-
-    const firstWord = nameParts[0];
-    return firstWord.substring(0, 2).toUpperCase();
+interface UserInitialsIconProps {
+    name?: string | null;
+    className?: string;
 }
 
-type Props = {
-    name?: string;
-};
+/**
+ * Renders a circular fallback avatar with the user's initials.
+ * If no name is provided it shows a generic icon instead.
+ */
+export default function UserInitialsIcon({
+    name,
+    className,
+}: UserInitialsIconProps) {
+    // ── derive initials ────────────────────────────────────────────────
+    const initials = React.useMemo(() => {
+        if (!name) return '';
+        // Split on whitespace, filter empty parts, take first char of first 2 parts
+        return name
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase() ?? '')
+            .join('');
+    }, [name]);
 
-export default function UserInitialsIcon({ name }: Props) {
-    const initials = getUserInitials(name);
     return (
-        <div className="flex items-center justify-center w-fit h-auto aspect-square text-sm font-semibold text-white bg-gray-400 rounded-full">
-            {initials}
+        <div
+            className={clsx(
+                'inline-grid place-items-center rounded-full bg-gray-500/20 text-gray-800',
+                'select-none font-medium uppercase',
+                /* default size → w-8 h-8; you can override via `className` */
+                'w-8 h-8',
+                className
+            )}
+        >
+            {initials || (
+                <span aria-hidden="true">👤</span>
+            )}
+            <span className="sr-only">{name ?? 'User avatar'}</span>
         </div>
-    )
+    );
 }

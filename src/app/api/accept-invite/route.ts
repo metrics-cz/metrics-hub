@@ -1,40 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { adminDb as db } from '@/lib/firebase/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
+// src/app/api/accept-invite/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
-  const tokenHeader = req.headers.get('authorization')?.split('Bearer ')[1];
-  if (!tokenHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
-  const { token } = await req.json();
-  const decoded = await getAuth().verifyIdToken(tokenHeader);
-  const userId = decoded.uid;
+  const tokenHeader = req.headers.get('authorization')?.replace('Bearer ', '')
+  if (!tokenHeader) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-  const inviteRef = db.collection('companyInvites').doc(token);
-  const inviteSnap = await inviteRef.get();
+  const { data: { user }, error: authError } = await supabase.auth.getUser(tokenHeader)
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+  }
 
-  if (!inviteSnap.exists) return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+  const { token } = await req.json() as { token: string }
 
-  const invite = inviteSnap.data()!;
-  const now = new Date();
-  if (invite.expiresAt.toDate() < now) return NextResponse.json({ error: 'Invite expired' }, { status: 400 });
+  // TODO: move invites into a new table `company_invites`
+  const { data: invite, error: inviteErr } = await supabase
+    .from('company_invites')
+    .select('*')
+    .eq('token', token)
+    .single()
 
-  // Add user to company
-  const userRef = db.collection('users').doc(userId);
-  await userRef.set(
-    {
-      companies: FieldValue.arrayUnion(invite.companyId),
-    },
-    { merge: true }
-  );
+  if (inviteErr || !invite) {
+    return NextResponse.json({ error: 'Invalid or expired invite' }, { status: 400 })
+  }
 
-  await inviteRef.delete();
+  // 1. Add the user to the company
+  await supabase.from('company_users').insert({
+    company_id: invite.company_id,
+    user_id: user.id,
+    role: invite.role ?? 'member'
+  })
 
-  return NextResponse.json({ success: true });
-}
-import * as React from 'react';
+  // 2. Delete the invite
+  await supabase.from('company_invites').delete().eq('token', token)
 
-export default async function Page() {
-    return <div />;
+  return NextResponse.json({ success: true })
 }

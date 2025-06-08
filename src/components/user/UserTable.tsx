@@ -1,6 +1,6 @@
 'use client';
 
-import { CompanyUserMini as User } from '@/lib/company/companyUserMini';
+import { CompanyUserMini as User } from '@/lib/validation/companyUserMiniSchema';
 import UserRow from './UserRow';
 
 type Props = {
