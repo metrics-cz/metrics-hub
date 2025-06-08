@@ -35,7 +35,7 @@ export default function UserRow({ user }: Props) {
 
       <td className='px-4 py-3'>{user.lastSignIn ? user.lastSignIn.toLocaleString("sk-SK") : '—'}</td>
       {<td className="px-4 py-3">
-        {user.status === 'active' ? (
+        {/*  {user.status === 'active' ? (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-full">
             <span className="w-2 h-2 bg-green-500 rounded-full" />
             Aktivní
@@ -45,7 +45,7 @@ export default function UserRow({ user }: Props) {
             <span className="w-2 h-2 bg-orange-500 rounded-full" />
             Čeká na pozvánku
           </span>
-        )}
+        )} */}
       </td>}
 
       <td className="px-4 py-3 text-right relative">

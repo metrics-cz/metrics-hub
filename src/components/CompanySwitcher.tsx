@@ -7,7 +7,7 @@ import { useCompanyList } from '@/lib/companyList';
 import clsx from 'classnames';
 import CreateCompanyForm from '@/components/CreateCompanyForm';
 import { useTranslations } from 'next-intl';
-
+import Avatar from '@/components/user/Avatar';
 type Props = {
   collapsed?: boolean;
 };
@@ -41,17 +41,7 @@ export default function CompanySwitcher({ collapsed = false }: Props) {
         }}
         className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10"
       >
-        {/* avatar / fallback icon */}
-        {active?.logoURL ? (
-          <img
-            src={active.logoURL}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full grid place-items-center bg-white/10">
-            <Building size={20} className="text-white/70" />
-          </div>
-        )}
+        <Avatar />
 
         {!collapsed && (
           <>
@@ -79,8 +69,8 @@ export default function CompanySwitcher({ collapsed = false }: Props) {
                 c.id === companyId && 'bg-white/5'
               )}
             >
-              {c.logoURL ? (
-                <img src={c.logoURL} className="w-6 h-6 rounded-full" />
+              {c.logo_url ? (
+                <img src={c.logo_url} className="w-6 h-6 rounded-full" />
               ) : (
                 <div className="w-6 h-6 rounded-full grid place-items-center bg-white/10">
                   <Building size={16} className="text-white/70" />
