@@ -1,17 +1,19 @@
 // src/app/api/company/[companyId]/users/[userId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { Route } from 'next';
 
 /**
  * DELETE /api/company/[companyId]/users/[userId]
  * Removes `userId` from the company in `company_users`.
  * Only owners/admins of that company are allowed.
  */
+type RouteCtx = { params: Promise<{ companyId: string; userId: string }> };
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { companyId: string; userId: string } } 
+  { params }:  RouteCtx 
 ) {
-  const { companyId, userId } = params;
+  const { companyId, userId } = await params;
 
   /* 1. Grab and verify the bearer token */
   const bearer = req.headers.get('authorization') ?? '';

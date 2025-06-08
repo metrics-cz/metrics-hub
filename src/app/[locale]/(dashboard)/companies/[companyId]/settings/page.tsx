@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getCompanyById, type Company } from '@/lib/company/getCompanyById';
-
+import { getCompanyById } from '@/lib/company/getCompanyById';
+import { type Company } from '@/lib/validation/companySchema';
 export default function CompanySettingsPage() {
   /* params from URL */
   const { companyId } = useParams<{ companyId: string }>();
