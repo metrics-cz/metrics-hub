@@ -1,6 +1,8 @@
+// src/app/api/company/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuid } from 'uuid';
 import { createClient } from '@supabase/supabase-js';
+import prisma from '@/lib/prisma';               // ← Prisma client
 
 interface CompanyInput {
   name: string;
@@ -8,31 +10,30 @@ interface CompanyInput {
 }
 
 export async function POST(request: NextRequest) {
-  // 1) Get the Supabase token from the Authorization header
+  /*──────────────────  Verify the bearer token with Supabase Auth */
   const authHeader = request.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Missing or invalid Authorization header' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Missing or invalid Authorization header' },
+      { status: 401 }
+    );
   }
+  const token = authHeader.slice(7);
 
-  const token = authHeader.replace('Bearer ', '');
-
-  // 2) Initialize Supabase client (client-side usage with service role not needed)
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,     // ✓ anon key is enough
     { global: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
-  // 3) Verify user
-  const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-  if (userError || !user) {
+  const { data: { user }, error: userErr } = await supabase.auth.getUser(token);
+  if (userErr || !user) {
     return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
   }
-
   const uid = user.id;
   const userEmail = user.email ?? '';
 
-  // 4) Parse and validate body
+  /*──────────────────  Parse and validate body */
   let body: CompanyInput;
   try {
     body = await request.json();
@@ -42,40 +43,52 @@ export async function POST(request: NextRequest) {
 
   const name = (body.name ?? '').trim();
   if (name.length < 2) {
-    return NextResponse.json({ error: 'Company name is required and must be at least 2 characters' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Company name must be at least 2 characters' },
+      { status: 400 }
+    );
   }
 
   const billingEmail = (body.billingEmail ?? userEmail).toLowerCase();
   const companyId = uuid();
 
-  // 5) Create the company
-  const { error: companyError } = await supabase.from('companies').insert({
-    id: companyId,
-    name,
-    billing_email: billingEmail,
-    plan: 'free',
-    owner_uid: uid,
-    created_at: new Date().toISOString(),
-    active: true,
-    logo_url: null, // Optional, can be set later
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.companies.create({
+        data: {
+          id: companyId,
+          name,
+          billing_email: billingEmail,
+          owner_uid: uid,
+          // plan, created_at, active, logo_url use defaults
+        },
+      });
 
-  if (companyError) {
-    console.error('Error creating company:', companyError.message);
-    return NextResponse.json({ error: 'Failed to create company' }, { status: 500 });
+      await tx.company_users.create({
+        data: {
+          company_id: companyId,
+          user_id: uid,
+          role: 'owner',
+        },
+      });
+    });
+
+    return NextResponse.json({ companyId }, { status: 201 });
+  } catch (e: any) {
+    /* Unique-violation handling */
+    if (e.code === 'P2002' && e.meta?.target?.includes('billing_email')) {
+      return NextResponse.json(
+        { error: 'Billing e-mail already used by another company' },
+        { status: 409 }        // HTTP 409 Conflict
+      );
+    }
+
+    console.error('Error creating company:', e);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
+}
 
-  // 6) Add user to company_users table
-  const { error: roleError } = await supabase.from('company_users').insert({
-    company_id: companyId,
-    user_id: uid,
-    role: 'owner',
-  });
-
-  if (roleError) {
-    console.error('Error assigning role:', roleError.message);
-    return NextResponse.json({ error: 'Failed to assign user to company' }, { status: 500 });
-  }
-
-  return NextResponse.json({ companyId }, { status: 201 });
+/* Stub – implement as needed */
+export async function DELETE(request: NextRequest) {
+  return NextResponse.json({ error: 'Not implemented' }, { status: 501 });
 }

@@ -41,7 +41,18 @@ export default function CompanySwitcher({ collapsed = false }: Props) {
         }}
         className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10"
       >
-        <Avatar />
+        {/* avatar / fallback icon */}
+        {active?.logo_url ? (
+          <img
+            src={active.logo_url}
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full grid place-items-center bg-white/10">
+            <Building size={20} className="text-white/70" />
+          </div>
+        )}
+
 
         {!collapsed && (
           <>

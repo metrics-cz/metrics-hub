@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 
 .next
-
+doc
 # Runtime data
 pids
 *.pid
@@ -76,3 +76,4 @@ firebase-debug.log*
 EOF
 
 *.local
+/generated/prisma
