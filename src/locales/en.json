@@ -2,6 +2,7 @@
   "profile": {
     "title": "Profile",
     "uploadPhoto": "Click to upload a new photo.",
+    "removePhoto": "Remove Photo",
     "uploading": "Uploading…",
     "name": "First and Last Name",
     "firstNamePlaceholder": "First Name",

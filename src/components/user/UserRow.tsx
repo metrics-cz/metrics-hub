@@ -33,7 +33,7 @@ export default function UserRow({ user }: Props) {
       {/*   <td className="px-4 py-3">{user.role}</td> */}
       <td className="px-4 py-3">{user.role || '—'}</td>
 
-      <td className='px-4 py-3'>{user.lastSignIn ? user.lastSignIn.toLocaleString("sk-SK") : '—'}</td>
+      <td className='px-4 py-3'>{user.lastSignIn ? new Date(user.lastSignIn).toLocaleString("sk-SK") : '—'}</td>
       {<td className="px-4 py-3">
         {/*  {user.status === 'active' ? (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-full">

@@ -2,6 +2,7 @@
     "profile": {
         "title": "Profil",
         "uploadPhoto": "Kliknutím nahrajte novou fotku.",
+        "removePhoto": "Smazat fotku",
         "uploading": "Nahrávám…",
         "name": "Jméno a příjmení",
         "firstNamePlaceholder": "Jméno",

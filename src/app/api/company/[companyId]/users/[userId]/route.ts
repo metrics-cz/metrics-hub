@@ -1,7 +1,7 @@
 // src/app/api/company/[companyId]/users/[userId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { Route } from 'next';
+import prisma from '@/lib/prisma';  // Import the Prisma client
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * DELETE /api/company/[companyId]/users/[userId]
@@ -9,57 +9,58 @@ import { Route } from 'next';
  * Only owners/admins of that company are allowed.
  */
 type RouteCtx = { params: Promise<{ companyId: string; userId: string }> };
+
 export async function DELETE(
   req: NextRequest,
-  { params }:  RouteCtx 
+  { params }: RouteCtx
 ) {
   const { companyId, userId } = await params;
 
   /* 1. Grab and verify the bearer token */
   const bearer = req.headers.get('authorization') ?? '';
-  const token  = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
+  const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
   if (!token) {
     return NextResponse.json({ error: 'Missing token' }, { status: 401 });
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,                // server-only
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  );
-
-  const {
-    data: { user },
-    error: authErr
-  } = await supabase.auth.getUser(token);
-
-  if (authErr || !user) {
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) {
     return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
   }
 
   /* 2. Ensure caller is owner/admin of the company */
-  const { data: roleRow, error: roleErr } = await supabase
-    .from('company_users')
-    .select('role')
-    .eq('company_id', companyId)
-    .eq('user_id', user.id)
-    .single();
+  const roleRow = await prisma.company_users.findUnique({
+    where: {
+      company_id_user_id: {
+        company_id: companyId,
+        user_id: user.id,
+      },
+    },
+    select: {
+      role: true,
+    },
+  });
 
-  if (roleErr || !roleRow || !['owner', 'admin'].includes(roleRow.role)) {
+  if (!roleRow || !['owner', 'admin'].includes(roleRow.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   /* 3. Remove the target user from the company */
-  const { error: delErr } = await supabase
-    .from('company_users')
-    .delete()
-    .eq('company_id', companyId)
-    .eq('user_id', userId);
+  try {
+    const deleteResult = await prisma.company_users.deleteMany({
+      where: {
+        company_id: companyId,
+        user_id: userId,
+      },
+    });
 
-  if (delErr) {
+    if (deleteResult.count === 0) {
+      return NextResponse.json({ error: 'User not found or already removed' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (delErr) {
     console.error('Delete failed:', delErr.message);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true });
 }

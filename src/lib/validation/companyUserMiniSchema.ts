@@ -10,6 +10,7 @@ export const companyUserMiniSchema = z.object({
   avatar_url      : z.string().url().nullable()  
 })
 
+
 export type CompanyUserMini = {
   id: string;
   email: string;

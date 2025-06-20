@@ -3,7 +3,7 @@ import * as React from 'react';
 import AppSection from '@/components/apps/AppSection';
 import { Plus } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-export default async function Page() {
+export default function Page() {
     const router = useRouter();
     const path = usePathname();
     return (
