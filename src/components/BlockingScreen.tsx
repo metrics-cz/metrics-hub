@@ -9,7 +9,7 @@ export function BlockingScreen({ companyId }: { companyId: string }) {
 
     return (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white">
-            <h1 className="text-2xl font-bold mb-4">unauthorized access</h1>
+            <h1 className="text-2xl font-bold mb-4">Unauthorized access</h1>
 
             <p className="text-lg text-gray-600 mb-6">
                 You do not have permission to access this page.

@@ -8,7 +8,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "classnames";
-import { FilePlus2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Avatar from '@/components/user/Avatar'
 
@@ -147,6 +146,39 @@ export default function ProfilePage() {
   };
 
   /* --- avatar upload --- */
+  const handleRemoveAvatar = async () => {
+    if (!user) return;
+
+    try {
+      const { error: rmErr } = await supabase
+        .storage
+        .from('avatars')
+        .remove([`avatars/${user.id}`]);
+
+      if (rmErr) throw rmErr;
+      
+      // 2. clear avatar_url in the auth profile
+      const { error: upErr } = await supabase.auth.updateUser({
+        data: { avatar_url: null },
+      });
+      if (upErr) throw upErr;
+
+      // 3. optionally clear it in your own users table
+      await supabase
+        .from('users')
+        .update({ avatar_url: null })
+        .eq('id', user.id);
+
+    } catch (err) {
+      console.error('remove avatar failed:', err);
+      alert(t('removeFailed'));           // add i18n string
+    }
+  };
+
+  const confirmAndRemove = () => {
+    const sure = confirm(t('removeConfirm')); // e.g. "Are you sure?"
+    if (sure) handleRemoveAvatar();
+  };
   const [uploading, setUploading] = useState(false);
 
   const handleAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,7 +189,7 @@ export default function ProfilePage() {
       const file = e.target.files[0];
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(`avatars/${user.id}`, file, { upsert: true });
+        .upload(`avatars/${user.id}/${file.name}`, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -227,16 +259,19 @@ export default function ProfilePage() {
               disabled={uploading}
             />
 
-            {/* overlay “plus” icon only when no avatar yet */}
-            {!user?.user_metadata?.avatar_url && (
-              <div className="absolute inset-0 grid place-items-center text-white">
-                <FilePlus2 size={48} />
-              </div>
-            )}
+
           </label>
 
           <div className="text-sm text-neutral-500">
             <p>{t('uploadPhoto')}</p>
+            {user?.user_metadata?.avatar_url && (
+              <p
+                onClick={confirmAndRemove}
+                className="text-red-500 cursor-pointer hover:underline"
+              >
+                {t('removePhoto')}
+              </p>
+            )}
             {uploading && <p className="text-primary">{t('uploading')}</p>}
           </div>
         </div>

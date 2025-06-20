@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
+    "@prisma/adapter-pg": "^6.10.1",
     "@prisma/client": "^6.9.0",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",
     "classnames": "^2.5.1",

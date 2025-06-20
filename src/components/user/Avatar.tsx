@@ -22,9 +22,6 @@ export default function Avatar({
         return (
             <img
                 src={src}
-                alt={name ?? 'Avatar'}
-                height={size}
-                width={size}
                 className={clsx(
                     'inline-block rounded-full object-cover select-none',
                     className

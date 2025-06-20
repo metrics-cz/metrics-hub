@@ -13,9 +13,17 @@ export default function CompanySettingsPage() {
 
   /* fetch once `companyId` is available */
   useEffect(() => {
-    if (!companyId) return;
-    getCompanyById(companyId).then(setCompany);
-  }, [companyId]);
+    const fetchCompany = async () => {
+      try {
+        const data = await getCompanyById(companyId);
+        setCompany(data);
+      } catch (error) {
+        console.error("Error fetching company:", error);
+      } 
+    };
+
+    fetchCompany();  // Call the async function
+  }, []);
 
   /* -------------------------------------------------------------------- */
   return (

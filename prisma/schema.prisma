@@ -7,7 +7,7 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-  schemas   = ["auth", "public"]
+  schemas   = ["public", "auth"]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -321,7 +321,9 @@ model users {
   one_time_tokens             one_time_tokens[]
   sessions                    sessions[]
   companies                   companies[]
-  company_users               company_users[]
+
+  company_invitations_sent     company_invitations[] @relation("Inviter")
+  company_invitations_received company_invitations[]
 
   @@index([instance_id])
   @@index([is_anonymous])
@@ -341,23 +343,50 @@ model companies {
   users         users?          @relation(fields: [owner_uid], references: [id], onDelete: NoAction, onUpdate: NoAction)
   company_users company_users[]
 
+  company_invitations company_invitations[]
+
   @@schema("public")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations.   https://pris.ly/d/row-level-security for more info.
 model company_users {
-  id         String  @id @default(dbgenerated("uuid_generate_v4()"))
-  company_id String
-  user_id    String
+  id         String    @id @default(dbgenerated("uuid_generate_v4()"))
+  company_id String    @db.Uuid
+  user_id    String    @db.Uuid
   role       String
+  companies  companies @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "company_users_company_fk")
 
-  company    companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@unique([company_id, user_id])        // still generates company_id_user_id
+  @@unique([company_id, user_id], map: "company_id_user_id_unique")
+  @@unique([company_id, user_id])
   @@schema("public")
 }
 
+model company_invitations {
+  id         String                    @id @default(uuid()) @db.Uuid
+  email      String
+  userId     String                    @db.Uuid
+  companyId  String                    @db.Uuid
+  invitedBy  String                    @db.Uuid
+  role       company_invitation_role   @default(member)
+  message    String?
+  status     company_invitation_status @default(pending)
+  expiresAt  DateTime                  @db.Timestamptz
+  acceptedAt DateTime?                 @db.Timestamptz
+  createdAt  DateTime                  @default(now()) @db.Timestamptz
+  updatedAt  DateTime                  @default(now()) @db.Timestamptz
+
+  // Relations
+  user    users     @relation(fields: [userId], references: [id])
+  company companies @relation(fields: [companyId], references: [id])
+  inviter users     @relation("Inviter", fields: [invitedBy], references: [id])
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([invitedBy])
+  @@index([status])
+  @@index([email])
+  @@schema("public")
+}
 
 enum aal_level {
   aal1
@@ -398,4 +427,22 @@ enum one_time_token_type {
   phone_change_token
 
   @@schema("auth")
+}
+
+enum company_invitation_role {
+  owner
+  superadmin
+  admin
+  member
+
+  @@schema("public")
+}
+
+enum company_invitation_status {
+  pending
+  accepted
+  rejected
+  expired
+
+  @@schema("public")
 }
