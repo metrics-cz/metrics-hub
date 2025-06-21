@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import { useMemo } from 'react';
 import clsx from 'classnames';
 
 interface UserInitialsIconProps {
@@ -17,7 +17,7 @@ export default function UserInitialsIcon({
     className,
 }: UserInitialsIconProps) {
     // ── derive initials ────────────────────────────────────────────────
-    const initials = React.useMemo(() => {
+    const initials = useMemo(() => {
         if (!name) return '';
         // Split on whitespace, filter empty parts, take first char of first 2 parts
         return name

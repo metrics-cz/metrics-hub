@@ -10,6 +10,11 @@ const nextConfig = {
     config.resolve.alias['@'] = path.resolve(__dirname, 'src');
     return config;
   },
+  
+  // Optimize framer-motion bundling
+  experimental: {
+    optimizePackageImports: ['framer-motion']
+  }
 };
 
 // Wrap your existing nextConfig with the next-intl plugin

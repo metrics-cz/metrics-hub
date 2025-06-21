@@ -7,12 +7,12 @@ import { useCompanyList } from '@/lib/companyList';
 import clsx from 'classnames';
 import CreateCompanyForm from '@/components/CreateCompanyForm';
 import { useTranslations } from 'next-intl';
-import Avatar from '@/components/user/Avatar';
 type Props = {
   collapsed?: boolean;
+  onMobileClose?: () => void;
 };
 
-export default function CompanySwitcher({ collapsed = false }: Props) {
+export default function CompanySwitcher({ collapsed = false, onMobileClose }: Props) {
   const companies = useCompanyList();
   const { companyId } = useParams<{ companyId?: string }>();
   const active = companies.find((c) => c.id === companyId) ?? null;
@@ -74,6 +74,7 @@ export default function CompanySwitcher({ collapsed = false }: Props) {
               onClick={() => {
                 setOpen(false);
                 router.push(`/companies/${c.id}`);
+                onMobileClose?.();
               }}
               className={clsx(
                 'flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10',

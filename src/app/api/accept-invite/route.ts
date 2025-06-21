@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
 
   const { token } = await req.json() as { token: string }
 
-  // TODO: move invites into a new table `company_invites`
   const { data: invite, error: inviteErr } = await supabase
     .from('company_invites')
     .select('*')
