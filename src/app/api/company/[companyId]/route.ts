@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import prisma from '@/lib/prisma';
+import { queryDb } from '@/lib/db';
 
 type RouteContext = { params: Promise<{ companyId: string }> };
 
@@ -46,115 +47,63 @@ export async function GET(
       }, { status: 400 });
     }
 
-    /* 3 ───────────────────────────────── Check if company exists first */
-    try {
-      // Add connection check and retry logic
-      await prisma.$connect();
+    /* 3 ───────────────────────────────── Check if company exists and user membership */
+    let company, membership;
+    
+    if (process.env.NODE_ENV === 'development') {
+      // Use native PostgreSQL client for development
+      const companyQuery = `
+        SELECT * FROM companies WHERE id = $1
+      `;
       
-      const company = await prisma.companies.findUnique({
-        where: { id: companyId },
-      });
-
-      if (!company) {
-        return NextResponse.json({ 
-          error: 'Company not found',
-          code: 'COMPANY_NOT_FOUND' 
-        }, { status: 404 });
-      }
-
-      /* 4 ───────────────────────────────── Access check via Prisma */
-      const membership = await prisma.company_users.findFirst({
-        where: {
-          company_id: companyId,
-          user_id: uid,
-        },
-        select: { id: true, role: true },
-      });
-
-      if (!membership) {
-        return NextResponse.json({ 
-          error: 'No access to this company',
-          code: 'ACCESS_DENIED' 
-        }, { status: 403 });
-      }
-
-      /* 5 ───────────────────────────────── Return company data */
-      return NextResponse.json({
-        ...company,
-        userRole: membership.role // Include user's role in the company
-      });
-
-    } catch (prismaError) {
-      console.error('Prisma database error:', prismaError);
+      const membershipQuery = `
+        SELECT id, role FROM company_users 
+        WHERE company_id = $1 AND user_id = $2
+      `;
       
-      // Handle specific Prisma errors
-      if (prismaError.code === 'P2023') {
-        return NextResponse.json({ 
-          error: 'Invalid company ID format',
-          code: 'INVALID_COMPANY_ID' 
-        }, { status: 400 });
-      }
-
-      // Handle connection errors specifically
-      if (prismaError.message?.includes('prepared statement') || 
-          prismaError.message?.includes('connection') ||
-          prismaError.code === 'P1001' ||
-          prismaError.code === 'P1008' ||
-          prismaError.code === 'P1017') {
-        
-        console.log('Connection issue detected, attempting to reconnect...');
-        
-        try {
-          // Force disconnect and reconnect
-          await prisma.$disconnect();
-          await prisma.$connect();
-          
-          // Retry the operations
-          const company = await prisma.companies.findUnique({
-            where: { id: companyId },
-          });
-
-          if (!company) {
-            return NextResponse.json({ 
-              error: 'Company not found',
-              code: 'COMPANY_NOT_FOUND' 
-            }, { status: 404 });
-          }
-
-          const membership = await prisma.company_users.findFirst({
-            where: {
-              company_id: companyId,
-              user_id: uid,
-            },
-            select: { id: true, role: true },
-          });
-
-          if (!membership) {
-            return NextResponse.json({ 
-              error: 'No access to this company',
-              code: 'ACCESS_DENIED' 
-            }, { status: 403 });
-          }
-
-          return NextResponse.json({
-            ...company,
-            userRole: membership.role
-          });
-          
-        } catch (retryError) {
-          console.error('Retry failed:', retryError);
-          return NextResponse.json({ 
-            error: 'Database connection error',
-            code: 'DATABASE_ERROR' 
-          }, { status: 500 });
-        }
-      }
-
-      return NextResponse.json({ 
-        error: 'Database error',
-        code: 'DATABASE_ERROR' 
-      }, { status: 500 });
+      const [companyResults, membershipResults] = await Promise.all([
+        queryDb(companyQuery, [companyId]),
+        queryDb(membershipQuery, [companyId, uid])
+      ]);
+      
+      company = companyResults[0];
+      membership = membershipResults[0];
+    } else {
+      // Use Prisma ORM in production
+      [company, membership] = await Promise.all([
+        prisma.companies.findUnique({
+          where: { id: companyId },
+        }),
+        prisma.company_users.findFirst({
+          where: {
+            company_id: companyId,
+            user_id: uid,
+          },
+          select: { id: true, role: true },
+        })
+      ]);
     }
+
+    if (!company) {
+      return NextResponse.json({ 
+        error: 'Company not found',
+        code: 'COMPANY_NOT_FOUND' 
+      }, { status: 404 });
+    }
+
+    if (!membership) {
+      return NextResponse.json({ 
+        error: 'No access to this company',
+        code: 'ACCESS_DENIED' 
+      }, { status: 403 });
+    }
+
+    /* 4 ───────────────────────────────── Return company data */
+    return NextResponse.json({
+      ...company,
+      userRole: membership.role // Include user's role in the company
+    });
+
 
   } catch (error) {
     console.error('Unexpected error in company route:', error);

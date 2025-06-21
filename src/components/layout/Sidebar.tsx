@@ -13,7 +13,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import clsx from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
-
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/AuthProvider';
 import { useActiveCompany } from '@/lib/activeCompany';
@@ -22,6 +21,7 @@ import CompanySwitcher from '@/components/CompanySwitcher';
 import BuildInfo from '@/components/BuildInfo';
 import UserInitialsIcon from '@/components/user/UserInitialsIcon';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import NotificationBell from '@/components/NotificationBell';
 
 interface NavItem {
   href: string;
@@ -35,12 +35,14 @@ function NavLink({
   disabled,
   collapsed,
   pathname,
+  onMobileClick,
 }: {
   item: NavItem;
   activeCompanyId?: string;
   disabled: boolean;
   collapsed: boolean;
   pathname: string;
+  onMobileClick?: () => void;
 }) {
   const target = `/companies/${activeCompanyId}${item.href}`;
   const Icon = item.icon;
@@ -48,6 +50,7 @@ function NavLink({
   return (
     <Link
       href={disabled ? '#' : target}
+      onClick={onMobileClick}
       className={clsx(
         'flex items-center gap-2 rounded',
         collapsed ? 'px-2 py-1' : 'px-3 py-2',
@@ -71,27 +74,27 @@ function SidebarActions({
   const { user } = useAuth();
   const fullName = user?.user_metadata?.full_name;
   const avatar = user?.user_metadata?.avatar_url;
+  const t = useTranslations();
+  const locale = useLocale();
 
   return (
     <div className="space-y-2 px-2 flex flex-col items-center gap-1 mt-2 w-full">
       {collapsed ? (
         <div className="flex flex-col items-center gap-3 px-3 py-2">
           <LanguageSwitcher collapsed={collapsed} />
-          <button className="w-full h-10 flex items-center justify-center rounded hover:bg-white/10">
-            <Bell size={18} />
-          </button>
+          <NotificationBell />
         </div>
       ) : (
         <div className="w-full flex flex-row">
           <LanguageSwitcher collapsed={collapsed} />
-          <button className="w-full h-10 flex items-center justify-center rounded hover:bg-white/10 ml-2">
-            <Bell size={18} />
-          </button>
+          <div className="ml-2">
+            <NotificationBell />
+          </div>
         </div>
       )}
 
       <Link
-        href="/profile"
+        href={`/${locale}/profile`}
         className="w-full flex items-center gap-3 px-3 rounded hover:bg-white/10"
       >
         {avatar ? (
@@ -109,7 +112,7 @@ function SidebarActions({
         className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 text-red-400"
       >
         <LogOut size={18} />
-        {!collapsed && <span>Odhlásit se</span>}
+        {!collapsed && <span>{t('sidebar.logout')}</span>}
       </button>
 
       <div className="text-center mt-3">
@@ -130,12 +133,19 @@ export default function Sidebar() {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const { user } = useAuth();
   const fullName = user?.user_metadata?.full_name;
   const avatar = user?.user_metadata?.avatar_url;
   
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const mq = window.matchMedia('(min-width: 768px)');
     const handle = (e: MediaQueryListEvent | MediaQueryList) => {
       if (e.matches) setMobileOpen(false);
@@ -150,6 +160,8 @@ export default function Sidebar() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     if (mobileOpen) {
       document.addEventListener('keydown', escHandler);
       document.documentElement.style.overflow = 'hidden';
@@ -221,7 +233,7 @@ export default function Sidebar() {
         collapsed={collapsed}
         onSignOut={async () => {
           await supabase.auth.signOut();
-          router.push('/auth');
+          router.push(`/${locale}/auth`);
         }}
       />
     </aside>
@@ -230,7 +242,7 @@ export default function Sidebar() {
   const MobileSidebar = (
     <aside className="h-full bg-[#121212] text-white flex flex-col shadow-lg w-screen max-w-screen-sm">
       <div className="flex justify-between flex-row h-14 px-4">
-        <img src="/logo.png" alt="Metrics Hub logo" className="h-25 w-auto" />
+        <img src="/logo.png" alt="Metrics Hub logo" className="h-12 w-auto" />
 
         <button
           onClick={() => setMobileOpen(false)}
@@ -241,7 +253,7 @@ export default function Sidebar() {
       </div>
 
       <div className="px-2">
-        <CompanySwitcher collapsed={false} />
+        <CompanySwitcher collapsed={false} onMobileClose={() => setMobileOpen(false)} />
       </div>
 
       <div className="my-4 h-px bg-white/10 mx-4" />
@@ -257,6 +269,7 @@ export default function Sidebar() {
                 disabled={disabled}
                 collapsed={false}
                 pathname={pathname}
+                onMobileClick={() => setMobileOpen(false)}
               />
             ))}
             <div className="my-4 h-px bg-white/10" />
@@ -268,6 +281,7 @@ export default function Sidebar() {
                 disabled={disabled}
                 collapsed={false}
                 pathname={pathname}
+                onMobileClick={() => setMobileOpen(false)}
               />
             ))}
           </nav>
@@ -278,11 +292,35 @@ export default function Sidebar() {
         collapsed={false}
         onSignOut={async () => {
           await supabase.auth.signOut();
-          router.push('/auth');
+          router.push(`/${locale}/auth`);
         }}
       />
     </aside>
   );
+
+  if (!isClient) {
+    return (
+      <>
+        <div className="hidden md:block">
+          <aside className="h-full bg-[#121212] text-white flex flex-col shadow-lg w-64">
+            <div className="h-12 flex items-center justify-center">
+              <Menu size={24} />
+            </div>
+          </aside>
+        </div>
+        <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#121212] text-white flex items-center justify-between px-4 py-3 shadow">
+          <Menu size={24} />
+          <div className="flex items-center gap-4">
+            {avatar ? (
+              <img src={avatar} alt="Me" className="w-8 h-8 rounded-full object-cover" />
+            ) : (
+              <UserInitialsIcon name={fullName} />
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -294,19 +332,17 @@ export default function Sidebar() {
         </button>
         <div className="flex items-center gap-4">
           <LanguageSwitcher collapsed={false} isMobileHeader />
-          <button className="border-none">
-            <Bell size={20} />
-          </button>
-           <Link
-        href="/profile"
-        className="w-full flex items-center gap-3 px-3 rounded hover:bg-white/10"
-      >
-        {avatar ? (
-          <img src={avatar} alt="Me" className="w-8 h-8 rounded-full object-cover" />
-        ) : (
-          <UserInitialsIcon name={fullName} />
-        )}
-      </Link>
+          <NotificationBell />
+          <Link
+            href={`/${locale}/profile`}
+            className="flex items-center rounded hover:bg-white/10 p-2"
+          >
+            {avatar ? (
+              <img src={avatar} alt="Me" className="w-8 h-8 rounded-full object-cover" />
+            ) : (
+              <UserInitialsIcon name={fullName} />
+            )}
+          </Link>
         </div>
       </div>
 

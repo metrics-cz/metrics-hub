@@ -3,6 +3,8 @@
     "title": "Profile",
     "uploadPhoto": "Click to upload a new photo.",
     "removePhoto": "Remove Photo",
+    "removeFailed": "Failed to remove photo.",
+    "removeConfirm": "Are you sure you want to remove this photo?",
     "uploading": "Uploading…",
     "name": "First and Last Name",
     "firstNamePlaceholder": "First Name",
@@ -28,12 +30,26 @@
   },
   "auth": {
     "signInRedirecting": "Redirecting...",
-    "signInTitle": "Sign In"
+    "signInTitle": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "signingIn": "Signing in…",
+    "signIn": "Sign In",
+    "register": "Register",
+    "or": "or",
+    "signInWithGoogle": "Sign in with Google"
+  },
+  "acceptInvite": {
+    "waiting": "Waiting for invitation…",
+    "verifying": "Verifying invitation…",
+    "accepted": "Invitation accepted! Redirecting…",
+    "invalid": "Invitation has expired or is invalid."
   },
   "sidebar": {
     "profile": "Profile",
     "logout": "Log Out",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "changeLanguage": "Change language"
   },
   "nav": {
     "apps": "Apps",
@@ -47,7 +63,50 @@
     "createNewCompany": "Create new company",
     "close": "Close"
   },
-  "sidebar": {
-    "changeLanguage": "Change language"
+  "users": {
+    "title": "Users",
+    "addUser": "Add User",
+    "inviteUser": "Invite User",
+    "email": "Email",
+    "role": "Role",
+    "member": "Member",
+    "admin": "Administrator",
+    "user": "User",
+    "lastLogin": "Last Login",
+    "status": "Status",
+    "active": "Active",
+    "pending": "Pending invitation"
+  },
+  "settings": {
+    "title": "Company Settings",
+    "active": "Active",
+    "inactive": "Inactive",
+    "description": "Company Description",
+    "saveProfile": "Save Profile",
+    "billingAddress": "Billing Address",
+    "contactInfo": "Contact Information"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "newInvoice": "New Invoice",
+    "pending": "Pending",
+    "paid": "Paid",
+    "overdue": "Overdue"
+  },
+  "apps": {
+    "title": "Apps",
+    "addApp": "Add App",
+    "description": "Description"
+  },
+  "common": {
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "send": "Send",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading…",
+    "error": "Error",
+    "success": "Success"
   }
 }

@@ -8,8 +8,6 @@ type Props = {
 };
 
 export default function UserTable({ users }: Props) {
-
-  console.log("Users data:", users);
   return (
     <table className="w-full text-left border-separate border-spacing-y-2">
       <thead className="text-sm text-gray-500 border-b border-gray-400">

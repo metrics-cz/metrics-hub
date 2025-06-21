@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
-
-// Create Supabase client for admin functions (for email sending)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, 
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+import { sendInvitationEmail } from '@/lib/email/sendInvitationEmail';
 
 // Email validation function
 function isValidEmail(email: string): boolean {
@@ -50,18 +38,35 @@ function checkRateLimit(userId: string): boolean {
 // POST endpoint for sending company invitations
 export async function POST(request: NextRequest) {
   try {
-    // Get authenticated user (still using Supabase for auth)
-    const supabase = createServerComponentClient({ cookies });
-    const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !currentUser) {
+    // Get authorization header
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Authentication required', code: 'UNAUTHORIZED' },
         { status: 401 }
       );
     }
 
-    // Check rate limit for this user
+    const token = authHeader.replace('Bearer ', '');
+
+    // Create Supabase client and verify token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !currentUser) {
+      console.error('Auth error:', authError);
+      return NextResponse.json(
+        { error: 'Authentication required', code: 'UNAUTHORIZED' },
+        { status: 401 }
+      );
+    }
+
+    // Check rate limit
     if (!checkRateLimit(currentUser.id)) {
       return NextResponse.json(
         {
@@ -74,7 +79,6 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json().catch(() => null);
-
     if (!body) {
       return NextResponse.json(
         { error: 'Invalid JSON body', code: 'INVALID_JSON' },
@@ -85,16 +89,9 @@ export async function POST(request: NextRequest) {
     const { email, companyId, role = 'member', message } = body;
 
     // Validate required fields
-    if (!email) {
+    if (!email || !companyId) {
       return NextResponse.json(
-        { error: 'Email is required', code: 'EMAIL_REQUIRED' },
-        { status: 400 }
-      );
-    }
-
-    if (!companyId) {
-      return NextResponse.json(
-        { error: 'Company ID is required', code: 'COMPANY_ID_REQUIRED' },
+        { error: 'Email and company ID are required', code: 'MISSING_FIELDS' },
         { status: 400 }
       );
     }
@@ -118,71 +115,56 @@ export async function POST(request: NextRequest) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    try {
-      // Check if current user has permission to invite to this company using Prisma
-      const userCompany = await prisma.company_users.findFirst({
-        where: {
-          user_id: currentUser.id,
-          company_id: companyId,
-        },
-        include: {
-          companies: {
-            select: {
-              name: true,
-            },
+    // Check if current user has permission to invite to this company
+    const userCompany = await prisma.company_users.findFirst({
+      where: {
+        user_id: currentUser.id,
+        company_id: companyId,
+      },
+      include: {
+        companies: {
+          select: {
+            name: true,
           },
         },
-      });
+      },
+    });
 
-      if (!userCompany) {
-        return NextResponse.json(
-          {
-            error: 'You do not have permission to invite users to this company',
-            code: 'INSUFFICIENT_PERMISSIONS',
-          },
-          { status: 403 }
-        );
-      }
-
-      // Check if user has admin/owner role to send invitations
-      if (!['admin', 'owner', 'superadmin'].includes(userCompany.role)) {
-        return NextResponse.json(
-          { error: 'Only admins, superadmins and owners can send company invitations', code: 'INSUFFICIENT_ROLE' },
-          { status: 403 }
-        );
-      }
-
-      // Get user by email from auth.users table using Prisma
-      const inviteeUser = await prisma.users.findFirst({
-        where: {
-          email: normalizedEmail,
+    if (!userCompany) {
+      return NextResponse.json(
+        {
+          error: 'You do not have permission to invite users to this company',
+          code: 'INSUFFICIENT_PERMISSIONS',
         },
-        select: {
-          id: true,
-          email: true,
-        },
-      });
+        { status: 403 }
+      );
+    }
 
-      if (!inviteeUser) {
-        return NextResponse.json(
-          {
-            error: 'User with this email does not exist in the app',
-            code: 'USER_NOT_FOUND',
-            suggestion: 'The user needs to register first before they can be invited to a company',
-          },
-          { status: 404 }
-        );
-      }
+    // Check if user has admin/owner role to send invitations
+    if (!['admin', 'owner', 'superadmin'].includes(userCompany.role)) {
+      return NextResponse.json(
+        { error: 'Only admins and owners can send company invitations', code: 'INSUFFICIENT_ROLE' },
+        { status: 403 }
+      );
+    }
 
-      // Check if user is already a member of this company using Prisma
+    // Check if invitee exists in the system
+    const inviteeUser = await prisma.users.findFirst({
+      where: {
+        email: normalizedEmail,
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
+
+    // Check if user is already a member of this company
+    if (inviteeUser) {
       const existingMember = await prisma.company_users.findFirst({
         where: {
           user_id: inviteeUser.id,
           company_id: companyId,
-        },
-        select: {
-          id: true,
-          role: true,
         },
       });
 
@@ -197,16 +179,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check for existing pending invitations using Prisma
+      // Check for existing pending invitations
       const existingInvitation = await prisma.company_invitations.findFirst({
         where: {
           userId: inviteeUser.id,
           companyId: companyId,
           status: 'pending',
-        },
-        select: {
-          id: true,
-          status: true,
         },
       });
 
@@ -216,18 +194,112 @@ export async function POST(request: NextRequest) {
           { status: 409 }
         );
       }
+    }
 
-      // Create company invitation record using Prisma
-      const invitation = await prisma.company_invitations.create({
+    const companyName = userCompany.companies?.name || 'the company';
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    let invitation;
+    let notification = null;
+
+    if (inviteeUser) {
+      // User exists - create in-app notification and invitation
+      await prisma.$transaction(async (tx) => {
+        // Create invitation first
+        invitation = await tx.company_invitations.create({
+          data: {
+            email: normalizedEmail,
+            userId: inviteeUser.id,
+            companyId: companyId,
+            invitedBy: currentUser.id,
+            role: role as any,
+            message: message,
+            status: 'pending',
+            expiresAt,
+          },
+          include: {
+            company: {
+              select: {
+                name: true,
+              },
+            },
+            inviter: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        });
+
+        // Create notification linked to invitation
+        notification = await tx.notifications.create({
+          data: {
+            userId: inviteeUser.id,
+            type: 'company_invitation',
+            title: `Invitation to join ${companyName}`,
+            message: `You've been invited to join ${companyName} as a ${role}.`,
+            data: {
+              companyId,
+              companyName,
+              role,
+              inviterEmail: currentUser.email,
+              message: message || null,
+              invitationId: invitation.id,
+            },
+            actionUrl: `/en/invitations/${invitation.id}`,
+            expiresAt,
+          },
+        });
+
+        // Update invitation with notification ID
+        invitation = await tx.company_invitations.update({
+          where: { id: invitation.id },
+          data: { notificationId: notification.id },
+          include: {
+            company: {
+              select: {
+                name: true,
+              },
+            },
+            inviter: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        });
+      });
+
+
+      return NextResponse.json({
+        success: true,
+        message: 'Invitation sent successfully via in-app notification',
+        data: {
+          invitation_id: invitation.id,
+          notification_id: notification.id,
+          email: invitation.email,
+          company_name: companyName,
+          role: invitation.role,
+          expires_at: invitation.expiresAt,
+          type: 'in_app_notification',
+        },
+      }, { status: 200 });
+
+    } else {
+      // User doesn't exist - create invitation and send email
+      // We'll create a placeholder user ID that will be updated when user registers
+      const tempUserId = '00000000-0000-0000-0000-000000000000'; // Placeholder UUID
+      
+      invitation = await prisma.company_invitations.create({
         data: {
           email: normalizedEmail,
-          userId: inviteeUser.id,
+          userId: tempUserId, // Placeholder that will be updated when user registers
           companyId: companyId,
           invitedBy: currentUser.id,
-          role: role as any, // Type assertion for enum
+          role: role as any,
           message: message,
           status: 'pending',
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          expiresAt,
         },
         include: {
           company: {
@@ -243,66 +315,44 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Send notification email via Supabase Edge Function or your email service
+      // Send email invitation
       try {
-        // Get company name safely
-        const companyName = invitation.company?.name || 'the company';
-        const inviterEmail = invitation.inviter?.email || 'Someone';
-
-        const emailData = {
+        await sendInvitationEmail({
           to: normalizedEmail,
-          subject: `Invitation to join ${companyName}`,
-          html: `
-            <h2>You're invited to join ${companyName}!</h2>
-            <p>Hi there!</p>
-            <p>${inviterEmail} has invited you to join <strong>${companyName}</strong> as a ${role}.</p>
-            ${message ? `<p><strong>Personal message:</strong><br>${message}</p>` : ''}
-            <p>
-              <a href="${process.env.NEXT_PUBLIC_SITE_URL}/invitations/${invitation.id}"
-                 style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                Accept Invitation
-              </a>
-            </p>
-            <p><small>This invitation expires in 7 days.</small></p>
-          `,
-          invitation_id: invitation.id,
-        };
-
-        const { error: emailError } = await supabaseAdmin.functions.invoke('send-company-invitation', {
-          body: emailData,
+          companyName,
+          inviterEmail: currentUser.email || 'Someone',
+          role,
+          message,
+          invitationId: invitation.id,
         });
 
-        if (emailError) {
-          console.error('Email sending failed:', emailError);
-          // Don't fail the whole request if email fails
-        }
+
+        return NextResponse.json({
+          success: true,
+          message: 'Invitation sent successfully via email',
+          data: {
+            invitation_id: invitation.id,
+            email: invitation.email,
+            company_name: companyName,
+            role: invitation.role,
+            expires_at: invitation.expiresAt,
+            type: 'email_invitation',
+          },
+        }, { status: 200 });
+
       } catch (emailError) {
-        console.error('Email service error:', emailError);
-        // Continue without failing the request
+        console.error('Email sending failed:', emailError);
+        
+        // Delete the invitation if email fails
+        await prisma.company_invitations.delete({
+          where: { id: invitation.id },
+        });
+
+        return NextResponse.json(
+          { error: 'Failed to send invitation email', code: 'EMAIL_FAILED' },
+          { status: 500 }
+        );
       }
-
-      // Success response
-      console.log(`Company invitation sent to: ${normalizedEmail} for company: ${companyId}`);
-
-      return NextResponse.json({
-        success: true,
-        message: 'Company invitation sent successfully',
-        data: {
-          invitation_id: invitation.id,
-          email: invitation.email,
-          company_name: invitation.company?.name || 'Unknown Company',
-          role: invitation.role,
-          expires_at: invitation.expiresAt,
-          invited_by: invitation.inviter?.email || 'Unknown User',
-        },
-      }, { status: 200 });
-
-    } catch (prismaError) {
-      console.error('Prisma database error:', prismaError);
-      return NextResponse.json(
-        { error: 'Database error occurred', code: 'DATABASE_ERROR' },
-        { status: 500 }
-      );
     }
 
   } catch (error) {

@@ -1,53 +1,112 @@
 {
-    "profile": {
-        "title": "Profil",
-        "uploadPhoto": "Kliknutím nahrajte novou fotku.",
-        "removePhoto": "Smazat fotku",
-        "uploading": "Nahrávám…",
-        "name": "Jméno a příjmení",
-        "firstNamePlaceholder": "Jméno",
-        "lastNamePlaceholder": "Příjmení",
-        "saveChanges": "Uložit změny",
-        "email": "E‑mail",
-        "newEmail": "Nový e‑mail",
-        "passwordConfirm": "Heslo pro potvrzení",
-        "updateEmail": "Aktualizovat e‑mail",
-        "changePassword": "Změna hesla",
-        "currentPassword": "Aktuální heslo",
-        "newPassword": "Nové heslo",
-        "changePasswordButton": "Změnit heslo",
-        "dangerZone": "Nebezpečná zóna",
-        "deleteAccount": "Smazat účet",
-        "deleteConfirm": "Opravdu smazat celý účet? Tento krok nelze vrátit.",
-        "uploadFailed": "Nahrání fotky se nepovedlo.",
-        "validation": {
-            "min2chars": "Min. 2 znaky",
-            "invalidEmail": "Neplatný e‑mail",
-            "passwordMin6": "Min. 6 znaků"
-        }
-    },
-    "auth": {
-        "signInRedirecting": "Přesměrování...",
-        "signInTitle": "Přihlášení"
-    },
-    "sidebar": {
-        "profile": "Profil",
-        "logout": "Odhlásit se",
-        "notifications": "Notifikace"
-    },
-    "nav": {
-        "apps": "Aplikace",
-        "integrations": "Integrace a automatizace",
-        "users": "Správa uživatelů",
-        "settings": "Nastavení firmy",
-        "invoices": "Fakturace"
-    },
-    "companySwitcher": {
-        "selectOrCreate": "Vybrat / vytvořit…",
-        "createNewCompany": "Vytvořit novou firmu",
-        "close": "Zavřít"
-    },
-    "sidebar": {
-        "changeLanguage": "Změnit jazyk"
+  "profile": {
+    "title": "Profil",
+    "uploadPhoto": "Kliknutím nahrajte novou fotku.",
+    "removePhoto": "Smazat fotku",
+    "removeFailed": "Odstranění fotky se nepovedlo.",
+    "removeConfirm": "Opravdu chcete odstranit tuto fotku?",
+    "uploading": "Nahrávám…",
+    "name": "Jméno a příjmení",
+    "firstNamePlaceholder": "Jméno",
+    "lastNamePlaceholder": "Příjmení",
+    "saveChanges": "Uložit změny",
+    "email": "E‑mail",
+    "newEmail": "Nový e‑mail",
+    "passwordConfirm": "Heslo pro potvrzení",
+    "updateEmail": "Aktualizovat e‑mail",
+    "changePassword": "Změna hesla",
+    "currentPassword": "Aktuální heslo",
+    "newPassword": "Nové heslo",
+    "changePasswordButton": "Změnit heslo",
+    "dangerZone": "Nebezpečná zóna",
+    "deleteAccount": "Smazat účet",
+    "deleteConfirm": "Opravdu smazat celý účet? Tento krok nelze vrátit.",
+    "uploadFailed": "Nahrání fotky se nepovedlo.",
+    "validation": {
+      "min2chars": "Min. 2 znaky",
+      "invalidEmail": "Neplatný e‑mail",
+      "passwordMin6": "Min. 6 znaků"
     }
+  },
+  "auth": {
+    "signInRedirecting": "Přesměrování...",
+    "signInTitle": "Přihlášení",
+    "email": "E-mail",
+    "password": "Heslo",
+    "signingIn": "Přihlašuji…",
+    "signIn": "Přihlásit se",
+    "register": "Registrace",
+    "or": "nebo",
+    "signInWithGoogle": "Přihlásit se pomocí Google"
+  },
+  "acceptInvite": {
+    "waiting": "Čekám na pozvánku…",
+    "verifying": "Ověřuji pozvánku…",
+    "accepted": "Pozvánka přijata! Přesměrovávám…",
+    "invalid": "Pozvánka vypršela nebo je neplatná."
+  },
+  "sidebar": {
+    "profile": "Profil",
+    "logout": "Odhlásit se",
+    "notifications": "Notifikace",
+    "changeLanguage": "Změnit jazyk"
+  },
+  "nav": {
+    "apps": "Aplikace",
+    "integrations": "Integrace a automatizace",
+    "users": "Správa uživatelů",
+    "settings": "Nastavení firmy",
+    "invoices": "Fakturace"
+  },
+  "companySwitcher": {
+    "selectOrCreate": "Vybrat / vytvořit…",
+    "createNewCompany": "Vytvořit novou firmu",
+    "close": "Zavřít"
+  },
+  "users": {
+    "title": "Uživatelé",
+    "addUser": "Přidat uživatele",
+    "inviteUser": "Pozvat uživatele",
+    "email": "Email",
+    "role": "Role",
+    "member": "Člen",
+    "admin": "Administrátor",
+    "user": "Uživatel",
+    "lastLogin": "Poslední přihlášení",
+    "status": "Stav",
+    "active": "Aktivní",
+    "pending": "Čeká na pozvánku"
+  },
+  "settings": {
+    "title": "Nastavení firmy",
+    "active": "Aktivní",
+    "inactive": "Neaktivní",
+    "description": "Popis společnosti",
+    "saveProfile": "Uložit profil",
+    "billingAddress": "Fakturační adresa",
+    "contactInfo": "Kontaktní údaje"
+  },
+  "invoices": {
+    "title": "Faktury",
+    "newInvoice": "Nová faktura",
+    "pending": "Čeká na vyřízení",
+    "paid": "Zaplaceno",
+    "overdue": "Po splatnosti"
+  },
+  "apps": {
+    "title": "Aplikace",
+    "addApp": "Přidat aplikaci",
+    "description": "Popis"
+  },
+  "common": {
+    "close": "Zavřít",
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "send": "Odeslat",
+    "delete": "Smazat",
+    "edit": "Upravit",
+    "loading": "Načítám…",
+    "error": "Chyba",
+    "success": "Úspěch"
+  }
 }

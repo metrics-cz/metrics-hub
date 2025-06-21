@@ -77,3 +77,7 @@ EOF
 
 *.local
 /generated/prisma
+
+*.sh
+
+CLAUDE.md

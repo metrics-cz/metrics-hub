@@ -321,6 +321,7 @@ model users {
   one_time_tokens             one_time_tokens[]
   sessions                    sessions[]
   companies                   companies[]
+  notifications               notifications[]
 
   company_invitations_sent     company_invitations[] @relation("Inviter")
   company_invitations_received company_invitations[]
@@ -362,29 +363,55 @@ model company_users {
 }
 
 model company_invitations {
-  id         String                    @id @default(uuid()) @db.Uuid
-  email      String
-  userId     String                    @db.Uuid
-  companyId  String                    @db.Uuid
-  invitedBy  String                    @db.Uuid
-  role       company_invitation_role   @default(member)
-  message    String?
-  status     company_invitation_status @default(pending)
-  expiresAt  DateTime                  @db.Timestamptz
-  acceptedAt DateTime?                 @db.Timestamptz
-  createdAt  DateTime                  @default(now()) @db.Timestamptz
-  updatedAt  DateTime                  @default(now()) @db.Timestamptz
+  id             String                    @id @default(uuid()) @db.Uuid
+  email          String
+  userId         String                    @db.Uuid
+  companyId      String                    @db.Uuid
+  invitedBy      String                    @db.Uuid
+  role           company_invitation_role   @default(member)
+  message        String?
+  status         company_invitation_status @default(pending)
+  expiresAt      DateTime                  @db.Timestamptz
+  acceptedAt     DateTime?                 @db.Timestamptz
+  createdAt      DateTime                  @default(now()) @db.Timestamptz
+  updatedAt      DateTime                  @default(now()) @db.Timestamptz
+  notificationId String?                   @db.Uuid
 
   // Relations
-  user    users     @relation(fields: [userId], references: [id])
-  company companies @relation(fields: [companyId], references: [id])
-  inviter users     @relation("Inviter", fields: [invitedBy], references: [id])
+  user         users          @relation(fields: [userId], references: [id])
+  company      companies      @relation(fields: [companyId], references: [id])
+  inviter      users          @relation("Inviter", fields: [invitedBy], references: [id])
+  notification notifications? @relation(fields: [notificationId], references: [id])
 
   @@index([userId])
   @@index([companyId])
   @@index([invitedBy])
   @@index([status])
   @@index([email])
+  @@index([notificationId])
+  @@schema("public")
+}
+
+model notifications {
+  id                    String              @id @default(uuid()) @db.Uuid
+  userId                String              @db.Uuid
+  type                  notification_type
+  title                 String
+  message               String
+  data                  Json?
+  read                  Boolean             @default(false)
+  actionUrl             String?
+  createdAt             DateTime            @default(now()) @db.Timestamptz
+  expiresAt             DateTime?           @db.Timestamptz
+
+  // Relations
+  user                  users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company_invitations   company_invitations[]
+
+  @@index([userId])
+  @@index([read])
+  @@index([type])
+  @@index([createdAt])
   @@schema("public")
 }
 
@@ -443,6 +470,16 @@ enum company_invitation_status {
   accepted
   rejected
   expired
+
+  @@schema("public")
+}
+
+enum notification_type {
+  company_invitation
+  invitation_accepted
+  invitation_rejected
+  user_joined_company
+  role_changed
 
   @@schema("public")
 }

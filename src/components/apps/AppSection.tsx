@@ -1,6 +1,5 @@
 'use client';
 import { Cog } from "lucide-react";
-import { withRouter } from "next/router";
 
 export default function AppSection() {
 

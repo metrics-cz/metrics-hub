@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router]);
 
-  if (loading) return <div>Loading…</div>;
+  if (loading) return <div suppressHydrationWarning>Loading…</div>;
   return (
     <CompanyListProvider>
       <div className="flex h-screen bg-bg-light">
