@@ -123,7 +123,7 @@ export default function LanguageSwitcher({
                 <button
                     onClick={() => setOpen(!open)}
                     aria-label="Change language"
-                    className="flex items-center gap-1 px-2 py-1 rounded-full hover:bg-gray-700 transition"
+                    className="flex items-center gap-1 px-2 py-1 border-none rounded-full hover:bg-gray-700 transition"
                 >
                     <currentLocale.Flag className="w-6 h-6 rounded-full" />
                     {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}

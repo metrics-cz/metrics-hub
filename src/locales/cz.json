@@ -52,6 +52,7 @@
     "changeLanguage": "Změnit jazyk"
   },
   "nav": {
+    "dashboard": "Dashboard",
     "apps": "Aplikace",
     "integrations": "Integrace a automatizace",
     "users": "Správa uživatelů",

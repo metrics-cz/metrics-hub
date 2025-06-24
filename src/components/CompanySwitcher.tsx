@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ChevronDown, Plus, Building } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useCompanyList } from '@/lib/companyList';
 import clsx from 'classnames';
 import CreateCompanyForm from '@/components/CreateCompanyForm';
 import { useTranslations } from 'next-intl';
+import CompanyInitialsIcon from './company/CompanyInitialsIcon';
 type Props = {
   collapsed?: boolean;
   onMobileClose?: () => void;
@@ -44,13 +45,11 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
         {/* avatar / fallback icon */}
         {active?.logo_url ? (
           <img
-            src={active.logo_url}
+            src={active?.logo_url}
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full grid place-items-center bg-white/10">
-            <Building size={20} className="text-white/70" />
-          </div>
+          <CompanyInitialsIcon name={active?.name} size={32} />
         )}
 
 
@@ -84,9 +83,7 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
               {c.logo_url ? (
                 <img src={c.logo_url} className="w-6 h-6 rounded-full" />
               ) : (
-                <div className="w-6 h-6 rounded-full grid place-items-center bg-white/10">
-                  <Building size={16} className="text-white/70" />
-                </div>
+                <CompanyInitialsIcon name={c.name} size={24} />
               )}
               <span className="truncate">{c.name}</span>
             </button>

@@ -276,7 +276,7 @@ export default function NotificationBell() {
     <div className="relative" ref={bellRef}>
       <button
         onClick={handleBellClick}
-        className="w-full h-10 flex items-center justify-center rounded hover:bg-white/10 relative transition-all duration-200 group"
+        className="w-full h-10 flex items-center justify-center border-none hover:bg-white/10 relative transition-all duration-200 group"
       >
         <Bell 
           size={18} 
@@ -292,10 +292,10 @@ export default function NotificationBell() {
       {open && !isDesktop && (
         <div 
           ref={dropdownRef}
-          className="fixed right-4 top-16 w-80 bg-[#1e1e1e] rounded-lg shadow-2xl border border-white/10 z-[9999] md:absolute md:right-0 md:top-12 animate-in slide-in-from-top-2 duration-200"
+          className="fixed right-4 top-16 w-80 bg-[#1e1e1e] rounded-lg shadow-2xlmd:absolute md:right-0 md:top-12 animate-in slide-in-from-top-2 duration-200"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-[#1e1e1e] to-[#252525] rounded-t-lg">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#1e1e1e] to-[#252525] rounded-t-lg">
             <div className="flex items-center gap-2">
               <Bell size={16} className="text-blue-400" />
               <h3 className="font-semibold text-white">Notifikace</h3>

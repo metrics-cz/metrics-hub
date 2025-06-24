@@ -236,7 +236,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="p-10 max-w-3xl mx-auto space-y-12">
+    <div className="p-10 max-w-3xl mx-auto space-y-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* avatar + basic */}
       <section className="space-y-6">
         <h2 className="text-xl font-semibold">{t('title')}</h2>
@@ -262,17 +262,17 @@ export default function ProfilePage() {
 
           </label>
 
-          <div className="text-sm text-neutral-500">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             <p>{t('uploadPhoto')}</p>
             {user?.user_metadata?.avatar_url && (
               <p
                 onClick={confirmAndRemove}
-                className="text-red-500 cursor-pointer hover:underline"
+                className="text-red-500 dark:text-red-400 cursor-pointer hover:underline"
               >
                 {t('removePhoto')}
               </p>
             )}
-            {uploading && <p className="text-primary">{t('uploading')}</p>}
+            {uploading && <p className="text-primary-600 dark:text-primary-400">{t('uploading')}</p>}
           </div>
         </div>
       </section>
@@ -286,7 +286,7 @@ export default function ProfilePage() {
             <input
               {...regName("firstName")}
               placeholder={t("firstNamePlaceholder")}
-              className={clsx("w-full form-input", nameErr.firstName && "ring-2 ring-red-400")}
+              className={clsx("w-full form-input bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100", nameErr.firstName && "ring-2 ring-red-400")}
             />
             {nameErr.firstName && <p className="text-xs text-red-600">{nameErr.firstName.message}</p>}
           </div>
@@ -294,14 +294,14 @@ export default function ProfilePage() {
             <input
               {...regName("lastName")}
               placeholder={t("lastNamePlaceholder")}
-              className={clsx("w-full form-input", nameErr.lastName && "ring-2 ring-red-400")}
+              className={clsx("w-full form-input bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100", nameErr.lastName && "ring-2 ring-red-400")}
             />
             {nameErr.lastName && <p className="text-xs text-red-600">{nameErr.lastName.message}</p>}
           </div>
           <button
             type="submit"
             disabled={savingName}
-            className="col-span-2 bg-primary text-white rounded-md py-2 disabled:opacity-50"
+            className="col-span-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
           >
             {t("saveChanges")}
           </button>
@@ -316,7 +316,7 @@ export default function ProfilePage() {
             <label className="block text-sm mb-1">{t("newEmail")}</label>
             <input
               {...regEmail("email")}
-              className={clsx("w-full form-input", emailErr.email && "ring-2 ring-red-400")}
+              className={clsx("w-full form-input bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100", emailErr.email && "ring-2 ring-red-400")}
             />
             {emailErr.email && <p className="text-xs text-red-600">{emailErr.email.message}</p>}
           </div>
@@ -325,14 +325,14 @@ export default function ProfilePage() {
             <input
               type="password"
               {...regEmail("password")}
-              className={clsx("w-full form-input", emailErr.password && "ring-2 ring-red-600")}
+              className={clsx("w-full form-input bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100", emailErr.password && "ring-2 ring-red-600")}
             />
             {emailErr.password && <p className="text-xs text-red-600">{emailErr.password.message}</p>}
           </div>
           <button
             type="submit"
             disabled={savingEmail}
-            className="bg-primary text-white rounded-md py-2 disabled:opacity-50"
+            className="bg-primary-600 hover:bg-primary-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
           >
             {t("updateEmail")}
           </button>
@@ -348,7 +348,7 @@ export default function ProfilePage() {
             <input
               type="password"
               {...regPwd("current")}
-              className={clsx("w-full form-input", pwdErr.current && "ring-2 ring-red-400")}
+              className={clsx("w-full form-input bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100", pwdErr.current && "ring-2 ring-red-400")}
             />
             {pwdErr.current && <p className="text-xs text-red-600">{pwdErr.current.message}</p>}
           </div>
@@ -357,14 +357,14 @@ export default function ProfilePage() {
             <input
               type="password"
               {...regPwd("password")}
-              className={clsx("w-full form-input", pwdErr.password && "ring-2 ring-red-400")}
+              className={clsx("w-full form-input bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100", pwdErr.password && "ring-2 ring-red-400")}
             />
             {pwdErr.password && <p className="text-xs text-red-600">{pwdErr.password.message}</p>}
           </div>
           <button
             type="submit"
             disabled={savingPwd}
-            className="bg-primary text-white rounded-md py-2 disabled:opacity-50"
+            className="bg-primary-600 hover:bg-primary-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
           >
             {t("changePasswordButton")}
           </button>
@@ -373,10 +373,10 @@ export default function ProfilePage() {
 
       {/* danger zone */}
       <section className="space-y-4">
-        <h3 className="font-medium text-red-600">{t("dangerZone")}</h3>
+        <h3 className="font-medium text-red-600 dark:text-red-400">{t("dangerZone")}</h3>
         <button
           onClick={handleDelete}
-          className="bg-red-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-700"
+          className="bg-red-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-700 transition-colors"
         >
           {t("deleteAccount")}
         </button>

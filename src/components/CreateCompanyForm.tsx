@@ -54,7 +54,7 @@ export default function CreateCompanyForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 w-full max-w-sm text-neutral-900"
+      className="space-y-4 w-full max-w-sm text-gray-900 dark:text-gray-100"
     >
       {/* Název firmy */}
       <div>
@@ -65,7 +65,7 @@ export default function CreateCompanyForm() {
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border px-3 py-2 rounded text-neutral-900 placeholder-neutral-400 focus:ring-primary/50"
+          className="w-full border px-3 py-2 rounded text-gray-900 dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 focus:ring-primary-500/50 dark:border-gray-600"
         />
       </div>
 
@@ -78,14 +78,14 @@ export default function CreateCompanyForm() {
           type="email"
           value={billingEmail}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full border px-3 py-2 rounded text-neutral-900 placeholder-neutral-400 focus:ring-primary/50"
+          className="w-full border px-3 py-2 rounded text-gray-900 dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 focus:ring-primary-500/50 dark:border-gray-600"
         />
       </div>
 
       {/* Submit */}
       <button
         disabled={loading}
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+        className="bg-primary-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-primary-700 transition-colors"
       >
         {loading ? 'Ukládám…' : 'Vytvořit společnost'}
       </button>

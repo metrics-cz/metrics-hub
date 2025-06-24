@@ -17,13 +17,46 @@ export default function UsersPage() {
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loadingRole, setLoadingRole] = useState(true);
   const t = useTranslations();
 
-  /* fetch once companyId is available */
+  /* fetch users and current user role */
   useEffect(() => {
     if (!companyId) return;
-    fetchUsersByCompanyMini(companyId).then(setUsers);
+
+    const fetchData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+
+        // Fetch users
+        const usersData = await fetchUsersByCompanyMini(companyId);
+        setUsers(usersData);
+
+        // Fetch current user's role in the company
+        const companyResponse = await fetch(`/api/company/${companyId}`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (companyResponse.ok) {
+          const companyData = await companyResponse.json();
+          setUserRole(companyData.userRole);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoadingRole(false);
+      }
+    };
+
+    fetchData();
   }, [companyId]);
+
+  // Check if current user can add other users (admin, superadmin, or owner)
+  const canAddUsers = userRole && ['admin', 'superadmin', 'owner'].includes(userRole);
 
   const handleSendInvite = async (email: string, role: string, message?: string) => {
     if (!companyId) return;
@@ -32,7 +65,7 @@ export default function UsersPage() {
     try {
       // Get the current session token
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.access_token) {
         alert('Chyba: Nejste přihlášeni');
         return;
@@ -56,19 +89,19 @@ export default function UsersPage() {
 
       if (response.ok) {
         // Show success message
-        const messageText = data.data.type === 'in_app_notification' 
+        const messageText = data.data.type === 'in_app_notification'
           ? 'Pozvánka byla odeslána prostřednictvím notifikace v aplikaci'
           : 'Pozvánka byla odeslána na email';
-        
+
         alert(`Úspěch! ${messageText}`);
         setShowModal(false);
-        
+
         // Refresh user list
         fetchUsersByCompanyMini(companyId).then(setUsers);
       } else {
         // Show error message
         let errorMessage = 'Nepodařilo se odeslat pozvánku';
-        
+
         switch (data.code) {
           case 'ALREADY_MEMBER':
             errorMessage = 'Uživatel je již členem této společnosti';
@@ -91,7 +124,7 @@ export default function UsersPage() {
           default:
             errorMessage = data.error || errorMessage;
         }
-        
+
         alert(`Chyba: ${errorMessage}`);
       }
     } catch (error) {
@@ -107,16 +140,18 @@ export default function UsersPage() {
   );
 
   return (
-    <div className="p-8">
+    <div className="p-8 min-h-screen">
       <div className="flex justify-between mb-2">
-        <h1 className="text-3xl font-semibold mb-4">{t('users.title')}</h1>
-        <button
-          className="bg-primary text-white rounded-md p-2 inline-flex items-center gap-2 hover:bg-primary/90 transition-colors"
-          onClick={() => setShowModal(true)}
-        >
-          <Plus />
-          {t('users.addUser')}
-        </button>
+        <h1 className="text-3xl font-semibold mb-4 text-gray-900 dark:text-gray-100">{t('users.title')}</h1>
+        {canAddUsers && !loadingRole && (
+          <button
+            className="bg-primary-600 text-white rounded-md p-2 inline-flex items-center gap-2 hover:bg-primary-700 transition-colors"
+            onClick={() => setShowModal(true)}
+          >
+            <Plus />
+            {t('users.addUser')}
+          </button>
+        )}
       </div>
 
       <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm} />
@@ -176,8 +211,8 @@ function InviteUserModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ">
+      <div className=" bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg w-full max-w-md p-6">
         <h2 className="text-lg font-semibold mb-4">{t('users.inviteUser')}</h2>
 
         <div className="mb-4">
@@ -190,9 +225,8 @@ function InviteUserModal({
               setEmailError('');
             }}
             onKeyPress={handleKeyPress}
-            className={`w-full border rounded px-3 py-2 ${
-              emailError ? 'border-red-500' : 'border-gray-300'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100 border rounded px-3 py-2 ${emailError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              } focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-500 dark:placeholder-gray-400`}
             placeholder="uzivatel@example.com"
             disabled={loading}
           />
@@ -206,7 +240,7 @@ function InviteUserModal({
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             disabled={loading}
           >
             <option value="member">{t('users.member')}</option>
@@ -223,7 +257,7 @@ function InviteUserModal({
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-500 dark:placeholder-gray-400"
             rows={3}
             placeholder="Přidejte osobní zprávu k pozvánce..."
             disabled={loading}
@@ -234,14 +268,14 @@ function InviteUserModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50 transition-colors"
           >
             {t('common.cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading || !email}
-            className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[80px]"
+            className="px-4 py-2 text-sm bg-primary-600 text-white hover:bg-primary-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[80px]"
           >
             {loading ? (
               <div className="flex items-center justify-center">

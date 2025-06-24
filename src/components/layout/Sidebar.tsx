@@ -22,6 +22,7 @@ import BuildInfo from '@/components/BuildInfo';
 import UserInitialsIcon from '@/components/user/UserInitialsIcon';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import NotificationBell from '@/components/NotificationBell';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface NavItem {
   href: string;
@@ -54,8 +55,8 @@ function NavLink({
       className={clsx(
         'flex items-center gap-2 rounded',
         collapsed ? 'px-2 py-1' : 'px-3 py-2',
-        disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-white/10',
-        pathname === target && !disabled && 'bg-white/10'
+        disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-primary-700 dark:hover:bg-gray-600',
+        pathname === target && !disabled && 'bg-primary-700 dark:bg-primary-900/20 text-white dark:text-primary-300'
       )}
     >
       <Icon size={collapsed ? 20 : 18} />
@@ -67,9 +68,11 @@ function NavLink({
 function SidebarActions({
   collapsed,
   onSignOut,
+  onMobileClick,
 }: {
   collapsed: boolean;
   onSignOut: () => Promise<void>;
+  onMobileClick?: () => void;
 }) {
   const { user } = useAuth();
   const fullName = user?.user_metadata?.full_name;
@@ -81,21 +84,26 @@ function SidebarActions({
     <div className="space-y-2 px-2 flex flex-col items-center gap-1 mt-2 w-full">
       {collapsed ? (
         <div className="flex flex-col items-center gap-3 px-3 py-2">
+          <ThemeToggle collapsed={collapsed} />
           <LanguageSwitcher collapsed={collapsed} />
           <NotificationBell />
         </div>
       ) : (
-        <div className="w-full flex flex-row">
-          <LanguageSwitcher collapsed={collapsed} />
-          <div className="ml-2">
-            <NotificationBell />
+        <div className="w-full space-y-2">
+          <ThemeToggle collapsed={collapsed} />
+          <div className="flex flex-row">
+            <LanguageSwitcher collapsed={collapsed} />
+            <div className="ml-2">
+              <NotificationBell />
+            </div>
           </div>
         </div>
       )}
 
       <Link
         href={`/${locale}/profile`}
-        className="w-full flex items-center gap-3 px-3 rounded hover:bg-white/10"
+        onClick={onMobileClick}
+        className="w-full flex items-center gap-3 px-3 rounded hover:bg-primary-700 dark:hover:bg-gray-600"
       >
         {avatar ? (
           <img src={avatar} alt="Me" className="w-8 h-8 rounded-full object-cover" />
@@ -109,7 +117,7 @@ function SidebarActions({
 
       <button
         onClick={onSignOut}
-        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 text-red-400"
+        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-primary-700 dark:hover:bg-gray-600 text-red-300 dark:text-red-400"
       >
         <LogOut size={18} />
         {!collapsed && <span>{t('sidebar.logout')}</span>}
@@ -181,25 +189,25 @@ export default function Sidebar() {
   const DesktopSidebar = (
     <aside
       className={clsx(
-        'h-full bg-[#121212] text-white flex flex-col shadow-lg transition-[width] duration-300',
+        'h-full bg-primary-600 dark:bg-gray-700 text-white flex flex-col shadow-lg transition-[width] duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       <button
         onClick={() => setCollapsed((c) => !c)}
         className={clsx(
-          'flex items-center justify-center hover:bg-white/10',
+          'flex items-center justify-center hover:bg-primary-700 dark:hover:bg-gray-600',
           collapsed ? 'h-10' : 'h-12'
         )}
       >
         <Menu size={collapsed ? 20 : 24} />
       </button>
 
-      <div className="px-2">
+      <div>
         <CompanySwitcher collapsed={collapsed} />
       </div>
 
-      <div className="my-4 h-px bg-white/10 mx-4" />
+      <div className="my-4 h-px bg-primary-700 dark:bg-gray-600 mx-4" />
 
       <div className="flex-1 overflow-y-auto">
         {active && (
@@ -208,7 +216,7 @@ export default function Sidebar() {
               <NavLink
                 key={i.href}
                 item={i}
-                activeCompanyId={active.id}
+                activeCompanyId={active?.id}
                 disabled={disabled}
                 collapsed={collapsed}
                 pathname={pathname}
@@ -219,7 +227,7 @@ export default function Sidebar() {
               <NavLink
                 key={i.href}
                 item={i}
-                activeCompanyId={active.id}
+                activeCompanyId={active?.id}
                 disabled={disabled}
                 collapsed={collapsed}
                 pathname={pathname}
@@ -240,23 +248,23 @@ export default function Sidebar() {
   );
 
   const MobileSidebar = (
-    <aside className="h-full bg-[#121212] text-white flex flex-col shadow-lg w-screen max-w-screen-sm">
+    <aside className="h-full bg-primary-600 dark:bg-gray-700 text-white flex flex-col shadow-lg w-screen max-w-screen-sm">
       <div className="flex justify-between flex-row h-14 px-4">
         <img src="/logo.png" alt="Metrics Hub logo" className="h-12 w-auto" />
 
         <button
           onClick={() => setMobileOpen(false)}
-          className="ml-auto p-1 rounded border-none hover:bg-white/10"
+          className="ml-auto p-1 border-none hover:bg-primary-700 dark:hover:bg-gray-600"
         >
           <X size={24} />
         </button>
       </div>
 
-      <div className="px-2">
+      <div>
         <CompanySwitcher collapsed={false} onMobileClose={() => setMobileOpen(false)} />
       </div>
 
-      <div className="my-4 h-px bg-white/10 mx-4" />
+      <div className="my-4 h-px bg-primary-700 dark:bg-gray-600 mx-4" />
 
       <div className="flex-1 overflow-y-auto">
         {active && (
@@ -265,7 +273,7 @@ export default function Sidebar() {
               <NavLink
                 key={i.href}
                 item={i}
-                activeCompanyId={active.id}
+                activeCompanyId={active?.id}
                 disabled={disabled}
                 collapsed={false}
                 pathname={pathname}
@@ -277,7 +285,7 @@ export default function Sidebar() {
               <NavLink
                 key={i.href}
                 item={i}
-                activeCompanyId={active.id}
+                activeCompanyId={active?.id}
                 disabled={disabled}
                 collapsed={false}
                 pathname={pathname}
@@ -294,6 +302,7 @@ export default function Sidebar() {
           await supabase.auth.signOut();
           router.push(`/${locale}/auth`);
         }}
+        onMobileClick={() => setMobileOpen(false)}
       />
     </aside>
   );
@@ -302,13 +311,13 @@ export default function Sidebar() {
     return (
       <>
         <div className="hidden md:block">
-          <aside className="h-full bg-[#121212] text-white flex flex-col shadow-lg w-64">
+          <aside className="h-full bg-primary-600 dark:bg-gray-700 text-white flex flex-col shadow-lg w-64">
             <div className="h-12 flex items-center justify-center">
               <Menu size={24} />
             </div>
           </aside>
         </div>
-        <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#121212] text-white flex items-center justify-between px-4 py-3 shadow">
+        <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-primary-600 dark:bg-gray-700 text-white flex items-center justify-between px-4 py-3 shadow">
           <Menu size={24} />
           <div className="flex items-center gap-4">
             {avatar ? (
@@ -326,7 +335,7 @@ export default function Sidebar() {
     <>
       <div className="hidden md:block">{DesktopSidebar}</div>
 
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#121212] text-white flex items-center justify-between px-4 py-3 shadow">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-primary-600 dark:bg-gray-900 text-white flex items-center justify-between px-4 py-3 shadow">
         <button className="border-none" onClick={() => setMobileOpen(true)}>
           <Menu size={24} />
         </button>
@@ -335,7 +344,7 @@ export default function Sidebar() {
           <NotificationBell />
           <Link
             href={`/${locale}/profile`}
-            className="flex items-center rounded hover:bg-white/10 p-2"
+            className="flex items-center rounded hover:bg-primary-700 dark:hover:bg-gray-600 p-2"
           >
             {avatar ? (
               <img src={avatar} alt="Me" className="w-8 h-8 rounded-full object-cover" />
