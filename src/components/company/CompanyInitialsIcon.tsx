@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import clsx from 'classnames';
 
-interface UserInitialsIconProps {
+interface CompanyInitialsIconProps {
     name?: string | null;
     className?: string;
     size?: number;
@@ -80,14 +80,14 @@ function getHSLLuminance(hslString: string): number {
 }
 
 /**
- * Renders a circular fallback avatar with the user's initials.
+ * Renders a circular fallback avatar with the company's initials.
  * Uses random pastel colors with automatic contrast detection.
  */
-export default function UserInitialsIcon({
+export default function CompanyInitialsIcon({
     name,
     className,
     size = 32,
-}: UserInitialsIconProps) {
+}: CompanyInitialsIconProps) {
     // ── derive initials ────────────────────────────────────────────────
     const initials = useMemo(() => {
         if (!name) return '';
@@ -103,10 +103,10 @@ export default function UserInitialsIcon({
     // ── generate color and contrast ───────────────────────────────────────
     const { backgroundColor, textColor } = useMemo(() => {
         if (!name) {
-            // Fallback for empty names
+            // Fallback for empty names - subtle background, no content
             return {
-                backgroundColor: '#374151', // gray-700
-                textColor: '#f3f4f6' // gray-100
+                backgroundColor: 'rgba(255, 255, 255, 0.1)', // Subtle white overlay
+                textColor: 'transparent'
             };
         }
 
@@ -140,10 +140,8 @@ export default function UserInitialsIcon({
                 fontSize: `${size * 0.4}px` // Font size scales with avatar size
             }}
         >
-            {initials || (
-                <span aria-hidden="true">👤</span>
-            )}
-            <span className="sr-only">{name ?? 'User avatar'}</span>
+            {initials}
+            <span className="sr-only">{name ?? 'Company avatar'}</span>
         </div>
     );
 }

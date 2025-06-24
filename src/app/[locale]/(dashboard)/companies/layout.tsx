@@ -6,7 +6,7 @@ export default function CompaniesLayout({
     children: React.ReactNode;
 }) {
     return (
-        <main style={{ padding: "2rem", background: "#f9f9f9", minHeight: "100vh" }}>
+        <main className="p-8 bg-gray-50 dark:bg-gray-700 min-h-screen">
             {children}
         </main>
     );

@@ -2,6 +2,7 @@
 module.exports = {
   // hlídat vše ve složce src
   content: ['./src/**/*.{ts,tsx,jsx,js}'],
+  darkMode: 'class',
 
   theme: {
     extend: {
@@ -16,11 +17,23 @@ module.exports = {
       },
       /* ---------- barvy projektu ---------- */
       colors: {
-        primary:   '#1976d2',   // modrá
+        primary: {
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
+        },
         secondary: '#424242',   // tmavě šedá
-        accent:    '#008080',   // teal
-        'bg-light':'#fafafa',
-        'bg-dark' :'#121212',
+        accent:    '#059669',   // zelená
+        'bg-light':'#ffffff',   // čistě bílá
+        'bg-dark' :'#0f0f0f',   // velmi tmavě šedá místo černé
       },
 
       /* ---------- animace fade-in ---------- */

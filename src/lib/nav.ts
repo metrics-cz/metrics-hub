@@ -16,7 +16,8 @@ export type NavItem = {
 
 /* ---------- hlavní menu ---------- */
 export const MAIN_NAV: NavItem[] = [
-  { labelKey: 'nav.apps',           href: '/apps',          icon: LayoutDashboard },
+  { labelKey: 'nav.dashboard',      href: '',               icon: LayoutDashboard },
+  { labelKey: 'nav.apps',           href: '/apps',          icon: Building },
   { labelKey: 'nav.integrations',   href: '/integrations',  icon: Workflow        },
 ];
 

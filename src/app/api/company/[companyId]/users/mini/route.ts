@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@supabase/supabase-js';
+import { queryDb } from '@/lib/db';
 import {
   companyUserMiniSchema,
   type CompanyUserMini,
@@ -27,37 +28,104 @@ export async function GET(req: NextRequest, { params }: ParamsCtx) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  /* ── Data fetch (Prisma raw join) ───────────────────────── */
+  /* ── Data fetch (Active users + Pending invitations) ───────── */
   const { companyId } = await params;
 
-  const rawRows: unknown[] = await prisma.$queryRaw`
-    SELECT
-      cu.company_id,
-      cu.role,
-      cu.user_id                                    AS id,
-      au.email,
-      (au.raw_user_meta_data ->> 'full_name')       AS full_name,
-      (au.raw_user_meta_data ->> 'avatar_url')      AS avatar_url,
-      au.last_sign_in_at
-    FROM public.company_users cu
-    JOIN auth.users           au ON au.id = cu.user_id
-    WHERE cu.company_id = ${companyId}::uuid; -- ← cast fixes “uuid = text”
-  `;
+  let rawRows, pendingInvitations;
+
+  if (process.env.NODE_ENV === 'development') {
+    // Use native PostgreSQL client for development
+    const activeUsersQuery = `
+      SELECT
+        cu.company_id,
+        cu.role,
+        cu.user_id                                    AS id,
+        au.email,
+        (au.raw_user_meta_data ->> 'full_name')       AS full_name,
+        (au.raw_user_meta_data ->> 'avatar_url')      AS avatar_url,
+        au.last_sign_in_at,
+        'active'                                      AS status
+      FROM public.company_users cu
+      JOIN auth.users           au ON au.id = cu.user_id
+      WHERE cu.company_id = $1
+    `;
+
+    const pendingInvitationsQuery = `
+      SELECT
+        ci."companyId"                                AS company_id,
+        ci.role,
+        ci.id,
+        ci.email,
+        ''                                            AS full_name,
+        NULL                                          AS avatar_url,
+        NULL                                          AS last_sign_in_at,
+        'pending'                                     AS status
+      FROM public.company_invitations ci
+      WHERE ci."companyId" = $1
+      AND ci.status = 'pending'
+      AND ci."expiresAt" > NOW()
+    `;
+
+    const [activeResults, pendingResults] = await Promise.all([
+      queryDb(activeUsersQuery, [companyId]),
+      queryDb(pendingInvitationsQuery, [companyId])
+    ]);
+
+    rawRows = activeResults;
+    pendingInvitations = pendingResults;
+  } else {
+    // Use Prisma ORM in production
+    [rawRows, pendingInvitations] = await Promise.all([
+      prisma.$queryRaw`
+        SELECT
+          cu.company_id,
+          cu.role,
+          cu.user_id                                    AS id,
+          au.email,
+          (au.raw_user_meta_data ->> 'full_name')       AS full_name,
+          (au.raw_user_meta_data ->> 'avatar_url')      AS avatar_url,
+          au.last_sign_in_at,
+          'active'                                      AS status
+        FROM public.company_users cu
+        JOIN auth.users           au ON au.id = cu.user_id
+        WHERE cu.company_id = ${companyId}::uuid
+      `,
+      prisma.$queryRaw`
+        SELECT
+          ci."companyId"                                AS company_id,
+          ci.role,
+          ci.id,
+          ci.email,
+          ''                                            AS full_name,
+          NULL                                          AS avatar_url,
+          NULL                                          AS last_sign_in_at,
+          'pending'                                     AS status
+        FROM public.company_invitations ci
+        WHERE ci."companyId" = ${companyId}::uuid 
+        AND ci.status = 'pending'
+        AND ci."expiresAt" > NOW()
+      `
+    ]);
+  }
+
+  // Combine both result sets
+  const allRows = [...rawRows, ...pendingInvitations];
 
   /* ── Validate + map once with Zod ───────────────────────── */
-  const parsed = companyUserMiniSchema.array().safeParse(rawRows);
+  const parsed = companyUserMiniSchema.array().safeParse(allRows);
   if (!parsed.success) {
     console.warn('company_user_mini route: invalid rows skipped', parsed.error.issues);
   }
 
   const result: CompanyUserMini[] = (parsed.success ? parsed.data : []).map(
-    ({ id, email, full_name, avatar_url, last_sign_in_at, role }) => ({
+    ({ id, email, full_name, avatar_url, last_sign_in_at, role, status }) => ({
       id,
       email,
       fullName  : full_name ?? '',
       avatarUrl : avatar_url,
       lastSignIn: last_sign_in_at,
       role,
+      status: status || 'active',
     })
   );
 
