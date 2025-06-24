@@ -15,16 +15,27 @@ type CompanyUserResponse = {
   company: Company;
 };
 
-const Ctx = createContext<Company[] | null>(null);
+type CompanyListContextType = {
+  companies: Company[];
+  loading: boolean;
+};
+
+const Ctx = createContext<CompanyListContextType | null>(null);
 
 export function CompanyListProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return setCompanies([]);
+    if (!user) {
+      setCompanies([]);
+      setLoading(false);
+      return;
+    }
 
     const fetchCompanies = async () => {
+      setLoading(true);
       // 1. Type the response explicitly
       const { data, error } = await supabase
         .from('company_users')
@@ -33,6 +44,7 @@ export function CompanyListProvider({ children }: { children: React.ReactNode })
 
       if (error) {
         console.error('Failed to fetch companies:', error.message);
+        setLoading(false);
         return;
       }
 
@@ -46,16 +58,23 @@ export function CompanyListProvider({ children }: { children: React.ReactNode })
         }));
 
       setCompanies(formatted);
+      setLoading(false);
     };
 
     fetchCompanies();
   }, [user]);
 
-  return <Ctx.Provider value={companies}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ companies, loading }}>{children}</Ctx.Provider>;
 }
 
 export function useCompanyList() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useCompanyList must be used within CompanyListProvider');
-  return ctx;
+  return ctx.companies;
+}
+
+export function useCompanyListLoading() {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error('useCompanyListLoading must be used within CompanyListProvider');
+  return ctx.loading;
 }

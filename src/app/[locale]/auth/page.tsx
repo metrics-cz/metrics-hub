@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import AuthCard from '@/features/auth/AuthCard';
 import { useLocale } from 'next-intl';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -27,7 +28,11 @@ export default function AuthPage() {
   if (checking) return null;
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-bg-light px-4 animate-fade">
+    <main className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4 animate-fade relative text-gray-900 dark:text-gray-100">
+      {/* Theme toggle in top-right corner */}
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle collapsed={true} position="auth-page" />
+      </div>
       <AuthCard />
     </main>
   );

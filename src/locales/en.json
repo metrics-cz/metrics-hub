@@ -52,6 +52,7 @@
     "changeLanguage": "Change language"
   },
   "nav": {
+    "dashboard": "Dashboard",
     "apps": "Apps",
     "integrations": "Integrations & Automation",
     "users": "User Management",

@@ -24,17 +24,18 @@ export default function AuthCard() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white shadow-lg rounded-2xl overflow-hidden ring-1 ring-black/5">
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-gray-700">
         <nav className="flex">
-          {(['login', 'register'] as const).map((t) => (
+          {(['login', 'register'] as const).map((t, index) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={clsx(
                 'flex-1 py-3 text-sm font-medium tracking-wide uppercase transition',
+                index === 0 ? 'rounded-tl-2xl' : 'rounded-tr-2xl',
                 tab === t
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-neutral-500 hover:text-primary'
+                  ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400'
               )}
             >
               {t === 'login' ? 'Přihlášení' : 'Registrace'}
@@ -42,7 +43,7 @@ export default function AuthCard() {
           ))}
         </nav>
 
-        <div className="relative h-full min-h-[420px]">
+        <div className={`relative h-full ${tab === 'register' ? 'min-h-[580px]' : 'min-h-[420px]'}`}>
           <AnimatePresence mode="wait">
             {tab === 'login' ? (
               <motion.div

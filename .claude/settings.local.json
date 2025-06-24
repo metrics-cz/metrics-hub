@@ -9,7 +9,8 @@
       "Bash(lsof:*)",
       "Bash(curl:*)",
       "Bash(timeout 5s npm run dev:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(pnpm build)"
     ],
     "deny": []
   }

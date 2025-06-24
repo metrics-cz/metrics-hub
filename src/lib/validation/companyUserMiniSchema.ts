@@ -7,7 +7,8 @@ export const companyUserMiniSchema = z.object({
   email           : z.string().email(),
   last_sign_in_at : z.coerce.date().nullable(),
   full_name       : z.string().nullable(),
-  avatar_url      : z.string().url().nullable()  
+  avatar_url      : z.string().url().nullable(),
+  status          : z.string().optional()
 })
 
 
@@ -18,4 +19,5 @@ export type CompanyUserMini = {
   avatarUrl: string | null;      
   lastSignIn: Date | null;
   role: string;
+  status?: string;
 };

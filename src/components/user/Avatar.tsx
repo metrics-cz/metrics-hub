@@ -35,7 +35,7 @@ export default function Avatar({
     return (
         <UserInitialsIcon
             name={name ?? ''}
-            
+            size={size}
             className={className}
         />
     );
