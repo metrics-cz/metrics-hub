@@ -43,22 +43,20 @@ export default function ThemeToggle({ collapsed = false, position = 'sidebar' }:
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`p-2 rounded-lg transition-colors ${
-            position === 'auth-page' 
-              ? 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm hover:bg-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100' 
-              : 'hover:bg-white/10 dark:hover:bg-gray-700'
-          }`}
+          className={`transition-colors ${position === 'auth-page'
+            ? 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm hover:bg-white dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100'
+            : ''
+            }`}
           title="Theme"
         >
           {getThemeIcon()}
         </button>
-        
+
         {isOpen && (
-          <div className={`absolute bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[120px] z-50 ${
-            position === 'auth-page' 
-              ? 'right-0 top-full mt-2' 
-              : 'left-full top-0 ml-2'
-          }`}>
+          <div className={`absolute bg-white dark:bg-gray-800 shadow-lg py-1 min-w-[120px] z-50 ${position === 'auth-page'
+            ? 'right-0 top-full mt-2'
+            : 'left-full top-0 ml-2'
+            }`}>
             {themes.map((t) => {
               const Icon = t.icon;
               return (
@@ -68,9 +66,8 @@ export default function ThemeToggle({ collapsed = false, position = 'sidebar' }:
                     setTheme(t.value);
                     setIsOpen(false);
                   }}
-                  className={`w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm ${
-                    theme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-gray-100'
-                  }`}
+                  className={`w-full py-2 text-left flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm ${theme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-gray-100'
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   {t.label}
@@ -87,14 +84,14 @@ export default function ThemeToggle({ collapsed = false, position = 'sidebar' }:
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-primary-700 dark:hover:bg-gray-600 transition-colors text-left"
       >
         {getThemeIcon()}
         <span className="text-sm">Theme</span>
       </button>
-      
+
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg py-1 w-full z-50">
+        <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 shadow-lg w-full z-50">
           {themes.map((t) => {
             const Icon = t.icon;
             return (
@@ -104,9 +101,8 @@ export default function ThemeToggle({ collapsed = false, position = 'sidebar' }:
                   setTheme(t.value);
                   setIsOpen(false);
                 }}
-                className={`w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm ${
-                  theme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-gray-100'
-                }`}
+                className={`w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm ${theme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-gray-100'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {t.label}

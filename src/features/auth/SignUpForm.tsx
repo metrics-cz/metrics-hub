@@ -173,14 +173,14 @@ export default function SignUpForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Jméno</label>
-          <input {...register('firstName')} className="mt-1 w-full form-input px-3 py-2" />
+          <input {...register('firstName')} className="mt-1 w-full form-input px-3 py-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100" />
           {errors.firstName && (
             <p className="text-xs text-red-600">{errors.firstName.message}</p>
           )}
         </div>
         <div>
           <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Příjmení</label>
-          <input {...register('lastName')} className="mt-1 w-full form-input px-3 py-2" />
+          <input {...register('lastName')} className="mt-1 w-full form-input px-3 py-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100" />
           {errors.lastName && (
             <p className="text-xs text-red-600">{errors.lastName.message}</p>
           )}
@@ -193,7 +193,7 @@ export default function SignUpForm({
           <input
             type="email"
             {...register('email')}
-            className="mt-1 w-full form-input px-3 py-2 pr-10"
+            className="mt-1 w-full form-input px-3 py-2 pr-10 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
           />
           {emailChecking && (
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -225,7 +225,7 @@ export default function SignUpForm({
         <input
           type="password"
           {...register('password')}
-          className="mt-1 w-full form-input px-3 py-2"
+          className="mt-1 w-full form-input px-3 py-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
         />
         
         {/* Password strength indicator */}
@@ -300,7 +300,7 @@ export default function SignUpForm({
         <input
           type="password"
           {...register('password2')}
-          className="mt-1 w-full form-input px-3 py-2"
+          className="mt-1 w-full form-input px-3 py-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
         />
         {errors.password2 && (
           <p className="text-xs text-red-600">{errors.password2.message}</p>

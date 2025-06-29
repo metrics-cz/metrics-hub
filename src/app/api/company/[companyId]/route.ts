@@ -118,3 +118,156 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: RouteContext
+) {
+  try {
+    /* 1 ───────────────────────────────── Auth: verify bearer token */
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.slice(7);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data: { user }, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    const uid = user.id;
+
+    /* 2 ───────────────────────────────── Validate and get company ID */
+    const { companyId } = await params;
+    
+    // Validate UUID format
+    if (!isValidUUID(companyId)) {
+      return NextResponse.json({ 
+        error: 'Invalid company ID format',
+        code: 'INVALID_COMPANY_ID' 
+      }, { status: 400 });
+    }
+
+    /* 3 ───────────────────────────────── Check if company exists and user is owner */
+    let company, membership;
+    
+    if (process.env.NODE_ENV === 'development') {
+      // Use native PostgreSQL client for development
+      const companyQuery = `
+        SELECT * FROM companies WHERE id = $1
+      `;
+      
+      const membershipQuery = `
+        SELECT id, role FROM company_users 
+        WHERE company_id = $1 AND user_id = $2
+      `;
+      
+      const [companyResults, membershipResults] = await Promise.all([
+        queryDb(companyQuery, [companyId]),
+        queryDb(membershipQuery, [companyId, uid])
+      ]);
+      
+      company = companyResults[0];
+      membership = membershipResults[0];
+    } else {
+      // Use Prisma ORM in production
+      [company, membership] = await Promise.all([
+        prisma.companies.findUnique({
+          where: { id: companyId },
+        }),
+        prisma.company_users.findFirst({
+          where: {
+            company_id: companyId,
+            user_id: uid,
+          },
+          select: { id: true, role: true },
+        })
+      ]);
+    }
+
+    if (!company) {
+      return NextResponse.json({ 
+        error: 'Company not found',
+        code: 'COMPANY_NOT_FOUND' 
+      }, { status: 404 });
+    }
+
+    if (!membership) {
+      return NextResponse.json({ 
+        error: 'No access to this company',
+        code: 'ACCESS_DENIED' 
+      }, { status: 403 });
+    }
+
+    // Only owners can delete companies
+    if (membership.role !== 'owner') {
+      return NextResponse.json({ 
+        error: 'Only company owners can delete companies',
+        code: 'INSUFFICIENT_PERMISSIONS' 
+      }, { status: 403 });
+    }
+
+    /* 4 ───────────────────────────────── Delete company with cascading operations */
+    if (process.env.NODE_ENV === 'development') {
+      // Use native PostgreSQL client for development with transaction
+      await queryDb('BEGIN', []);
+      
+      try {
+        // Delete all company invitations
+        await queryDb('DELETE FROM company_invitations WHERE company_id = $1', [companyId]);
+        
+        // Delete all company users
+        await queryDb('DELETE FROM company_users WHERE company_id = $1', [companyId]);
+        
+        // Delete the company
+        await queryDb('DELETE FROM companies WHERE id = $1', [companyId]);
+        
+        await queryDb('COMMIT', []);
+      } catch (error) {
+        await queryDb('ROLLBACK', []);
+        throw error;
+      }
+    } else {
+      // Use Prisma transaction in production
+      await prisma.$transaction(async (tx) => {
+        // Delete all company invitations
+        await tx.company_invitations.deleteMany({
+          where: { companyId: companyId }
+        });
+        
+        // Delete all company users
+        await tx.company_users.deleteMany({
+          where: { company_id: companyId }
+        });
+        
+        // Delete the company
+        await tx.companies.delete({
+          where: { id: companyId }
+        });
+      });
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      message: 'Company deleted successfully' 
+    });
+
+  } catch (error) {
+    console.error('Unexpected error in company delete route:', error);
+    
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -53,11 +53,12 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "apps": "Apps",
-    "integrations": "Integrations & Automation",
-    "users": "User Management",
-    "settings": "Company Settings",
-    "invoices": "Invoices"
+    "applications": "Applications",
+    "integrations": "Integrations and automation",
+    "users": "User management",
+    "settings": "Company settings",
+    "billing": "Billing",
+    "marketplace": "Marketplace"
   },
   "companySwitcher": {
     "selectOrCreate": "Select / create…",

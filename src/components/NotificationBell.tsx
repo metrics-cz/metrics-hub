@@ -36,7 +36,14 @@ interface NotificationData {
   unread_count: number;
 }
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  showText?: boolean;
+  text?: string;
+  isMobileSidebar?: boolean;
+  onMobileClick?: () => void;
+}
+
+export default function NotificationBell({ showText = false, text = 'Notifications', isMobileSidebar = false, onMobileClick }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -157,9 +164,12 @@ export default function NotificationBell() {
     }
   };
 
-  // Handle bell click - navigate to notifications page on desktop, toggle dropdown on mobile
+  // Handle bell click - navigate to notifications page on desktop or mobile sidebar, toggle dropdown on mobile header only
   const handleBellClick = () => {
-    if (isDesktop) {
+    if (isDesktop || isMobileSidebar) {
+      if (isMobileSidebar && onMobileClick) {
+        onMobileClick();
+      }
       router.push('/notifications');
     } else {
       setOpen(!open);
@@ -276,12 +286,13 @@ export default function NotificationBell() {
     <div className="relative" ref={bellRef}>
       <button
         onClick={handleBellClick}
-        className="w-full h-10 flex items-center justify-center border-none hover:bg-white/10 relative transition-all duration-200 group"
+        className={`w-full h-10 flex items-center gap-2 border-none relative transition-all duration-200 group ${isMobileSidebar ? 'px-3 py-2 rounded hover:bg-primary-700 dark:hover:bg-gray-600' : 'px-3 py-2 rounded hover:bg-primary-700 dark:hover:bg-gray-600'}`}
       >
         <Bell 
           size={18} 
           className={`transition-all duration-200 ${open ? 'text-blue-400' : 'text-white group-hover:text-blue-300'}`}
         />
+        {showText && <span className="text-sm">{text}</span>}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 animate-pulse">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -289,7 +300,7 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {open && !isDesktop && (
+      {open && !isDesktop && !isMobileSidebar && (
         <div 
           ref={dropdownRef}
           className="fixed right-4 top-16 w-80 bg-[#1e1e1e] rounded-lg shadow-2xlmd:absolute md:right-0 md:top-12 animate-in slide-in-from-top-2 duration-200"
