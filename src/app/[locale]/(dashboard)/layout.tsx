@@ -49,6 +49,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <CompanyListProvider>
       <DashboardContent>{children}</DashboardContent>
+      <DashboardContent>{children}</DashboardContent>
     </CompanyListProvider>
   );
 }
