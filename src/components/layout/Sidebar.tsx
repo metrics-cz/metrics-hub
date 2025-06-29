@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/AuthProvider';
 import { useActiveCompany } from '@/lib/activeCompany';
-import { MAIN_NAV, ADMIN_NAV } from '@/lib/nav';
+import { MAIN_NAV, BOTTOM_NAV, type NavItem } from '@/lib/nav';
 import CompanySwitcher from '@/components/CompanySwitcher';
 import BuildInfo from '@/components/BuildInfo';
 import UserInitialsIcon from '@/components/user/UserInitialsIcon';
@@ -24,11 +24,6 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import NotificationBell from '@/components/NotificationBell';
 import ThemeToggle from '@/components/ThemeToggle';
 
-interface NavItem {
-  href: string;
-  labelKey: string;
-  icon: LucideIcon;
-}
 
 function NavLink({
   item,
@@ -45,18 +40,20 @@ function NavLink({
   pathname: string;
   onMobileClick?: () => void;
 }) {
-  const target = `/companies/${activeCompanyId}${item.href}`;
+  const target = item.global ? item.href : `/companies/${activeCompanyId}${item.href}`;
   const Icon = item.icon;
   const t = useTranslations();
+  const isDisabled = item.global ? false : disabled;
+
   return (
     <Link
-      href={disabled ? '#' : target}
+      href={isDisabled ? '#' : target}
       onClick={onMobileClick}
       className={clsx(
         'flex items-center gap-2 rounded',
-        collapsed ? 'px-2 py-1' : 'px-3 py-2',
-        disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-primary-700 dark:hover:bg-gray-600',
-        pathname === target && !disabled && 'bg-primary-700 dark:bg-primary-900/20 text-white dark:text-primary-300'
+        collapsed ? 'px-3 py-1' : 'px-3 py-2',
+        isDisabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-primary-700 dark:hover:bg-gray-600',
+        pathname === target && !isDisabled && 'bg-primary-700 dark:bg-primary-900/20 text-white dark:text-primary-300'
       )}
     >
       <Icon size={collapsed ? 20 : 18} />
@@ -65,63 +62,104 @@ function NavLink({
   );
 }
 
-function SidebarActions({
+function SidebarBottomSection({
   collapsed,
   onSignOut,
   onMobileClick,
+  activeCompanyId,
+  disabled,
+  pathname,
 }: {
   collapsed: boolean;
   onSignOut: () => Promise<void>;
   onMobileClick?: () => void;
+  activeCompanyId?: string;
+  disabled: boolean;
+  pathname: string;
 }) {
+  const isMobileSidebar = !!onMobileClick;
   const { user } = useAuth();
   const fullName = user?.user_metadata?.full_name;
   const avatar = user?.user_metadata?.avatar_url;
   const t = useTranslations();
   const locale = useLocale();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   return (
-    <div className="space-y-2 px-2 flex flex-col items-center gap-1 mt-2 w-full">
-      {collapsed ? (
-        <div className="flex flex-col items-center gap-3 px-3 py-2">
-          <ThemeToggle collapsed={collapsed} />
-          <LanguageSwitcher collapsed={collapsed} />
-          <NotificationBell />
-        </div>
-      ) : (
-        <div className="w-full space-y-2">
-          <ThemeToggle collapsed={collapsed} />
-          <div className="flex flex-row">
-            <LanguageSwitcher collapsed={collapsed} />
-            <div className="ml-2">
-              <NotificationBell />
+    <div className="space-y-2 px-2 flex flex-col w-full">
+      {/* Marketplace */}
+      <div className="space-y-1">
+        {BOTTOM_NAV.map((item) => (
+          <NavLink
+            key={item.href}
+            item={item}
+            activeCompanyId={activeCompanyId}
+            disabled={disabled}
+            collapsed={collapsed}
+            pathname={pathname}
+            onMobileClick={onMobileClick}
+          />
+        ))}
+      </div>
+
+      <div className="my-4 h-px bg-primary-700 dark:bg-gray-600" />
+
+      {/* Notifications */}
+      <div className="w-full">
+        <NotificationBell showText={!collapsed} text={t('sidebar.notifications')} isMobileSidebar={isMobileSidebar} onMobileClick={onMobileClick} />
+      </div>
+
+      {/* Theme Toggle */}
+      <div className="w-full ">
+        <ThemeToggle collapsed={collapsed} />
+      </div>
+
+      {/* Profile Menu */}
+      <div className="relative">
+        <button
+          onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+          className="w-full flex items-center gap-3 px-3 py-2"
+        >
+          {avatar ? (
+            <img src={avatar} alt="Me" className="w-8 h-8 rounded-full object-cover" />
+          ) : (
+            <UserInitialsIcon name={fullName} />
+          )}
+          {!collapsed && (
+            <span className="truncate">{fullName ?? 'Profil'}</span>
+          )}
+        </button>
+
+        {profileMenuOpen && !collapsed && (
+          <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 shadow-lg py-2">
+            <Link
+              href={`/${locale}/profile`}
+              onClick={() => {
+                setProfileMenuOpen(false);
+                onMobileClick?.();
+              }}
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              {t('sidebar.profile')}
+            </Link>
+
+
+            <div className="py-2">
+              <LanguageSwitcher collapsed={false} />
             </div>
+
+            <button
+              onClick={() => {
+                onSignOut();
+                setProfileMenuOpen(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              {t('sidebar.logout')}
+            </button>
           </div>
-        </div>
-      )}
-
-      <Link
-        href={`/${locale}/profile`}
-        onClick={onMobileClick}
-        className="w-full flex items-center gap-3 px-3 rounded hover:bg-primary-700 dark:hover:bg-gray-600"
-      >
-        {avatar ? (
-          <img src={avatar} alt="Me" className="w-8 h-8 rounded-full object-cover" />
-        ) : (
-          <UserInitialsIcon name={fullName} />
         )}
-        {!collapsed && (
-          <span className="truncate">{fullName ?? 'Profil'}</span>
-        )}
-      </Link>
-
-      <button
-        onClick={onSignOut}
-        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-primary-700 dark:hover:bg-gray-600 text-red-300 dark:text-red-400"
-      >
-        <LogOut size={18} />
-        {!collapsed && <span>{t('sidebar.logout')}</span>}
-      </button>
+      </div>
 
       <div className="text-center mt-3">
         <BuildInfo />
@@ -146,14 +184,14 @@ export default function Sidebar() {
   const { user } = useAuth();
   const fullName = user?.user_metadata?.full_name;
   const avatar = user?.user_metadata?.avatar_url;
-  
+
   useEffect(() => {
     setIsClient(true);
   }, []);
-  
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const mq = window.matchMedia('(min-width: 768px)');
     const handle = (e: MediaQueryListEvent | MediaQueryList) => {
       if (e.matches) setMobileOpen(false);
@@ -169,7 +207,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     if (mobileOpen) {
       document.addEventListener('keydown', escHandler);
       document.documentElement.style.overflow = 'hidden';
@@ -222,27 +260,19 @@ export default function Sidebar() {
                 pathname={pathname}
               />
             ))}
-            <div className="my-4 h-px bg-white/10" />
-            {ADMIN_NAV.map((i) => (
-              <NavLink
-                key={i.href}
-                item={i}
-                activeCompanyId={active?.id}
-                disabled={disabled}
-                collapsed={collapsed}
-                pathname={pathname}
-              />
-            ))}
           </nav>
         )}
       </div>
 
-      <SidebarActions
+      <SidebarBottomSection
         collapsed={collapsed}
         onSignOut={async () => {
           await supabase.auth.signOut();
           router.push(`/${locale}/auth`);
         }}
+        activeCompanyId={active?.id}
+        disabled={disabled}
+        pathname={pathname}
       />
     </aside>
   );
@@ -280,29 +310,20 @@ export default function Sidebar() {
                 onMobileClick={() => setMobileOpen(false)}
               />
             ))}
-            <div className="my-4 h-px bg-white/10" />
-            {ADMIN_NAV.map((i) => (
-              <NavLink
-                key={i.href}
-                item={i}
-                activeCompanyId={active?.id}
-                disabled={disabled}
-                collapsed={false}
-                pathname={pathname}
-                onMobileClick={() => setMobileOpen(false)}
-              />
-            ))}
           </nav>
         )}
       </div>
 
-      <SidebarActions
+      <SidebarBottomSection
         collapsed={false}
         onSignOut={async () => {
           await supabase.auth.signOut();
           router.push(`/${locale}/auth`);
         }}
         onMobileClick={() => setMobileOpen(false)}
+        activeCompanyId={active?.id}
+        disabled={disabled}
+        pathname={pathname}
       />
     </aside>
   );

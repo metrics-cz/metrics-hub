@@ -61,14 +61,14 @@ export default function LanguageSwitcher({
                 </button>
 
                 {open && (
-                    <div className="absolute left-0 top-full mt-1 bg-gray-800 rounded shadow-lg w-32 z-50">
+                    <div className="absolute left-0 top-full mt-1 bg-primary-500 dark:bg-gray-800 rounded shadow-lg w-32 z-50">
                         {LOCALES.map(({ code, name, Flag }) => (
                             <button
                                 key={code}
                                 onClick={() => changeLocale(code)}
                                 className={clsx(
-                                    'flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-gray-700',
-                                    code === locale ? 'bg-gray-700 font-semibold' : ''
+                                    'flex items-center gap-2 px-3 py-2 w-full text-left text-white hover:bg-primary-600 dark:hover:bg-gray-700',
+                                    code === locale ? 'bg-primary-600 dark:bg-gray-700 font-semibold' : ''
                                 )}
                             >
                                 <Flag className="w-5 h-5" />
@@ -96,14 +96,14 @@ export default function LanguageSwitcher({
                 </button>
 
                 {open && (
-                    <div className="absolute left-0 top-full mt-1 bg-gray-800 rounded shadow-lg w-40 z-50">
+                    <div className="absolute left-0 top-full mt-1 bg-primary-500 dark:bg-gray-800 rounded shadow-lg w-40 z-50">
                         {LOCALES.map(({ code, name, Flag }) => (
                             <button
                                 key={code}
                                 onClick={() => changeLocale(code)}
                                 className={clsx(
-                                    'flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-gray-700',
-                                    code === locale ? 'bg-gray-700 font-semibold' : ''
+                                    'flex items-center gap-2 px-3 py-2 w-full text-left text-white hover:bg-primary-600 dark:hover:bg-gray-700',
+                                    code === locale ? 'bg-primary-600 dark:bg-gray-700 font-semibold' : ''
                                 )}
                             >
                                 <Flag className="w-5 h-5" />
@@ -130,14 +130,14 @@ export default function LanguageSwitcher({
                 </button>
 
                 {open && (
-                    <div className="absolute right-0 top-full mt-1 bg-gray-800 rounded shadow-lg w-40 z-50">
+                    <div className="absolute right-0 top-full mt-1 bg-primary-500 dark:bg-gray-800 rounded shadow-lg w-40 z-50">
                         {LOCALES.map(({ code, name, Flag }) => (
                             <button
                                 key={code}
                                 onClick={() => changeLocale(code)}
                                 className={clsx(
-                                    'flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-gray-700',
-                                    code === locale ? 'bg-gray-700 font-semibold' : ''
+                                    'flex items-center gap-2 px-3 py-2 w-full text-left text-white hover:bg-primary-600 dark:hover:bg-gray-700',
+                                    code === locale ? 'bg-primary-600 dark:bg-gray-700 font-semibold' : ''
                                 )}
                             >
                                 <Flag className="w-5 h-5" />

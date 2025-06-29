@@ -53,11 +53,12 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "apps": "Aplikace",
+    "applications": "Aplikace",
     "integrations": "Integrace a automatizace",
     "users": "Správa uživatelů",
     "settings": "Nastavení firmy",
-    "invoices": "Fakturace"
+    "billing": "Fakturace",
+    "marketplace": "Marketplace"
   },
   "companySwitcher": {
     "selectOrCreate": "Vybrat / vytvořit…",

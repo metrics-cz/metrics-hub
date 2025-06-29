@@ -236,7 +236,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="p-10 max-w-3xl mx-auto space-y-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="p-10 max-w-3xl mx-auto space-y-12 text-gray-900 dark:text-gray-100">
       {/* avatar + basic */}
       <section className="space-y-6">
         <h2 className="text-xl font-semibold">{t('title')}</h2>

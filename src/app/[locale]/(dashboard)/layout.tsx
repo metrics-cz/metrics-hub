@@ -19,7 +19,7 @@ function LoadingSpinner() {
 
 function DashboardContent({ children }: { children: ReactNode }) {
   const loading = useCompanyListLoading();
-  
+
   // Show loading spinner while fetching companies
   if (loading) {
     return <LoadingSpinner />;
@@ -27,9 +27,9 @@ function DashboardContent({ children }: { children: ReactNode }) {
 
   // Always show normal dashboard layout once loading is complete
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-600">
       <Sidebar />
-      <main className="flex-1 overflow-auto bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">{children}</main>
+      <main className="flex-1 overflow-auto text-gray-900 dark:text-gray-100">{children}</main>
     </div>
   );
 }
@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [user, loading, router]);
 
   if (loading) return <LoadingSpinner />;
-  
+
   return (
     <CompanyListProvider>
       <DashboardContent>{children}</DashboardContent>

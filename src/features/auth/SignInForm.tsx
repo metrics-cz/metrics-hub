@@ -121,7 +121,7 @@ export default function SignInForm() {
                 type="email"
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
-                className="mt-1 w-full form-input px-3 py-2"
+                className="mt-1 w-full form-input px-3 py-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
                 placeholder="uzivatel@example.com"
               />
             </div>
@@ -132,7 +132,7 @@ export default function SignInForm() {
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(false)}
-                className="flex-1 border border-gray-300 py-2 rounded hover:bg-gray-50"
+                className="flex-1 border border-gray-300 dark:border-gray-600 py-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
               >
                 Zrušit
               </button>
@@ -158,7 +158,7 @@ export default function SignInForm() {
         <input
           type="email"
           {...register('email')}
-          className="mt-1 w-full form-input px-3 py-2"
+          className="mt-1 w-full form-input px-3 py-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
         />
         {errors.email && (
           <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>
@@ -179,7 +179,7 @@ export default function SignInForm() {
         <input
           type="password"
           {...register('password')}
-          className="mt-1 w-full form-input px-3 py-2"
+          className="mt-1 w-full form-input px-3 py-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
         />
         {errors.password && (
           <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>
@@ -196,15 +196,15 @@ export default function SignInForm() {
       </button>
 
       <div className="flex items-center gap-2 my-4">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-sm text-gray-500">nebo</span>
-        <div className="flex-1 h-px bg-gray-200" />
+        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+        <span className="text-sm text-gray-500 dark:text-gray-400">nebo</span>
+        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
       </div>
 
       <button
         type="button"
         onClick={handleGoogleSignIn}
-        className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded hover:bg-gray-50 transition"
+        className="w-full flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-600 py-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition bg-white dark:bg-gray-900"
       >
         <img src="/google-logo.svg" alt="Google" className="w-5 h-5" />
         <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Přihlásit se pomocí Google</span>

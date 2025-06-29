@@ -105,8 +105,8 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
       {/* ---------- create modal ---------- */}
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 grid place-items-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm">
-            <CreateCompanyForm />
+          <div className="bg-white dark:bg-gray-600 rounded-xl p-6 w-full max-w-sm">
+            <CreateCompanyForm onClose={() => setShowCreate(false)} />
             <button
               onClick={() => setShowCreate(false)}
               className="mt-4 text-sm underline text-primary"
