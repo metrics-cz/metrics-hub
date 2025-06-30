@@ -128,7 +128,7 @@ export default function UserInitialsIcon({
     return (
         <div
             className={clsx(
-                'inline-grid place-items-center rounded-full',
+                'inline-grid place-items-center rounded-full flex-shrink-0 aspect-square',
                 'select-none font-medium uppercase',
                 className
             )}
@@ -137,6 +137,8 @@ export default function UserInitialsIcon({
                 color: textColor,
                 width: `${size}px`,
                 height: `${size}px`,
+                minWidth: `${size}px`,
+                minHeight: `${size}px`,
                 fontSize: `${size * 0.4}px` // Font size scales with avatar size
             }}
         >

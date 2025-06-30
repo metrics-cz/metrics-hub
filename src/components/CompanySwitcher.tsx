@@ -46,7 +46,7 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
         {active?.logo_url ? (
           <img
             src={active?.logo_url}
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-8 h-8 rounded-full object-cover flex-shrink-0 aspect-square"
           />
         ) : (
           <CompanyInitialsIcon name={active?.name} size={32} />
@@ -81,7 +81,7 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
               )}
             >
               {c.logo_url ? (
-                <img src={c.logo_url} className="w-6 h-6 rounded-full" />
+                <img src={c.logo_url} className="w-6 h-6 rounded-full flex-shrink-0 aspect-square" />
               ) : (
                 <CompanyInitialsIcon name={c.name} size={24} />
               )}

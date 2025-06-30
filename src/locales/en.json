@@ -100,6 +100,96 @@
     "addApp": "Add App",
     "description": "Description"
   },
+  "billing": {
+    "title": "Billing",
+    "currentPlan": "Current Plan",
+    "includingVat": "(Including VAT)",
+    "changePlan": "Change Plan",
+    "paymentInfo": "Payment Information",
+    "companyName": "Company Name for Billing",
+    "ico": "Registration Number",
+    "dic": "VAT Number",
+    "emailPlaceholder": "info@company.com",
+    "save": "Save",
+    "paymentMethod": "Payment Method",
+    "edit": "Edit",
+    "addNewCard": "Add New Card",
+    "invoiceHistory": "Invoice History",
+    "download": "Download",
+    "date": "Date",
+    "invoiceNumber": "Invoice Number",
+    "amount": "Amount",
+    "status": "Status",
+    "paid": "Paid",
+    "expires": "exp."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "applications": "Applications",
+    "integrations": "Integrations",
+    "users": "Users",
+    "settings": "Settings",
+    "billing": "Billing",
+    "marketplace": "Marketplace"
+  },
+  "marketplace": {
+    "title": "App Marketplace",
+    "subtitle": "Discover and install add-ons and integrations to extend your platform capabilities",
+    "searchPlaceholder": "Search apps...",
+    "filters": "Filters",
+    "categoriesLabel": "Categories",
+    "install": "Install",
+    "buyNow": "Buy Now",
+    "addToCompany": "Add to Company",
+    "buyAndInstall": "Buy & Install",
+    "installing": "Installing...",
+    "installSuccess": "App installed successfully!",
+    "noResults": "No apps found",
+    "noResultsSubtitle": "Try changing your search term or filters",
+    "by": "by",
+    "downloads": "downloads",
+    "version": "Version",
+    "description": "Description",
+    "features": "Features",
+    "screenshots": "Screenshots",
+    "documentation": "Documentation",
+    "screenshotPlaceholder": "Screenshot",
+    "categories": {
+      "all": "All Apps",
+      "communication": "Communication",
+      "productivity": "Productivity", 
+      "marketing": "Marketing",
+      "analytics": "Analytics",
+      "crm": "CRM",
+      "finance": "Finance"
+    },
+    "apps": {
+      "slack": {
+        "description": "Send automatic notifications and reports to your Slack channels",
+        "longDescription": "Integrate your application with Slack workspace and automatically send notifications, reports and updates directly to your channels."
+      },
+      "googleSheets": {
+        "description": "Export data and create automatic reports in Google Sheets",
+        "longDescription": "Synchronize your data with Google Sheets and create automatic reports, dashboards and overviews."
+      },
+      "trello": {
+        "description": "Synchronize tasks and create cards based on data",
+        "longDescription": "Automatically create Trello cards based on events in your application and maintain team productivity."
+      },
+      "hubspot": {
+        "description": "Integrate your data directly into HubSpot CRM for better customer care",
+        "longDescription": "Connect your application with HubSpot CRM and automatically update customer data, create leads and manage sales pipeline."
+      },
+      "gmail": {
+        "description": "Automatically send email campaigns and notifications",
+        "longDescription": "Set up automatic email campaigns and notifications directly from your application using Gmail API."
+      },
+      "powerbi": {
+        "description": "Create advanced dashboards and visualizations in Microsoft Power BI",
+        "longDescription": "Connect your data to Microsoft Power BI and create advanced business intelligence dashboards."
+      }
+    }
+  },
   "common": {
     "close": "Close",
     "save": "Save",
