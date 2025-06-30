@@ -27,9 +27,9 @@ export default function ThemeToggle({ collapsed = false, position = 'sidebar' }:
 
   const getThemeIcon = () => {
     if (theme === 'system') {
-      return <Monitor className="w-4 h-4" />;
+      return <Monitor className="w-5 h-5" />;
     }
-    return actualTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />;
+    return actualTheme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />;
   };
 
   const themes = [
@@ -45,7 +45,7 @@ export default function ThemeToggle({ collapsed = false, position = 'sidebar' }:
           onClick={() => setIsOpen(!isOpen)}
           className={`transition-colors ${position === 'auth-page'
             ? 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm hover:bg-white dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100'
-            : ''
+            : 'p-3 hover:bg-primary-700 dark:hover:bg-gray-600 rounded'
             }`}
           title="Theme"
         >
@@ -53,9 +53,9 @@ export default function ThemeToggle({ collapsed = false, position = 'sidebar' }:
         </button>
 
         {isOpen && (
-          <div className={`absolute bg-white dark:bg-gray-800 shadow-lg py-1 min-w-[120px] z-50 ${position === 'auth-page'
+          <div className={`absolute bg-white dark:bg-gray-800 shadow-lg py-1 pl-4 min-w-[120px] z-[9999] ${position === 'auth-page'
             ? 'right-0 top-full mt-2'
-            : 'left-full top-0 ml-2'
+            : 'left-full top-0 ml-4'
             }`}>
             {themes.map((t) => {
               const Icon = t.icon;
@@ -69,7 +69,7 @@ export default function ThemeToggle({ collapsed = false, position = 'sidebar' }:
                   className={`w-full py-2 text-left flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm ${theme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-gray-100'
                     }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-5 h-5" />
                   {t.label}
                 </button>
               );

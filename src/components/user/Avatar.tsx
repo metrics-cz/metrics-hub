@@ -23,7 +23,7 @@ export default function Avatar({
             <img
                 src={src}
                 className={clsx(
-                    'inline-block rounded-full object-cover select-none',
+                    'inline-block rounded-full object-cover select-none flex-shrink-0 aspect-square',
                     className
                 )}
                 style={{ height: dimension, width: dimension }}
@@ -36,7 +36,7 @@ export default function Avatar({
         <UserInitialsIcon
             name={name ?? ''}
             size={size}
-            className={className}
+            className={clsx('flex-shrink-0', className)}
         />
     );
 }

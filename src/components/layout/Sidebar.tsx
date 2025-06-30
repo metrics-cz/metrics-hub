@@ -118,20 +118,23 @@ function SidebarBottomSection({
       <div className="relative">
         <button
           onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-          className="w-full flex items-center gap-3 px-3 py-2"
+          className={`w-full flex items-center ${collapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-2'}`}
         >
           {avatar ? (
-            <img src={avatar} alt="Me" className="w-8 h-8 rounded-full object-cover" />
+            <img src={avatar} alt="Me" className="w-8 h-8 min-w-8 min-h-8 rounded-full object-cover flex-shrink-0 aspect-square" />
           ) : (
-            <UserInitialsIcon name={fullName} />
+            <UserInitialsIcon name={fullName} size={32} className="flex-shrink-0 aspect-square" />
           )}
           {!collapsed && (
             <span className="truncate">{fullName ?? 'Profil'}</span>
           )}
         </button>
 
-        {profileMenuOpen && !collapsed && (
-          <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 shadow-lg py-2">
+        {profileMenuOpen && (
+          <div className={`absolute bg-white dark:bg-gray-800 shadow-lg py-2 z-50 ${collapsed
+              ? 'left-full bottom-0 ml-2 min-w-48'
+              : 'bottom-full left-0 right-0 mb-2'
+            }`}>
             <Link
               href={`/${locale}/profile`}
               onClick={() => {
@@ -143,10 +146,13 @@ function SidebarBottomSection({
               {t('sidebar.profile')}
             </Link>
 
+            <hr className='m-1'/>
 
             <div className="py-2">
               <LanguageSwitcher collapsed={false} />
             </div>
+
+            <hr className='m-1'/>
 
             <button
               onClick={() => {
@@ -159,10 +165,6 @@ function SidebarBottomSection({
             </button>
           </div>
         )}
-      </div>
-
-      <div className="text-center mt-3">
-        <BuildInfo />
       </div>
     </div>
   );

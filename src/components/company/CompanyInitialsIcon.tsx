@@ -128,7 +128,7 @@ export default function CompanyInitialsIcon({
     return (
         <div
             className={clsx(
-                'inline-grid place-items-center rounded-full',
+                'inline-grid place-items-center rounded-full flex-shrink-0 aspect-square',
                 'select-none font-medium uppercase',
                 className
             )}

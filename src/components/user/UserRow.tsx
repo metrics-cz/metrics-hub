@@ -34,7 +34,7 @@ export default function UserRow({ user }: Props) {
             {user.avatarUrl ? (
               <img
                 src={user.avatarUrl}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0 aspect-square"
               />
             ) : (
               <UserInitialsIcon name={user.fullName} />

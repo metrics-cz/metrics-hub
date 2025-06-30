@@ -100,6 +100,96 @@
     "addApp": "Přidat aplikaci",
     "description": "Popis"
   },
+  "billing": {
+    "title": "Fakturace",
+    "currentPlan": "Aktuální tarif",
+    "includingVat": "(Včetně DPH)",
+    "changePlan": "Změnit tarif",
+    "paymentInfo": "Platební údaje",
+    "companyName": "Fakturační jméno firmy",
+    "ico": "IČO",
+    "dic": "DIČ (VAT)",
+    "emailPlaceholder": "info@firma123.cz",
+    "save": "Uložit",
+    "paymentMethod": "Způsob platby",
+    "edit": "Upravit",
+    "addNewCard": "Přidat novou kartu",
+    "invoiceHistory": "Historie faktur",
+    "download": "Stáhnout",
+    "date": "Datum",
+    "invoiceNumber": "Číslo faktury",
+    "amount": "Částka",
+    "status": "Stav",
+    "paid": "Zaplaceno",
+    "expires": "exp."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "applications": "Aplikace",
+    "integrations": "Integrace",
+    "users": "Uživatelé",
+    "settings": "Nastavení",
+    "billing": "Fakturace",
+    "marketplace": "Marketplace"
+  },
+  "marketplace": {
+    "title": "Marketplace aplikací",
+    "subtitle": "Objevte a nainstalujte doplňky a integrace pro rozšíření možností vaší platformy",
+    "searchPlaceholder": "Hledat aplikace...",
+    "filters": "Filtry",
+    "categoriesLabel": "Kategorie",
+    "install": "Nainstalovat",
+    "buyNow": "Koupit nyní",
+    "addToCompany": "Přidat do firmy",
+    "buyAndInstall": "Koupit a nainstalovat",
+    "installing": "Instaluji...",
+    "installSuccess": "Aplikace byla úspěšně nainstalována!",
+    "noResults": "Žádné aplikace nenalezeny",
+    "noResultsSubtitle": "Zkuste změnit hledaný výraz nebo filtry",
+    "by": "od",
+    "downloads": "stažení",
+    "version": "Verze",
+    "description": "Popis",
+    "features": "Funkce",
+    "screenshots": "Snímky obrazovky",
+    "documentation": "Dokumentace",
+    "screenshotPlaceholder": "Snímek obrazovky",
+    "categories": {
+      "all": "Všechny aplikace",
+      "communication": "Komunikace",
+      "productivity": "Produktivita",
+      "marketing": "Marketing",
+      "analytics": "Analytika",
+      "crm": "CRM",
+      "finance": "Finance"
+    },
+    "apps": {
+      "slack": {
+        "description": "Posílejte automaticky notifikace a reporty do vašich Slack kanálů",
+        "longDescription": "Integrujte vaši aplikaci se Slack workspace a automaticky posílejte notifikace, reporty a aktualizace přímo do vašich kanálů."
+      },
+      "googleSheets": {
+        "description": "Exportujte data a vytvárejte automatické reporty v Google Sheets",
+        "longDescription": "Synchronizujte vaše data s Google Sheets a vytvářejte automatické reporty, dashboardy a přehledy."
+      },
+      "trello": {
+        "description": "Synchronizujte úkoly a vytvářejte karty na základě dat",
+        "longDescription": "Automaticky vytvářejte Trello karty na základě událostí ve vaší aplikaci a udržujte týmovou produktivitu."
+      },
+      "hubspot": {
+        "description": "Integrujte vaše data přímo do HubSpot CRM pro lepší zákaznickou péči",
+        "longDescription": "Propojte vaši aplikaci s HubSpot CRM a automaticky aktualizujte zákaznická data, vytvářejte leady a spravujte prodejní pipeline."
+      },
+      "gmail": {
+        "description": "Automaticky posílejte emailové kampaně a notifikace",
+        "longDescription": "Nastavte automatické emailové kampaně a notifikace přímo z vaší aplikace pomocí Gmail API."
+      },
+      "powerbi": {
+        "description": "Vytvářejte pokročilé dashboardy a vizualizace v Microsoft Power BI",
+        "longDescription": "Připojte vaše data k Microsoft Power BI a vytvářejte pokročilé business intelligence dashboardy."
+      }
+    }
+  },
   "common": {
     "close": "Zavřít",
     "save": "Uložit",
