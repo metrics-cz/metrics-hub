@@ -121,7 +121,7 @@ export default function DashboardPage() {
       {/* KPI Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Link href={`/companies/${companyId}/integrations`}>
-          <div className="bg-white dark:bg-gray-600 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500/50 transition-colors cursor-pointer shadow-sm">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500/50 transition-colors cursor-pointer shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Aktivní integrace</p>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
         </Link>
 
         <Link href={`/companies/${companyId}/integrations`}>
-          <div className="bg-white dark:bg-gray-600 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500/50 transition-colors cursor-pointer shadow-sm">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500/50 transition-colors cursor-pointer shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Aktivní automatizace</p>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        <div className="bg-white dark:bg-gray-600 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-neutral-400">Proběhlé úlohy (24h)</p>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-600 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-neutral-400">Chybové stavy (24h)</p>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Activity Feed */}
-      <div className="bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Poslední aktivita</h2>

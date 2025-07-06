@@ -15,7 +15,8 @@ export default function UserRow({ user }: Props) {
   const router = useRouter();
   const pathname = window.location.pathname;
   return (
-    <tr className="shadow-sm rounded-md bg-white dark:bg-gray-800">
+    <tr className="shadow-sm bg-white dark:bg-gray-800 rounded">
+
       <td className="flex items-center gap-3 px-4 py-3">
         {user.status === 'pending' ? (
           // For pending invitations, show email instead of name/avatar
@@ -47,10 +48,10 @@ export default function UserRow({ user }: Props) {
         )}
       </td>
 
-      {/*   <td className="px-4 py-3">{user.role}</td> */}
       <td className="px-4 py-3">{user.role || '—'}</td>
 
       <td className='px-4 py-3'>{user.lastSignIn ? new Date(user.lastSignIn).toLocaleString("sk-SK") : '—'}</td>
+
       <td className="px-4 py-3">
         {user.status === 'active' ? (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-primary-700 bg-primary-100 dark:bg-primary-900/30 dark:text-primary-400 rounded-full">

@@ -2,51 +2,39 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getCompanyById } from '@/lib/company/getCompanyById';
 import { type Company } from '@/lib/validation/companySchema';
 import CompanyInitialsIcon from '@/components/company/CompanyInitialsIcon';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
+import { useActiveCompany } from '@/lib/activeCompany';
 export default function CompanySettingsPage() {
   /* params from URL */
   const { companyId } = useParams<{ companyId: string }>();
   const router = useRouter();
   const { user } = useAuth();
-
+  
+  /* Get company data from context instead of fetching */
+  const company = useActiveCompany();
+  
   /* local state */
-  const [company, setCompany] = useState<Company | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  /* fetch once `companyId` is available */
-  useEffect(() => {
-    const fetchCompany = async () => {
-      try {
-        const data = await getCompanyById(companyId);
-        setCompany(data);
-      } catch (error) {
-        console.error("Error fetching company:", error);
-      }
-    };
-
-    fetchCompany();  // Call the async function
-  }, []);
 
   /* --- delete company function --- */
   const handleDeleteCompany = async () => {
     if (!company || !user) return;
-    
+
     const confirmed = confirm(
       `Opravdu chcete smazat společnost "${company.name}"? Tato akce je nevratná a všechna data budou trvale odstraněna.`
     );
-    
+
     if (!confirmed) return;
 
     setDeleting(true);
-    
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      
+
       if (!token) {
         throw new Error('Nejste přihlášeni');
       }
@@ -80,16 +68,10 @@ export default function CompanySettingsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[4fr_4fr] gap-8">
         {/* --------- Profil firmy --------- */}
-        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 relative bg-white dark:bg-gray-900">
-          {company?.active ? (
-            <span className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-              Aktivní
-            </span>
-          ) : (
-            <span className="absolute top-4 right-4 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-              Neaktivní
-            </span>
-          )}
+        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 relative bg-white dark:bg-gray-800">
+          <span className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+            Aktivní
+          </span>
 
           <div className="flex items-center mb-4">
             <div className="m-2">
@@ -130,7 +112,7 @@ export default function CompanySettingsPage() {
         </section>
 
         {/* ------ Fakturační adresa ------ */}
-        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
           <h3 className="font-semibold text-lg mb-6">Fakturační adresa</h3>
           <div className="grid grid-cols-2 gap-5 mb-6">
             <input type="text" placeholder="Ulice a číslo" className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
@@ -145,7 +127,7 @@ export default function CompanySettingsPage() {
         </section>
 
         {/* ---------- Branding ---------- */}
-        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
           <h3 className="font-semibold text-lg mb-6">Branding</h3>
           <div className="flex items-center gap-8 mb-6">
             <div className="flex items-center gap-3">
@@ -164,7 +146,7 @@ export default function CompanySettingsPage() {
         </section>
 
         {/* ------- Kontaktní údaje ------- */}
-        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
           <h3 className="font-semibold text-lg mb-6">Kontaktní údaje</h3>
           <div className="grid grid-cols-3 gap-6">
             <input type="tel" placeholder="Telefon" className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100" />

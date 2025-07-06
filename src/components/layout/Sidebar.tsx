@@ -86,7 +86,7 @@ function SidebarBottomSection({
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   return (
-    <div className="space-y-2 px-2 flex flex-col w-full">
+    <div className="space-y-2 px-2 mb-3 flex flex-col w-full">
       {/* Marketplace */}
       <div className="space-y-1">
         {BOTTOM_NAV.map((item) => (
@@ -132,8 +132,8 @@ function SidebarBottomSection({
 
         {profileMenuOpen && (
           <div className={`absolute bg-white dark:bg-gray-800 shadow-lg py-2 z-50 ${collapsed
-              ? 'left-full bottom-0 ml-2 min-w-48'
-              : 'bottom-full left-0 right-0 mb-2'
+            ? 'left-full bottom-0 ml-2 min-w-48'
+            : 'bottom-full left-0 right-0 mb-2'
             }`}>
             <Link
               href={`/${locale}/profile`}
@@ -146,13 +146,13 @@ function SidebarBottomSection({
               {t('sidebar.profile')}
             </Link>
 
-            <hr className='m-1'/>
+            <hr className='m-1' />
 
             <div className="py-2">
               <LanguageSwitcher collapsed={false} />
             </div>
 
-            <hr className='m-1'/>
+            <hr className='m-1' />
 
             <button
               onClick={() => {
@@ -250,20 +250,18 @@ export default function Sidebar() {
       <div className="my-4 h-px bg-primary-700 dark:bg-gray-600 mx-4" />
 
       <div className="flex-1 overflow-y-auto">
-        {active && (
-          <nav className="px-2 space-y-1">
-            {MAIN_NAV.map((i) => (
-              <NavLink
-                key={i.href}
-                item={i}
-                activeCompanyId={active?.id}
-                disabled={disabled}
-                collapsed={collapsed}
-                pathname={pathname}
-              />
-            ))}
-          </nav>
-        )}
+        <nav className="px-2 space-y-1">
+          {MAIN_NAV.map((i) => (
+            <NavLink
+              key={i.href}
+              item={i}
+              activeCompanyId={active?.id}
+              disabled={disabled}
+              collapsed={collapsed}
+              pathname={pathname}
+            />
+          ))}
+        </nav>
       </div>
 
       <SidebarBottomSection
@@ -299,21 +297,19 @@ export default function Sidebar() {
       <div className="my-4 h-px bg-primary-700 dark:bg-gray-600 mx-4" />
 
       <div className="flex-1 overflow-y-auto">
-        {active && (
-          <nav className="px-2 space-y-1">
-            {MAIN_NAV.map((i) => (
-              <NavLink
-                key={i.href}
-                item={i}
-                activeCompanyId={active?.id}
-                disabled={disabled}
-                collapsed={false}
-                pathname={pathname}
-                onMobileClick={() => setMobileOpen(false)}
-              />
-            ))}
-          </nav>
-        )}
+        <nav className="px-2 space-y-1">
+          {MAIN_NAV.map((i) => (
+            <NavLink
+              key={i.href}
+              item={i}
+              activeCompanyId={active?.id}
+              disabled={disabled}
+              collapsed={false}
+              pathname={pathname}
+              onMobileClick={() => setMobileOpen(false)}
+            />
+          ))}
+        </nav>
       </div>
 
       <SidebarBottomSection

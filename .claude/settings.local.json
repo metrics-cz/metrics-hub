@@ -10,7 +10,10 @@
       "Bash(curl:*)",
       "Bash(timeout 5s npm run dev:*)",
       "Bash(ls:*)",
-      "Bash(pnpm build)"
+      "Bash(pnpm build)",
+      "Bash(npm run lint)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm lint:*)"
     ],
     "deny": []
   }

@@ -279,7 +279,7 @@ export default function MarketplacePage() {
                   className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 font-medium ${
                     selectedCategory === category.id
                       ? 'bg-primary-600 text-white shadow-sm'
-                      : 'dark:bg-gray-600 bg-gray-100 dark:text-gray-300 text-gray-700 hover:dark:bg-gray-500 hover:bg-gray-200'
+                      : 'dark:bg-gray-800 bg-gray-100 dark:text-gray-300 text-gray-700 hover:dark:bg-gray-500 hover:bg-gray-200'
                   }`}
                 >
                   {t(category.labelKey)}
@@ -363,7 +363,7 @@ export default function MarketplacePage() {
                     e.stopPropagation();
                     setSelectedApp(integration);
                   }}
-                  className="px-4 py-2.5 dark:bg-gray-700 bg-gray-100 dark:text-white text-gray-900 rounded-lg hover:dark:bg-gray-600 hover:bg-gray-200 transition-all duration-200"
+                  className="px-4 py-2.5 dark:bg-gray-700 bg-gray-100 dark:text-white text-gray-900 rounded-lg hover:dark:bg-gray-800 hover:bg-gray-200 transition-all duration-200"
                 >
                   <Info className="w-4 h-4" />
                 </button>
@@ -403,7 +403,7 @@ export default function MarketplacePage() {
               </div>
               <button
                 onClick={() => setSelectedApp(null)}
-                className="p-2 dark:bg-gray-700 bg-gray-100 rounded-lg dark:text-white text-gray-900 hover:dark:bg-gray-600 hover:bg-gray-200 transition-all duration-200"
+                className="p-2 dark:bg-gray-700 bg-gray-100 rounded-lg dark:text-white text-gray-900 hover:dark:bg-gray-800 hover:bg-gray-200 transition-all duration-200"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -483,7 +483,7 @@ export default function MarketplacePage() {
                   href={selectedApp.documentation}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-6 py-3 dark:bg-gray-700 bg-gray-100 dark:text-white text-gray-900 rounded-lg hover:dark:bg-gray-600 hover:bg-gray-200 transition-all duration-200 font-medium"
+                  className="px-6 py-3 dark:bg-gray-700 bg-gray-100 dark:text-white text-gray-900 rounded-lg hover:dark:bg-gray-800 hover:bg-gray-200 transition-all duration-200 font-medium"
                 >
                   {t('documentation')}
                 </a>

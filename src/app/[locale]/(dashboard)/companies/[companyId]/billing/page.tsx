@@ -89,24 +89,24 @@ export default function BillingPage() {
                     {t('invoiceHistory')}
                     <button className="text-blue-600 dark:text-blue-400 text-sm hover:underline">{t('download')}</button>
                 </h3>
-                <table className="w-full text-sm text-left">
+                <table className="w-full text-sm text-left border-separate border-spacing-y-2">
                     <thead className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
                         <tr>
-                            <th className="py-2">{t('date')}</th>
-                            <th className="py-2">{t('invoiceNumber')}</th>
-                            <th className="py-2">{t('amount')}</th>
-                            <th className="py-2">{t('status')}</th>
-                            <th className="py-2">PDF</th>
+                            <th className="px-4 py-2">{t('date')}</th>
+                            <th className="px-4 py-2">{t('invoiceNumber')}</th>
+                            <th className="px-4 py-2">{t('amount')}</th>
+                            <th className="px-4 py-2">{t('status')}</th>
+                            <th className="px-4 py-2">PDF</th>
                         </tr>
                     </thead>
                     <tbody>
                         {Array.from({ length: 6 }).map((_, i) => (
-                            <tr key={i} className="border-b border-gray-200 dark:border-gray-600">
-                                <td className="py-2 text-gray-900 dark:text-gray-100">2025–06</td>
-                                <td className="py-2 text-gray-900 dark:text-gray-100">F-{1000 + i}</td>
-                                <td className="py-2 text-gray-900 dark:text-gray-100">7 500 Kč</td>
-                                <td className="py-2 text-green-600 dark:text-green-400">{t('paid')}</td>
-                                <td className="py-2 text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">{t('download')}</td>
+                            <tr key={i} className="rounded bg-white dark:bg-gray-700 shadow-sm">
+                                <td className="px-4 py-3 text-gray-900 dark:text-gray-100">2025–06</td>
+                                <td className="px-4 py-3 text-gray-900 dark:text-gray-100">F-{1000 + i}</td>
+                                <td className="px-4 py-3 text-gray-900 dark:text-gray-100">7 500 Kč</td>
+                                <td className="px-4 py-3 text-green-600 dark:text-green-400">{t('paid')}</td>
+                                <td className="px-4 py-3 text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">{t('download')}</td>
                             </tr>
                         ))}
                     </tbody>
