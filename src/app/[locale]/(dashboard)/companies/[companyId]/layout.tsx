@@ -1,10 +1,9 @@
 'use client';
 import { BlockingScreen } from '@/components/BlockingScreen';
 import { LoadingSpinner } from '@/components/Spinner';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useActiveCompany } from '@/lib/activeCompany';
 import { useCompanyList } from '@/lib/companyList';
-import { updateLastSelectedCompany } from '@/lib/userPreferences';
 
 export default function CompanyLayout({
   children,
@@ -17,12 +16,8 @@ export default function CompanyLayout({
   const company = useActiveCompany();
   const companies = useCompanyList();
 
-  // Save this company as the last selected company when the layout mounts
-  useEffect(() => {
-    if (companyId) {
-      updateLastSelectedCompany(companyId);
-    }
-  }, [companyId]);
+  // Note: Removed updateLastSelectedCompany call to prevent AuthApiError crashes
+  // This was a non-critical feature that was causing authentication errors
 
   // Check if user has access to this company
   const hasAccess = companies.some(c => c.id === companyId);

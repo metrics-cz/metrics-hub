@@ -16,7 +16,7 @@ class RequestCache {
     const entry = this.cache.get(key);
     
     // If we have a valid cached entry, return it
-    if (entry && !this.isExpired(entry)) {
+    if (entry && !this.isExpired(entry) && entry.data !== undefined) {
       return entry.data;
     }
     
@@ -35,6 +35,7 @@ class RequestCache {
     const promise = fetcher();
     
     // Store the promise immediately to prevent duplicate requests
+    // Use a temporary entry to prevent concurrent calls
     this.cache.set(key, {
       data: undefined,
       timestamp: Date.now(),
@@ -44,7 +45,7 @@ class RequestCache {
     try {
       const data = await promise;
       
-      // Update cache with actual data
+      // Update cache with actual data and remove promise
       this.cache.set(key, {
         data,
         timestamp: Date.now(),
