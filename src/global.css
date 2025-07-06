@@ -18,3 +18,37 @@
         @apply focus:outline-none focus:ring-2 focus:ring-primary-500/50;
     }
 }
+
+/* ---------- Simple table styling ---------- */
+@layer components {
+    /* Enhanced table row styling with subtle effects */
+    tbody tr {
+        @apply transition-all duration-200;
+    }
+    
+    /* Hover effects for table rows */
+    tbody tr:hover {
+        @apply transform scale-[1.005] shadow-lg;
+    }
+    
+    /* Rounded corners for table rows using border-separate */
+    tr.rounded td:first-child {
+        border-radius: 10px 0 0 10px;
+    }
+    
+    tr.rounded td:last-child {
+        border-radius: 0 10px 10px 0;
+    }
+    
+    /* Ensure proper background inheritance for rounded cells */
+    tr.rounded td {
+        background: inherit;
+    }
+    
+    /* Enhanced rounded row styling */
+    tr.rounded {
+        overflow: hidden;
+    }
+
+}
+

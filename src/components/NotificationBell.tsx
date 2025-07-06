@@ -6,35 +6,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  data?: any;
-  read: boolean;
-  actionUrl?: string;
-  createdAt: string;
-  expiresAt?: string;
-  invitation?: {
-    id: string;
-    status: string;
-    role: string;
-    company: {
-      name: string;
-      logo_url?: string;
-    };
-    inviter: {
-      email: string;
-    };
-  };
-}
-
-interface NotificationData {
-  notifications: Notification[];
-  unread_count: number;
-}
+import { useNotifications, Notification } from '@/components/providers/NotificationProvider';
 
 interface NotificationBellProps {
   showText?: boolean;
@@ -45,94 +17,16 @@ interface NotificationBellProps {
 
 export default function NotificationBell({ showText = false, text = 'Notifications', isMobileSidebar = false, onMobileClick }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
   const t = useTranslations();
   const bellRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Use the centralized notification context
+  const { notifications, unreadCount, isLoading: loading, markAsRead, markAllAsRead } = useNotifications();
 
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      
-      // Get the current session token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-
-      const response = await fetch('/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data: { success: boolean; data: NotificationData } = await response.json();
-        if (data.success) {
-          setNotifications(data.data.notifications);
-          setUnreadCount(data.data.unread_count);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Mark notification as read
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-      
-      if (response.ok) {
-        setNotifications(prev => 
-          prev.map(n => 
-            n.id === notificationId ? { ...n, read: true } : n
-          )
-        );
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  // Mark all as read
-  const markAllAsRead = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-
-      const response = await fetch('/api/notifications', {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-      
-      if (response.ok) {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        setUnreadCount(0);
-      }
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
-  };
 
   // Handle invitation response
   const handleInvitationResponse = async (invitationId: string, action: 'accept' | 'reject') => {
@@ -152,8 +46,7 @@ export default function NotificationBell({ showText = false, text = 'Notificatio
         if (action === 'accept' && data.data?.redirect_url) {
           router.push(data.data.redirect_url);
         }
-        // Refresh notifications
-        fetchNotifications();
+        // Notifications will be refreshed automatically via real-time subscription
       } else {
         const error = await response.json();
         alert(error.error || `Failed to ${action} invitation`);
@@ -208,33 +101,6 @@ export default function NotificationBell({ showText = false, text = 'Notificatio
     };
   }, [open]);
 
-  // Setup real-time subscriptions
-  useEffect(() => {
-    if (!user) return;
-
-    fetchNotifications();
-
-    // Subscribe to real-time notifications
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `userId=eq.${user.id}`,
-        },
-        () => {
-          fetchNotifications(); // Refetch to get complete data
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);

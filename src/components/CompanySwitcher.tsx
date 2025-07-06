@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useCompanyList } from '@/lib/companyList';
+import { useActiveCompany } from '@/lib/activeCompany';
 import clsx from 'classnames';
 import CreateCompanyForm from '@/components/CreateCompanyForm';
 import { useTranslations } from 'next-intl';
 import CompanyInitialsIcon from './company/CompanyInitialsIcon';
+import { updateLastSelectedCompany } from '@/lib/userPreferences';
 type Props = {
   collapsed?: boolean;
   onMobileClose?: () => void;
@@ -16,7 +18,7 @@ type Props = {
 export default function CompanySwitcher({ collapsed = false, onMobileClose }: Props) {
   const companies = useCompanyList();
   const { companyId } = useParams<{ companyId?: string }>();
-  const active = companies.find((c) => c.id === companyId) ?? null;
+  const active = useActiveCompany(); // Now uses enhanced logic with last selected company fallback
 
   const router = useRouter();
   const t = useTranslations();
@@ -70,8 +72,9 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
           {companies.map((c) => (
             <button
               key={c.id}
-              onClick={() => {
+              onClick={async () => {
                 setOpen(false);
+                await updateLastSelectedCompany(c.id);
                 router.push(`/companies/${c.id}`);
                 onMobileClose?.();
               }}

@@ -10,6 +10,8 @@ import { type CompanyUserMini } from '@/lib/validation/companyUserMiniSchema';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
+import { useCurrentCompany } from '@/lib/currentCompany';
+import { cachedApi } from '@/lib/cachedApi';
 
 export default function UsersPage() {
   const { companyId } = useParams<{ companyId: string }>();
@@ -17,42 +19,29 @@ export default function UsersPage() {
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [loadingRole, setLoadingRole] = useState(true);
   const t = useTranslations();
+  
+  // Get user role from context instead of fetching separately
+  const { userRole, isLoading: loadingRole } = useCurrentCompany();
 
-  /* fetch users and current user role */
+  /* fetch users only (role comes from context) */
   useEffect(() => {
     if (!companyId) return;
 
-    const fetchData = async () => {
+    const fetchUsers = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) return;
-
-        // Fetch users
+        setLoading(true);
         const usersData = await fetchUsersByCompanyMini(companyId);
-        setUsers(usersData);
-
-        // Fetch current user's role in the company
-        const companyResponse = await fetch(`/api/company/${companyId}`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-        });
-
-        if (companyResponse.ok) {
-          const companyData = await companyResponse.json();
-          setUserRole(companyData.userRole);
-        }
+        setUsers(usersData || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching users:', error);
+        setUsers([]); // Set empty array as fallback
       } finally {
-        setLoadingRole(false);
+        setLoading(false);
       }
     };
 
-    fetchData();
+    fetchUsers();
   }, [companyId]);
 
   // Check if current user can add other users (admin, superadmin, or owner)
@@ -96,7 +85,8 @@ export default function UsersPage() {
         alert(`Úspěch! ${messageText}`);
         setShowModal(false);
 
-        // Refresh user list
+        // Invalidate cache and refresh user list
+        cachedApi.invalidateCompanyUsers(companyId);
         fetchUsersByCompanyMini(companyId).then(setUsers);
       } else {
         // Show error message
@@ -155,7 +145,15 @@ export default function UsersPage() {
       </div>
 
       <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm} />
-      <UserTable users={filtered} />
+      
+      {loading ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading users...</span>
+        </div>
+      ) : (
+        <UserTable users={filtered} />
+      )}
 
       {showModal && (
         <InviteUserModal

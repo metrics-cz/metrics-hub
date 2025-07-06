@@ -5,6 +5,9 @@ import Sidebar from '@/components/layout/Sidebar';
 import { CompanyListProvider, useCompanyListLoading } from '@/lib/companyList';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
+import { NotificationProvider } from '@/components/providers/NotificationProvider';
+import { CurrentCompanyProvider } from '@/lib/currentCompany';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 function LoadingSpinner() {
   return (
@@ -47,8 +50,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <CompanyListProvider>
-      <DashboardContent>{children}</DashboardContent>
-    </CompanyListProvider>
+    <ErrorBoundary>
+      <CompanyListProvider>
+        <ErrorBoundary>
+          <CurrentCompanyProvider>
+            <ErrorBoundary>
+              <NotificationProvider>
+                <DashboardContent>{children}</DashboardContent>
+              </NotificationProvider>
+            </ErrorBoundary>
+          </CurrentCompanyProvider>
+        </ErrorBoundary>
+      </CompanyListProvider>
+    </ErrorBoundary>
   );
 }
