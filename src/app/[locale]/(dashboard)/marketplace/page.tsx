@@ -3,28 +3,43 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Search, Filter, Star, Download, ShoppingCart, Info, MessageSquare, FileSpreadsheet, Target, Mail, BarChart3, Trello, X } from 'lucide-react';
+import { cachedApi } from '@/lib/cachedApi';
+import { Application, ApplicationCategory } from '@/lib/applications';
+import { useActiveCompany } from '@/lib/activeCompany';
 
-interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  icon: React.ComponentType<any>;
-  rating: number;
+interface Integration extends Omit<Application, 'download_count' | 'is_premium' | 'long_description' | 'documentation_url'> {
+  iconUrl: string;
   downloads: number;
   isPremium: boolean;
-  price: string | null;
-  tags: string[];
   longDescription: string;
-  features: string[];
-  screenshots: string[];
   documentation: string;
-  developer: string;
-  version: string;
-  lastUpdated: string;
 }
 
-const categories = [
+// Fallback icon component for when image fails to load
+const FallbackIcon = ({ className }: { className?: string }) => (
+  <MessageSquare className={className} />
+);
+
+// App icon component with fallback
+const AppIcon = ({ iconUrl, appName, className }: { iconUrl?: string; appName: string; className?: string }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (!iconUrl || hasError) {
+    return <FallbackIcon className={className} />;
+  }
+
+  return (
+    <img
+      src={iconUrl}
+      alt={`${appName} icon`}
+      className={className}
+      onError={() => setHasError(true)}
+      onLoad={() => setHasError(false)}
+    />
+  );
+};
+
+const defaultCategories = [
   { id: 'all', labelKey: 'marketplace.categories.all' },
   { id: 'communication', labelKey: 'marketplace.categories.communication' },
   { id: 'productivity', labelKey: 'marketplace.categories.productivity' },
@@ -36,165 +51,79 @@ const categories = [
 
 export default function MarketplacePage() {
   const t = useTranslations('marketplace');
+  const company = useActiveCompany();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [categories, setCategories] = useState(defaultCategories);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedApp, setSelectedApp] = useState<Integration | null>(null);
   const [installing, setInstalling] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
+  // Convert Application to Integration format
+  const convertToIntegration = (app: Application): Integration => {
+    return {
+      ...app,
+      iconUrl: app.icon_url || '',
+      downloads: app.download_count,
+      isPremium: app.is_premium,
+      longDescription: app.long_description || app.description,
+      documentation: app.documentation_url || '',
+      tags: app.tags || [],
+      features: app.features || [],
+      screenshots: app.screenshots || []
+    };
+  };
+
+  // Fetch applications from API
   useEffect(() => {
-    const mockIntegrations: Integration[] = [
-      {
-        id: '1',
-        name: 'Slack',
-        description: t('apps.slack.description'),
-        longDescription: t('apps.slack.longDescription'),
-        category: 'communication',
-        icon: MessageSquare,
-        rating: 4.8,
-        downloads: 12500,
-        isPremium: false,
-        price: null,
-        tags: ['communication', 'teamwork', 'notifications'],
-        features: [
-          'Automatic notifications',
-          'Customizable webhooks',
-          'Report scheduling',
-          'Team collaboration'
-        ],
-        screenshots: ['/api/placeholder/600/400', '/api/placeholder/600/400'],
-        documentation: 'https://docs.slack.com',
-        developer: 'Slack Technologies',
-        version: '2.4.1',
-        lastUpdated: '2025-01-15'
-      },
-      {
-        id: '2',
-        name: 'Google Sheets',
-        description: t('apps.googleSheets.description'),
-        longDescription: t('apps.googleSheets.longDescription'),
-        category: 'productivity',
-        icon: FileSpreadsheet,
-        rating: 4.9,
-        downloads: 18750,
-        isPremium: false,
-        price: null,
-        tags: ['spreadsheets', 'export', 'reports'],
-        features: [
-          'Real-time sync',
-          'Automated reports',
-          'Custom templates',
-          'Data visualization'
-        ],
-        screenshots: ['/api/placeholder/600/400', '/api/placeholder/600/400'],
-        documentation: 'https://developers.google.com/sheets',
-        developer: 'Google LLC',
-        version: '1.8.3',
-        lastUpdated: '2025-01-20'
-      },
-      {
-        id: '3',
-        name: 'Trello',
-        description: t('apps.trello.description'),
-        longDescription: t('apps.trello.longDescription'),
-        category: 'productivity',
-        icon: Trello,
-        rating: 4.6,
-        downloads: 8300,
-        isPremium: false,
-        price: null,
-        tags: ['project management', 'tasks', 'organization'],
-        features: [
-          'Auto card creation',
-          'Custom workflows',
-          'Team boards',
-          'Progress tracking'
-        ],
-        screenshots: ['/api/placeholder/600/400'],
-        documentation: 'https://developer.atlassian.com/cloud/trello',
-        developer: 'Atlassian',
-        version: '3.1.0',
-        lastUpdated: '2025-01-10'
-      },
-      {
-        id: '4',
-        name: 'HubSpot CRM',
-        description: t('apps.hubspot.description'),
-        longDescription: t('apps.hubspot.longDescription'),
-        category: 'crm',
-        icon: Target,
-        rating: 4.7,
-        downloads: 15200,
-        isPremium: true,
-        price: '$29/month',
-        tags: ['crm', 'customers', 'sales'],
-        features: [
-          'Lead management',
-          'Contact sync',
-          'Deal tracking',
-          'Sales automation'
-        ],
-        screenshots: ['/api/placeholder/600/400', '/api/placeholder/600/400', '/api/placeholder/600/400'],
-        documentation: 'https://developers.hubspot.com',
-        developer: 'HubSpot Inc.',
-        version: '4.2.1',
-        lastUpdated: '2025-01-18'
-      },
-      {
-        id: '5',
-        name: 'Gmail',
-        description: t('apps.gmail.description'),
-        longDescription: t('apps.gmail.longDescription'),
-        category: 'communication',
-        icon: Mail,
-        rating: 4.5,
-        downloads: 9800,
-        isPremium: false,
-        price: null,
-        tags: ['email', 'marketing', 'automation'],
-        features: [
-          'Email campaigns',
-          'Template management',
-          'Delivery tracking',
-          'Contact lists'
-        ],
-        screenshots: ['/api/placeholder/600/400', '/api/placeholder/600/400'],
-        documentation: 'https://developers.google.com/gmail',
-        developer: 'Google LLC',
-        version: '2.1.5',
-        lastUpdated: '2025-01-12'
-      },
-      {
-        id: '6',
-        name: 'Power BI',
-        description: t('apps.powerbi.description'),
-        longDescription: t('apps.powerbi.longDescription'),
-        category: 'analytics',
-        icon: BarChart3,
-        rating: 4.4,
-        downloads: 6700,
-        isPremium: true,
-        price: '$45/month',
-        tags: ['analytics', 'visualization', 'business intelligence'],
-        features: [
-          'Custom dashboards',
-          'Real-time analytics',
-          'Data modeling',
-          'Report sharing'
-        ],
-        screenshots: ['/api/placeholder/600/400', '/api/placeholder/600/400'],
-        documentation: 'https://docs.microsoft.com/power-bi',
-        developer: 'Microsoft Corporation',
-        version: '1.5.2',
-        lastUpdated: '2025-01-08'
-      },
-    ];
+    const fetchApplications = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    setIntegrations(mockIntegrations);
-    setLoading(false);
-  }, [t]);
+        // Fetch applications and categories in parallel
+        const [appsResponse, categoriesResponse] = await Promise.all([
+          fetch('/api/applications'),
+          fetch('/api/applications/categories')
+        ]);
+
+        if (!appsResponse.ok || !categoriesResponse.ok) {
+          throw new Error('Failed to fetch applications');
+        }
+
+        const appsData = await appsResponse.json();
+        const categoriesData = await categoriesResponse.json();
+
+        if (appsData.success && appsData.data?.applications) {
+          const convertedIntegrations = appsData.data.applications.map(convertToIntegration);
+          setIntegrations(convertedIntegrations);
+        }
+
+        if (categoriesData.success && categoriesData.data) {
+          const dynamicCategories = [
+            { id: 'all', labelKey: 'marketplace.categories.all' },
+            ...categoriesData.data.map((cat: ApplicationCategory) => ({
+              id: cat.name,
+              labelKey: `marketplace.categories.${cat.name}`,
+              name: cat.name
+            }))
+          ];
+          setCategories(dynamicCategories);
+        }
+
+      } catch (error) {
+        console.error('Error fetching applications:', error);
+        setError('Failed to load applications');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, []);
 
   const filteredIntegrations = integrations.filter(integration => {
     const matchesSearch = integration.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -207,17 +136,43 @@ export default function MarketplacePage() {
   });
 
   const handleInstall = async (integrationId: string) => {
+    if (!company?.id) {
+      alert(t('noCompanySelected') || 'Please select a company first');
+      return;
+    }
+
     setInstalling(integrationId);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Close modal after successful installation
-    setSelectedApp(null);
-    setInstalling(null);
-    
-    // TODO: Show success notification
-    alert(t('installSuccess'));
+    try {
+      const response = await cachedApi.installApplication(company.id, integrationId);
+      
+      if (response.success) {
+        // Close modal after successful installation
+        setSelectedApp(null);
+        alert(response.message || t('installSuccess'));
+      } else {
+        throw new Error(response.error || 'Installation failed');
+      }
+    } catch (error) {
+      console.error('Error installing application:', error);
+      let errorMessage = t('installError') || 'Installation failed';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Authentication required')) {
+          errorMessage = 'Please log in to install applications.';
+        } else if (error.message.includes('permission')) {
+          errorMessage = 'You do not have permission to install applications for this company.';
+        } else if (error.message.includes('already installed')) {
+          errorMessage = 'This application is already installed.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setInstalling(null);
+    }
   };
 
   if (loading) {
@@ -230,6 +185,28 @@ export default function MarketplacePage() {
               <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="text-center py-16">
+          <div className="w-16 h-16 dark:bg-gray-700 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <X className="w-8 h-8 dark:text-gray-400 text-gray-500" />
+          </div>
+          <h3 className="dark:text-white text-gray-900 font-medium mb-2">Failed to Load Applications</h3>
+          <p className="dark:text-gray-400 text-gray-600 text-sm mb-4">
+            {error}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -293,7 +270,6 @@ export default function MarketplacePage() {
       {/* Integration Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredIntegrations.map((integration) => {
-          const IconComponent = integration.icon;
           return (
             <div
               key={integration.id}
@@ -303,7 +279,11 @@ export default function MarketplacePage() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 dark:bg-gray-700 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <IconComponent className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                    <AppIcon 
+                      iconUrl={integration.iconUrl} 
+                      appName={integration.name} 
+                      className="w-6 h-6 text-primary-600 dark:text-primary-400" 
+                    />
                   </div>
                   <div>
                     <h3 className="font-semibold dark:text-white text-gray-900 text-sm">{integration.name}</h3>
@@ -394,7 +374,11 @@ export default function MarketplacePage() {
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200 p-6 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 dark:bg-gray-700 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <selectedApp.icon className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                  <AppIcon 
+                    iconUrl={selectedApp.iconUrl} 
+                    appName={selectedApp.name} 
+                    className="w-8 h-8 text-primary-600 dark:text-primary-400" 
+                  />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold dark:text-white text-gray-900">{selectedApp.name}</h2>

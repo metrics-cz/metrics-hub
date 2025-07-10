@@ -96,8 +96,26 @@
     "overdue": "Overdue"
   },
   "apps": {
-    "title": "Apps",
-    "addApp": "Add App",
+    "title": "Installed Applications",
+    "subtitle": "Manage your installed applications and integrations",
+    "addApp": "Add Applications",
+    "browseMarketplace": "Browse Marketplace",
+    "noAppsInstalled": "No applications are installed",
+    "noAppsSubtitle": "Start by adding applications from marketplace",
+    "active": "Active",
+    "removeApp": "Remove application",
+    "description": "Description"
+  },
+  "integrations": {
+    "title": "Automation and Integration",
+    "subtitle": "Manage your automations and integrations",
+    "addIntegration": "Add Automation",
+    "browseMarketplace": "Browse Automation Marketplace",
+    "noIntegrationsInstalled": "No automations are installed",
+    "noIntegrationsSubtitle": "Start by adding automations from marketplace",
+    "active": "Active",
+    "removeIntegration": "Remove automation",
+    "configureIntegration": "Configure automation",
     "description": "Description"
   },
   "billing": {
@@ -144,6 +162,8 @@
     "buyAndInstall": "Buy & Install",
     "installing": "Installing...",
     "installSuccess": "App installed successfully!",
+    "installError": "Installation failed",
+    "noCompanySelected": "Please select a company first",
     "noResults": "No apps found",
     "noResultsSubtitle": "Try changing your search term or filters",
     "by": "by",

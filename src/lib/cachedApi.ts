@@ -107,6 +107,111 @@ class CachedApi {
   clearAll(): void {
     requestCache.clear();
   }
+
+  // Application management methods
+  async installApplication(companyId: string, applicationId: string): Promise<any> {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`/api/company/${companyId}/applications`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ applicationId })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Failed to install application (${response.status}): ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Invalidate related caches
+      this.invalidateCompanyApplications(companyId);
+      
+      return data;
+    } catch (error) {
+      console.error('Error installing application:', error);
+      throw error;
+    }
+  }
+
+  async fetchCompanyApplications(companyId: string): Promise<any[]> {
+    const cacheKey = `company-applications:${companyId}`;
+    
+    return requestCache.get(cacheKey, async () => {
+      try {
+        const headers = await this.getAuthHeaders();
+        const response = await fetch(`/api/company/${companyId}/applications`, { headers });
+        
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Unknown error');
+          throw new Error(`Failed to fetch company applications (${response.status}): ${errorText}`);
+        }
+        
+        const data = await response.json();
+        return data.success ? data.data : [];
+      } catch (error) {
+        console.error('Error fetching company applications:', error);
+        throw error;
+      }
+    });
+  }
+
+  async uninstallApplication(companyId: string, applicationId: string): Promise<any> {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`/api/company/${companyId}/applications/${applicationId}`, {
+        method: 'DELETE',
+        headers
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Failed to uninstall application (${response.status}): ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Invalidate related caches
+      this.invalidateCompanyApplications(companyId);
+      
+      return data;
+    } catch (error) {
+      console.error('Error uninstalling application:', error);
+      throw error;
+    }
+  }
+
+  async updateApplicationSettings(companyId: string, applicationId: string, settings: any): Promise<any> {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`/api/company/${companyId}/applications/${applicationId}/settings`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ settings })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Failed to update application settings (${response.status}): ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Invalidate related caches
+      this.invalidateCompanyApplications(companyId);
+      
+      return data;
+    } catch (error) {
+      console.error('Error updating application settings:', error);
+      throw error;
+    }
+  }
+
+  // Cache invalidation methods for applications
+  invalidateCompanyApplications(companyId: string): void {
+    requestCache.invalidate(`company-applications:${companyId}`);
+  }
 }
 
 export const cachedApi = new CachedApi();

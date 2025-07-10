@@ -96,8 +96,26 @@
     "overdue": "Po splatnosti"
   },
   "apps": {
-    "title": "Aplikace",
-    "addApp": "Přidat aplikaci",
+    "title": "Nainstalované aplikace",
+    "subtitle": "Spravujte vaše nainstalované aplikace a integrace",
+    "addApp": "Přidat aplikace",
+    "browseMarketplace": "Prohlédnout marketplace",
+    "noAppsInstalled": "Žádné aplikace nejsou nainstalovány",
+    "noAppsSubtitle": "Začněte přidáním aplikací z marketplace",
+    "active": "Aktivní",
+    "removeApp": "Odebrat aplikaci",
+    "description": "Popis"
+  },
+  "integrations": {
+    "title": "Automatizace a Integrace",
+    "subtitle": "Spravujte vaše automatizace a integrace",
+    "addIntegration": "Přidat automatizaci",
+    "browseMarketplace": "Prohlédnout marketplace automatizací",
+    "noIntegrationsInstalled": "Žádné automatizace nejsou nainstalovány",
+    "noIntegrationsSubtitle": "Začněte přidáním automatizací z marketplace",
+    "active": "Aktivní",
+    "removeIntegration": "Odebrat automatizaci",
+    "configureIntegration": "Konfigurovat automatizaci",
     "description": "Popis"
   },
   "billing": {
@@ -144,6 +162,8 @@
     "buyAndInstall": "Koupit a nainstalovat",
     "installing": "Instaluji...",
     "installSuccess": "Aplikace byla úspěšně nainstalována!",
+    "installError": "Instalace se nezdařila",
+    "noCompanySelected": "Prosím vyberte nejprve firmu",
     "noResults": "Žádné aplikace nenalezeny",
     "noResultsSubtitle": "Zkuste změnit hledaný výraz nebo filtry",
     "by": "od",
