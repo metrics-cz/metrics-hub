@@ -108,20 +108,21 @@ export default async function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-  const cspMode = process.env.CSP_MODE || 'relaxed'; 
-  const isStrict = cspMode === 'strict';
+  // CSP mode - now using production-compatible settings
 
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      isStrict
-        ? "script-src 'self'"
-        : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline'",
+      // Allow Next.js inline scripts for production compatibility
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // Allow Google Fonts and inline styles
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      // Allow Google Fonts domains
+      "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
+      // Allow Supabase and other necessary API connections
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.vercel.com",
       "frame-ancestors 'none'",
     ].join('; ')
   );
