@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import UserTable from '@/components/user/UserTable';
 import { Plus } from 'lucide-react';
 import SearchBar from '@/components/user/SearchBar';
@@ -10,45 +9,60 @@ import { type CompanyUserMini } from '@/lib/validation/companyUserMiniSchema';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
-import { useCurrentCompany } from '@/lib/currentCompany';
+import { useActiveCompany } from '@/lib/activeCompany';
 import { cachedApi } from '@/lib/cachedApi';
 
 export default function UsersPage() {
-  const { companyId } = useParams<{ companyId: string }>();
+  const company = useActiveCompany();
   const [users, setUsers] = useState<CompanyUserMini[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loadingRole, setLoadingRole] = useState(true);
   const t = useTranslations();
-  
-  // Get user role from context instead of fetching separately
-  const { userRole, isLoading: loadingRole } = useCurrentCompany();
+  const { user } = useAuth();
 
-  /* fetch users only (role comes from context) */
+  /* fetch users and user role */
   useEffect(() => {
-    if (!companyId) return;
+    if (!company?.id || !user?.id) return;
 
-    const fetchUsers = async () => {
+    const fetchUsersAndRole = async () => {
       try {
         setLoading(true);
-        const usersData = await fetchUsersByCompanyMini(companyId);
+        setLoadingRole(true);
+        
+        // Fetch users
+        const usersData = await fetchUsersByCompanyMini(company.id);
         setUsers(usersData || []);
+        
+        // Fetch user role
+        const { data: roleData } = await supabase
+          .from('company_users')
+          .select('role')
+          .eq('company_id', company.id)
+          .eq('user_id', user.id)
+          .single();
+        
+        setUserRole(roleData?.role || null);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching users and role:', error);
         setUsers([]); // Set empty array as fallback
+        setUserRole(null);
       } finally {
         setLoading(false);
+        setLoadingRole(false);
       }
     };
 
-    fetchUsers();
-  }, [companyId]);
+    fetchUsersAndRole();
+  }, [company?.id, user?.id]);
 
   // Check if current user can add other users (admin, superadmin, or owner)
   const canAddUsers = userRole && ['admin', 'superadmin', 'owner'].includes(userRole);
 
   const handleSendInvite = async (email: string, role: string, message?: string) => {
-    if (!companyId) return;
+    if (!company?.id) return;
 
     setLoading(true);
     try {
@@ -68,7 +82,7 @@ export default function UsersPage() {
         },
         body: JSON.stringify({
           email,
-          companyId,
+          companyId: company.id,
           role,
           message,
         }),
@@ -86,8 +100,8 @@ export default function UsersPage() {
         setShowModal(false);
 
         // Invalidate cache and refresh user list
-        cachedApi.invalidateCompanyUsers(companyId);
-        fetchUsersByCompanyMini(companyId).then(setUsers);
+        cachedApi.invalidateCompanyUsers(company.id);
+        fetchUsersByCompanyMini(company.id).then(setUsers);
       } else {
         // Show error message
         let errorMessage = 'Nepodařilo se odeslat pozvánku';

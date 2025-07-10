@@ -61,7 +61,7 @@ export default function LanguageSwitcher({
                 </button>
 
                 {open && (
-                    <div className="absolute left-0 top-full mt-1 bg-primary-500 dark:bg-gray-800 rounded shadow-lg w-32 z-50">
+                    <div className="absolute left-0 top-full mt-1 bg-primary-500 dark:bg-gray-800 rounded shadow-lg w-36 z-50">
                         {LOCALES.map(({ code, name, Flag }) => (
                             <button
                                 key={code}
@@ -84,14 +84,16 @@ export default function LanguageSwitcher({
     // Desktop expanded: rectangular flag + language
     if (!isMobileHeader && !collapsed) {
         return (
-            <div className="relative">
+            <div className="relative w-full">
                 <button
                     onClick={() => setOpen(!open)}
                     aria-label="Change language"
-                    className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-700 transition"
+                    className="flex items-center w-full gap-2 px-3 py-2 justify-between text-gray-700 dark:text-gray-300 hover:bg-gray-300"
                 >
-                    <currentLocale.Flag className="w-6 h-6" />
-                    <span>{currentLocale.name}</span>
+                    <div className="flex items-center gap-2">
+                        <currentLocale.Flag className="w-6 h-6" />
+                        <span>{currentLocale.name}</span>
+                    </div>
                     {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 
@@ -123,7 +125,7 @@ export default function LanguageSwitcher({
                 <button
                     onClick={() => setOpen(!open)}
                     aria-label="Change language"
-                    className="flex items-center gap-1 px-2 py-1 border-none rounded-full hover:bg-gray-700 transition"
+                    className="flex items-center gap-1 px-2 py-1 border-none rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition"
                 >
                     <currentLocale.Flag className="w-6 h-6 rounded-full" />
                     {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}

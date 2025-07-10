@@ -131,7 +131,7 @@ function SidebarBottomSection({
         </button>
 
         {profileMenuOpen && (
-          <div className={`absolute bg-white dark:bg-gray-800 shadow-lg py-2 z-50 ${collapsed
+          <div className={`absolute rounded bg-white dark:bg-gray-800 shadow-lg py-2 z-50 ${collapsed
             ? 'left-full bottom-0 ml-2 min-w-48'
             : 'bottom-full left-0 right-0 mb-2'
             }`}>
@@ -141,14 +141,14 @@ function SidebarBottomSection({
                 setProfileMenuOpen(false);
                 onMobileClick?.();
               }}
-              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
             >
               {t('sidebar.profile')}
             </Link>
 
             <hr className='m-1' />
 
-            <div className="py-2">
+            <div className="py-2 w-full">
               <LanguageSwitcher collapsed={false} />
             </div>
 
@@ -159,7 +159,7 @@ function SidebarBottomSection({
                 onSignOut();
                 setProfileMenuOpen(false);
               }}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-300 dark:hover:bg-gray-700"
             >
               {t('sidebar.logout')}
             </button>

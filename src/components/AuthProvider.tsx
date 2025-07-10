@@ -22,8 +22,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /* 1.  Initial session load                                             */
   /* -------------------------------------------------------------------- */
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user ?? null);
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
+      if (error) {
+        console.error('AuthProvider: Error getting user:', error);
+        setUser(null);
+      } else {
+        setUser(user ?? null);
+      }
       setLoading(false);
     });
   }, []);
@@ -34,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       const newUser = session?.user ?? null;
       setUser(newUser);
 

@@ -13,7 +13,13 @@
       "Bash(pnpm build)",
       "Bash(npm run lint)",
       "Bash(npx tsc:*)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "Bash(find:*)",
+      "Bash(supabase db diff:*)",
+      "Bash(supabase migration:*)",
+      "Bash(supabase db:*)",
+      "Bash(supabase status:*)",
+      "Bash(npx supabase migration:*)"
     ],
     "deny": []
   }

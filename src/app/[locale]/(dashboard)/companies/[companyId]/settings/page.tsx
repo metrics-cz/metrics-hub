@@ -2,22 +2,136 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { type Company } from '@/lib/validation/companySchema';
+import { type Company, type UserCompany } from '@/lib/validation/companySchema';
 import CompanyInitialsIcon from '@/components/company/CompanyInitialsIcon';
+import { LogoUpload } from '@/components/company/LogoUpload';
+import { ColorSchemeManager } from '@/components/company/ColorSchemeManager';
+import { ConnectedServicesOverview } from '@/components/company/ConnectedServicesOverview';
+import { ContactDetailsForm } from '@/components/company/ContactDetailsForm';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useActiveCompany } from '@/lib/activeCompany';
+import { isAdminOrHigher } from '@/lib/permissions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Settings, Palette, Link, Mail, Trash2, AlertCircle, Save, RefreshCw } from 'lucide-react';
 export default function CompanySettingsPage() {
   /* params from URL */
   const { companyId } = useParams<{ companyId: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  
+
   /* Get company data from context instead of fetching */
-  const company = useActiveCompany();
-  
+  const company: UserCompany | null = useActiveCompany();
   /* local state */
   const [deleting, setDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState('general');
+  const [companyData, setCompanyData] = useState<Company | null>(company);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  /* Form state for general settings */
+  const [generalFormData, setGeneralFormData] = useState({
+    name: company?.name || ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setCompanyData(company);
+    if (company) {
+      setGeneralFormData({
+        name: company.name || ''
+      });
+    }
+  }, [company]);
+
+  // Check if user has admin permission for settings management
+  const hasAdminPermission = isAdminOrHigher(company?.userRole);
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  const handleLogoUploadSuccess = (logoUrl: string, type: 'square' | 'rectangular') => {
+    if (companyData) {
+      setCompanyData({
+        ...companyData,
+        [type === 'square' ? 'logo_url' : 'rectangular_logo_url']: logoUrl,
+      });
+    }
+    showNotification('success', `${type === 'square' ? 'Square' : 'Rectangular'} logo uploaded and saved successfully`);
+  };
+
+  const handleColorSchemeUpdate = (primaryColor: string, secondaryColor: string) => {
+    if (companyData) {
+      setCompanyData({
+        ...companyData,
+        primary_color: primaryColor,
+        secondary_color: secondaryColor,
+      });
+    }
+    showNotification('success', 'Color scheme updated successfully');
+  };
+
+  const handleContactDetailsUpdate = (contactDetails: any) => {
+    if (companyData) {
+      setCompanyData({
+        ...companyData,
+        contact_details: contactDetails,
+        billing_email: contactDetails.email,
+      });
+    }
+    showNotification('success', 'Contact details updated successfully');
+  };
+
+  const handleError = (error: string) => {
+    showNotification('error', error);
+  };
+
+  const handleSaveGeneralSettings = async () => {
+    if (!company || !user) return;
+
+    setIsSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`/api/company/${companyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: generalFormData.name
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update company');
+      }
+
+      const updatedCompany = await response.json();
+
+      // Update local state
+      setCompanyData(updatedCompany);
+
+      showNotification('success', 'Company details updated successfully');
+    } catch (error) {
+      console.error('Error updating company:', error);
+      handleError(error instanceof Error ? error.message : 'Failed to update company');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   /* --- delete company function --- */
   const handleDeleteCompany = async () => {
@@ -61,115 +175,233 @@ export default function CompanySettingsPage() {
     }
   };
 
-  /* -------------------------------------------------------------------- */
+  if (!companyData) {
+    return (
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="text-center py-8">
+          <p>Loading company data...</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="max-w-full mx-auto px-6 py-8">
-      <h1 className="text-3xl font-semibold mb-4">Nastavení firmy</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[4fr_4fr] gap-8">
-        {/* --------- Profil firmy --------- */}
-        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 relative bg-white dark:bg-gray-800">
-          <span className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-            Aktivní
-          </span>
-
-          <div className="flex items-center mb-4">
-            <div className="m-2">
-              {
-                company?.logo_url ? (
-                  <img
-                    src={company.logo_url}
-                    alt={`${company.name} logo`}
-                    className="w-16 h-16 rounded-full mr-4"
-                  />
-                ) : (
-                  <CompanyInitialsIcon name={company?.name} size={64} />
-                )
-              }
-            </div>
-            <div className="flex flex-col">
-              <h2 className="text-xl font-semibold mb-1">{company?.name}</h2>
-              <input
-                type="text"
-                placeholder="Firma 123"
-                className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 w-64 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                defaultValue={company?.name}
-              />
-            </div>
-          </div>
-
-          <label htmlFor="desc" className="block text-sm font-medium mb-1">
-            Popis společnosti
-          </label>
-          <textarea
-            id="desc"
-            rows={4}
-            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 resize-none bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-          />
-          <button className="mt-6 bg-blue-600 text-white rounded px-6 py-2 w-full hover:bg-blue-700 transition">
-            Uložit profil
-          </button>
-        </section>
-
-        {/* ------ Fakturační adresa ------ */}
-        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
-          <h3 className="font-semibold text-lg mb-6">Fakturační adresa</h3>
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <input type="text" placeholder="Ulice a číslo" className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-            <input type="text" placeholder="Město" className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-          </div>
-          <div className="grid grid-cols-2 gap-5">
-            <input type="text" placeholder="PSČ" className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-            <select className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-              <option>Česko</option>
-            </select>
-          </div>
-        </section>
-
-        {/* ---------- Branding ---------- */}
-        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
-          <h3 className="font-semibold text-lg mb-6">Branding</h3>
-          <div className="flex items-center gap-8 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded bg-[#1976d2] border border-gray-300" />
-              <span>1976d2</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded bg-[#008080] border border-gray-300" />
-              <span>008080</span>
-            </div>
-          </div>
-          <div className="border border-gray-300 rounded p-5 text-center cursor-pointer">
-            <p className="font-semibold mb-1">Nahrát logo</p>
-            <p className="text-sm text-gray-500">Doporučeno 256 x 255 px PNG</p>
-          </div>
-        </section>
-
-        {/* ------- Kontaktní údaje ------- */}
-        <section className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
-          <h3 className="font-semibold text-lg mb-6">Kontaktní údaje</h3>
-          <div className="grid grid-cols-3 gap-6">
-            <input type="tel" placeholder="Telefon" className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-            <input type="email" placeholder="support@firma123.cz" className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-            <input type="url" placeholder="Web" className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-          </div>
-        </section>
-
-        {/* ------- Danger Zone ------- */}
-        <section className="border border-red-200 dark:border-red-800 rounded-lg p-6 bg-red-50 dark:bg-red-900/20 col-span-full">
-          <h3 className="font-semibold text-lg mb-4 text-red-600 dark:text-red-400">Nebezpečná zóna</h3>
-          <p className="text-sm text-red-700 dark:text-red-300 mb-6">
-            Smazání společnosti je nevratná akce. Všechna data společnosti, včetně uživatelů a pozvánek, budou trvale odstraněna.
-          </p>
-          <button
-            onClick={handleDeleteCompany}
-            disabled={deleting}
-            className="bg-red-600 text-white px-6 py-2 rounded-md shadow-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {deleting ? 'Mazání...' : 'Smazat společnost'}
-          </button>
-        </section>
+    <main className="max-w-7xl mx-auto px-6 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-semibold mb-2">Company Settings</h1>
+          <p className="text-muted-foreground">Manage your company profile, branding, and integrations</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+            Active
+          </Badge>
+        </div>
       </div>
+
+      {/* Permission Warning */}
+      {!hasAdminPermission && (
+        <Alert className="mb-6 border-orange-200 bg-orange-50">
+          <AlertCircle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            You have limited access to company settings. Admin or higher role is required to modify company information, branding, and advanced settings.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Notification */}
+      {notification && (
+        <Alert
+          variant={notification.type === 'error' ? 'destructive' : 'default'}
+          className="mb-6"
+        >
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{notification.message}</AlertDescription>
+        </Alert>
+      )}
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            General
+          </TabsTrigger>
+          <TabsTrigger value="branding" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Branding
+          </TabsTrigger>
+          <TabsTrigger value="integrations" className="flex items-center gap-2">
+            <Link className="h-4 w-4" />
+            Integrations
+          </TabsTrigger>
+          <TabsTrigger value="contact" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Contact
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex items-center gap-2">
+            <Trash2 className="h-4 w-4" />
+            Advanced
+          </TabsTrigger>
+        </TabsList>
+
+        {/* General Settings */}
+        <TabsContent value="general" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Company Profile</CardTitle>
+              <CardDescription>
+                Basic information about your company
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center gap-6">
+                <div className="flex-shrink-0">
+                  {companyData.logo_url ? (
+                    <img
+                      src={companyData.logo_url}
+                      alt={`${companyData.name} logo`}
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <CompanyInitialsIcon name={companyData.name} size={64} />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">{companyData.name}</h3>
+                  <p className="text-muted-foreground">{companyData.billing_email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="company-name" className="text-sm font-medium">
+                    Company Name
+                  </label>
+                  <input
+                    id="company-name"
+                    type="text"
+                    value={generalFormData.name}
+                    onChange={(e) => setGeneralFormData(prev => ({ ...prev, name: e.target.value }))}
+                    disabled={!hasAdminPermission}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="plan" className="text-sm font-medium">
+                    Plan
+                  </label>
+                  <input
+                    id="plan"
+                    type="text"
+                    value={companyData.plan || 'Free'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                    readOnly
+                  />
+                </div>
+              </div>           
+
+              <Button
+                className="w-full"
+                disabled={!hasAdminPermission || isSaving}
+                onClick={handleSaveGeneralSettings}
+              >
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Branding Settings */}
+        <TabsContent value="branding" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <LogoUpload
+              companyId={companyId}
+              companyName={companyData.name}
+              type="square"
+              currentLogoUrl={companyData.logo_url}
+              onUploadSuccess={(url) => handleLogoUploadSuccess(url, 'square')}
+              onUploadError={handleError}
+            />
+            <LogoUpload
+              companyId={companyId}
+              companyName={companyData.name}
+              type="rectangular"
+              currentLogoUrl={companyData.rectangular_logo_url}
+              onUploadSuccess={(url) => handleLogoUploadSuccess(url, 'rectangular')}
+              onUploadError={handleError}
+            />
+          </div>
+
+          <ColorSchemeManager
+            companyId={companyId}
+            currentPrimaryColor={companyData.primary_color}
+            currentSecondaryColor={companyData.secondary_color}
+            onUpdateSuccess={handleColorSchemeUpdate}
+            onUpdateError={handleError}
+          />
+        </TabsContent>
+
+        {/* Integrations */}
+        <TabsContent value="integrations" className="space-y-6">
+          <ConnectedServicesOverview companyId={companyId} />
+        </TabsContent>
+
+        {/* Contact Details */}
+        <TabsContent value="contact" className="space-y-6">
+          <ContactDetailsForm
+            companyId={companyId}
+            companyEmail={companyData.billing_email || ''}
+            currentContactDetails={companyData.contact_details}
+            onUpdateSuccess={handleContactDetailsUpdate}
+            onUpdateError={handleError}
+          />
+        </TabsContent>
+
+        {/* Advanced Settings */}
+        <TabsContent value="advanced" className="space-y-6">
+          <Card className="border-red-200">
+            <CardHeader>
+              <CardTitle className="text-red-600">Danger Zone</CardTitle>
+              <CardDescription>
+                These actions are irreversible. Please be careful.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-red-50 rounded-lg">
+                <h4 className="font-semibold text-red-800 mb-2">Delete Company</h4>
+                <p className="text-sm text-red-700 mb-4">
+                  Permanently delete this company and all associated data. This action cannot be undone.
+                </p>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteCompany}
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <>Deleting...</>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Company
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }

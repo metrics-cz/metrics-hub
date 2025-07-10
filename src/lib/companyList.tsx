@@ -3,20 +3,16 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/AuthProvider';
-
-export type Company = {
-  id: string;
-  name: string;
-  logo_url?: string;
-};
+import { type Company, type UserCompany } from '@/lib/validation/companySchema';
 
 // Define type for the nested company response
 type CompanyUserResponse = {
+  role: string;
   company: Company;
 };
 
 type CompanyListContextType = {
-  companies: Company[];
+  companies: UserCompany[];
   loading: boolean;
 };
 
@@ -24,7 +20,7 @@ const Ctx = createContext<CompanyListContextType | null>(null);
 
 export function CompanyListProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<UserCompany[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,9 +33,26 @@ export function CompanyListProvider({ children }: { children: React.ReactNode })
     const fetchCompanies = async () => {
       setLoading(true);
       // 1. Type the response explicitly
-      const { data, error } = await supabase
-        .from('company_users')
-        .select('company:companies (id, name, logo_url)')
+     const { data, error } = await supabase
+         .from('company_users')
+        .select(`
+          role, 
+          company:companies (
+            id, 
+            name, 
+            billing_email, 
+            plan, 
+            owner_uid, 
+            created_at, 
+            active, 
+            logo_url, 
+            rectangular_logo_url, 
+            primary_color, 
+            secondary_color, 
+            contact_details, 
+            updated_at
+          )
+        `)
         .eq('user_id', user.id) as { data: CompanyUserResponse[] | null; error: any };
 
       if (error) {
@@ -52,9 +65,8 @@ export function CompanyListProvider({ children }: { children: React.ReactNode })
       const formatted = (data ?? [])
         .filter(item => item.company) // Ensure company exists
         .map(item => ({
-          id: item.company.id,
-          name: item.company.name,
-          logo_url: item.company.logo_url,
+          ...item.company,
+          userRole: item.role,
         }));
 
       setCompanies(formatted);
