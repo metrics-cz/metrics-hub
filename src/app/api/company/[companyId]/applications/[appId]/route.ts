@@ -25,7 +25,7 @@ export async function GET(
 
     if (error) {
       console.error('Error fetching company application:', error);
-      if (error.code === 'PGRST116') {
+      if (error instanceof Error && error.code === 'PGRST116') {
         return NextResponse.json(
           { error: 'Application not installed' }, 
           { status: 404 }

@@ -128,20 +128,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         throw new Error('No authentication token available');
       }
 
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-      
-      await Promise.all(
-        unreadIds.map(id => 
-          fetch(`/api/notifications/${id}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ read: true }),
-          })
-        )
-      );
+      // Use bulk API to mark all as read in a single request
+      await fetch('/api/notifications/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ 
+          operation: 'mark_read',
+          notificationIds: [] // Empty array means mark all as read
+        }),
+      });
 
       // Optimistically update local state
       setNotifications(prev => 

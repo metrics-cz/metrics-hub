@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { format } from 'date-fns';
+import { GoogleOAuthSettings } from './GoogleOAuthSettings';
 
 interface ConnectedService {
   id: string;
@@ -63,18 +64,13 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
           last_sync,
           config,
           error_message,
-          connected_by_user_id,
+          connected_by,
           integrations (
             id,
             name,
             description,
-            icon_url
-          ),
-          users (
-            id,
-            name,
-            email,
-            avatar_url
+            icon_url,
+            integration_key
           )
         `)
         .eq('company_id', companyId)
@@ -84,24 +80,26 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
         throw fetchError;
       }
 
-      const transformedServices: ConnectedService[] = (data || []).map((item: any) => ({
-        id: item.id,
-        integration_id: item.integration_id,
-        name: item.integrations?.name || 'Unknown Service',
-        description: item.integrations?.description || '',
-        icon_url: item.integrations?.icon_url || '',
-        status: item.status,
-        connected_at: item.connected_at,
-        last_sync: item.last_sync,
-        connected_by: {
-          id: item.users?.id || '',
-          name: item.users?.name || 'Unknown User',
-          email: item.users?.email || '',
-          avatar_url: item.users?.avatar_url,
-        },
-        config: item.config,
-        error_message: item.error_message,
-      }));
+      const transformedServices: ConnectedService[] = (data || [])
+        .filter((item: any) => item.integrations?.integration_key !== 'google') // Exclude Google since it's shown separately
+        .map((item: any) => ({
+          id: item.id,
+          integration_id: item.integration_id,
+          name: item.integrations?.name || 'Unknown Service',
+          description: item.integrations?.description || '',
+          icon_url: item.integrations?.icon_url || '',
+          status: item.status,
+          connected_at: item.connected_at,
+          last_sync: item.last_sync,
+          connected_by: {
+            id: item.connected_by || '',
+            name: 'User', // We'll show just "User" since we can't easily fetch auth.users data
+            email: '',
+            avatar_url: undefined,
+          },
+          config: item.config,
+          error_message: item.error_message,
+        }));
 
       setServices(transformedServices);
     } catch (err) {
@@ -211,21 +209,29 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Connected Services</CardTitle>
-            <CardDescription>
-              {services.length} service{services.length !== 1 ? 's' : ''} connected to your company
-            </CardDescription>
+    <div className="space-y-6">
+      {/* Google OAuth Integration */}
+      <GoogleOAuthSettings 
+        companyId={companyId} 
+        onIntegrationChange={fetchConnectedServices}
+      />
+
+      {/* Other Connected Services */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Other Connected Services</CardTitle>
+              <CardDescription>
+                {services.length} other service{services.length !== 1 ? 's' : ''} connected to your company
+              </CardDescription>
+            </div>
+            <Button variant="outline" onClick={fetchConnectedServices}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
           </div>
-          <Button variant="outline" onClick={fetchConnectedServices}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </CardHeader>
+        </CardHeader>
       <CardContent>
         {services.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -272,13 +278,7 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
                       )}
                       
                       <div className="flex items-center gap-1">
-                        <Avatar className="h-4 w-4">
-                          <AvatarImage src={service.connected_by.avatar_url} />
-                          <AvatarFallback className="text-xs">
-                            {service.connected_by.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>by {service.connected_by.name}</span>
+                        <span>Connected by team member</span>
                       </div>
                     </div>
                     
@@ -319,7 +319,8 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

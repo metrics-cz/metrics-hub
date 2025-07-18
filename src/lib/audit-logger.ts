@@ -342,7 +342,7 @@ export function withAuditLog(
           metadata: {
             duration,
             success: !error,
-            error_message: error?.message,
+            error_message: error instanceof Error ? error.message : error ? String(error) : undefined,
           },
         });
       }

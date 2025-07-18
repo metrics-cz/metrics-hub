@@ -52,35 +52,47 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 
 
 
-CREATE TYPE "public"."company_invitation_role" AS ENUM (
-    'owner',
-    'superadmin',
-    'admin',
-    'member'
-);
+DO $$ BEGIN
+    CREATE TYPE "public"."company_invitation_role" AS ENUM (
+        'owner',
+        'superadmin',
+        'admin',
+        'member'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 
 ALTER TYPE "public"."company_invitation_role" OWNER TO "postgres";
 
 
-CREATE TYPE "public"."company_invitation_status" AS ENUM (
-    'pending',
-    'accepted',
-    'rejected',
-    'expired'
-);
+DO $$ BEGIN
+    CREATE TYPE "public"."company_invitation_status" AS ENUM (
+        'pending',
+        'accepted',
+        'rejected',
+        'expired'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 
 ALTER TYPE "public"."company_invitation_status" OWNER TO "postgres";
 
 
-CREATE TYPE "public"."notification_type" AS ENUM (
-    'company_invitation',
-    'invitation_accepted',
-    'invitation_rejected',
-    'user_joined_company',
-    'role_changed'
-);
+DO $$ BEGIN
+    CREATE TYPE "public"."notification_type" AS ENUM (
+        'company_invitation',
+        'invitation_accepted',
+        'invitation_rejected',
+        'user_joined_company',
+        'role_changed'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 
 ALTER TYPE "public"."notification_type" OWNER TO "postgres";

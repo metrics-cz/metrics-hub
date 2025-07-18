@@ -32,4 +32,4 @@ INSERT INTO "public"."applications" (
     4.8,
     0,
     true
-);
+) ON CONFLICT (name) DO NOTHING;

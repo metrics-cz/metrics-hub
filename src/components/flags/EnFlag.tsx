@@ -1,5 +1,5 @@
 // src/components/flags/EnFlag.tsx
-export default function EnFlag(props) {
+export default function EnFlag(props: any) {
   return (
     <img
       {...props}

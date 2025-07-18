@@ -329,7 +329,7 @@ export default function CompanySettingsPage() {
               companyId={companyId}
               companyName={companyData.name}
               type="square"
-              currentLogoUrl={companyData.logo_url}
+              {...(companyData.logo_url && { currentLogoUrl: companyData.logo_url })}
               onUploadSuccess={(url) => handleLogoUploadSuccess(url, 'square')}
               onUploadError={handleError}
             />
@@ -337,7 +337,7 @@ export default function CompanySettingsPage() {
               companyId={companyId}
               companyName={companyData.name}
               type="rectangular"
-              currentLogoUrl={companyData.rectangular_logo_url}
+              {...(companyData.rectangular_logo_url && { currentLogoUrl: companyData.rectangular_logo_url })}
               onUploadSuccess={(url) => handleLogoUploadSuccess(url, 'rectangular')}
               onUploadError={handleError}
             />
@@ -345,8 +345,8 @@ export default function CompanySettingsPage() {
 
           <ColorSchemeManager
             companyId={companyId}
-            currentPrimaryColor={companyData.primary_color}
-            currentSecondaryColor={companyData.secondary_color}
+            {...(companyData.primary_color && { currentPrimaryColor: companyData.primary_color })}
+            {...(companyData.secondary_color && { currentSecondaryColor: companyData.secondary_color })}
             onUpdateSuccess={handleColorSchemeUpdate}
             onUpdateError={handleError}
           />
@@ -362,7 +362,7 @@ export default function CompanySettingsPage() {
           <ContactDetailsForm
             companyId={companyId}
             companyEmail={companyData.billing_email || ''}
-            currentContactDetails={companyData.contact_details}
+            {...(companyData.contact_details && { currentContactDetails: companyData.contact_details })}
             onUpdateSuccess={handleContactDetailsUpdate}
             onUpdateError={handleError}
           />

@@ -60,7 +60,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (delErr) {
-    console.error('Delete failed:', delErr.message);
+    console.error('Delete failed:', delErr instanceof Error ? delErr.message : String(delErr));
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

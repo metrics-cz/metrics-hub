@@ -10,8 +10,15 @@ export interface CachedApiResponse<T> {
 class CachedApi {
   private async getAuthHeaders(): Promise<Record<string, string>> {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session?.access_token) {
+      // First try to get authenticated user (this validates the session server-side)
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('No authenticated user found');
+      }
+
+      // Then get the session for the access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
         throw new Error('No authentication token available');
       }
       

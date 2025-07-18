@@ -50,9 +50,9 @@ function getHSLLuminance(hslString: string): number {
     const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
     if (!match) return 0.5; // fallback
     
-    const h = parseInt(match[1]) / 360;
-    const s = parseInt(match[2]) / 100;
-    const l = parseInt(match[3]) / 100;
+    const h = parseInt(match[1] || '0') / 360;
+    const s = parseInt(match[2] || '0') / 100;
+    const l = parseInt(match[3] || '0') / 100;
     
     // Convert HSL to RGB first
     const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -116,7 +116,7 @@ export default function UserInitialsIcon({
         const bgColor = PASTEL_COLORS[colorIndex];
         
         // Determine text color based on background luminance
-        const luminance = getHSLLuminance(bgColor);
+        const luminance = getHSLLuminance(bgColor || 'hsl(0, 0%, 50%)');
         const textColor = luminance > 0.5 ? '#1f2937' : '#ffffff'; // gray-800 or white
         
         return {

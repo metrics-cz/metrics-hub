@@ -56,7 +56,7 @@ export function CompanyListProvider({ children }: { children: React.ReactNode })
         .eq('user_id', user.id) as { data: CompanyUserResponse[] | null; error: any };
 
       if (error) {
-        console.error('Failed to fetch companies:', error.message);
+        console.error('Failed to fetch companies:', error instanceof Error ? error.message : String(error));
         setLoading(false);
         return;
       }

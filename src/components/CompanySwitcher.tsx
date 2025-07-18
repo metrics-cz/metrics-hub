@@ -6,10 +6,11 @@ import { useRouter, useParams } from 'next/navigation';
 import { useCompanyList } from '@/lib/companyList';
 import { useActiveCompany } from '@/lib/activeCompany';
 import clsx from 'classnames';
-import CreateCompanyForm from '@/components/CreateCompanyForm';
 import { useTranslations } from 'next-intl';
 import CompanyInitialsIcon from './company/CompanyInitialsIcon';
 import { updateLastSelectedCompany } from '@/lib/userPreferences';
+import React, { Suspense } from 'react';
+const CreateCompanyForm = React.lazy(() => import('@/components/CreateCompanyForm'))
 type Props = {
   collapsed?: boolean;
   onMobileClose?: () => void;
@@ -109,7 +110,9 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 grid place-items-center z-50">
           <div className="bg-white dark:bg-gray-600 rounded-xl p-6 w-full max-w-sm">
-            <CreateCompanyForm onClose={() => setShowCreate(false)} />
+            <Suspense fallback={<div>Loading...</div>}>
+              <CreateCompanyForm onClose={() => setShowCreate(false)} />
+            </Suspense>
             <button
               onClick={() => setShowCreate(false)}
               className="mt-4 text-sm underline text-primary"

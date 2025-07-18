@@ -27,5 +27,5 @@ export function useActiveCompany(): UserCompany | null {
   }
 
   // Fallback to first available company
-  return companies.length > 0 ? companies[0] : null;
+  return companies.length > 0 ? companies[0] || null : null;
 }

@@ -41,7 +41,7 @@ const IntegrationIcon = ({ iconUrl, integrationName, className }: { iconUrl?: st
   const [hasError, setHasError] = useState(false);
 
   if (!iconUrl || hasError) {
-    return <FallbackIcon className={className} />;
+    return <FallbackIcon {...(className && { className })} />;
   }
 
   return (
@@ -96,8 +96,8 @@ export default function IntegrationsPage() {
       tags: app.tags || [],
       installedAt: companyApp.installed_at,
       isActive: companyApp.is_active,
-      configuration: companyApp.configuration,
-      settings: companyApp.settings,
+      ...(companyApp.configuration && { configuration: companyApp.configuration }),
+      ...(companyApp.settings && { settings: companyApp.settings }),
       type,
       status,
       connectedAccountsCount,
@@ -230,30 +230,30 @@ export default function IntegrationsPage() {
       </div>
 
       {installedIntegrations.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 dark:bg-gray-800 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-8 h-8 dark:text-gray-400 text-gray-500" />
-          </div>
-          <h3 className="dark:text-white text-gray-900 font-medium mb-2">{t('noIntegrationsInstalled')}</h3>
-          <p className="dark:text-gray-400 text-gray-600 mb-6 text-sm">
-            {t('noIntegrationsSubtitle')}
-          </p>
-          {canManage ? (
-            <button
-              className="bg-primary-600 text-white rounded-lg px-6 py-3 hover:bg-primary-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium"
-              onClick={() => router.push('/marketplace')}>
-              <Plus className="w-4 h-4" />
-              {t('browseMarketplace')}
-            </button>
-          ) : (
-            <div className="text-sm dark:text-gray-500 text-gray-400 py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              Contact an admin to install integrations
+          <div className="text-center py-16">
+            <div className="w-16 h-16 dark:bg-gray-800 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Plus className="w-8 h-8 dark:text-gray-400 text-gray-500" />
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {installedIntegrations.map((integration) => {
+            <h3 className="dark:text-white text-gray-900 font-medium mb-2">{t('noIntegrationsInstalled')}</h3>
+            <p className="dark:text-gray-400 text-gray-600 mb-6 text-sm">
+              {t('noIntegrationsSubtitle')}
+            </p>
+            {canManage ? (
+              <button
+                className="bg-primary-600 text-white rounded-lg px-6 py-3 hover:bg-primary-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium"
+                onClick={() => router.push('/marketplace')}>
+                <Plus className="w-4 h-4" />
+                {t('browseMarketplace')}
+              </button>
+            ) : (
+              <div className="text-sm dark:text-gray-500 text-gray-400 py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                Contact an admin to install integrations
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {installedIntegrations.map((integration) => {
             return (
               <div
                 key={integration.id}

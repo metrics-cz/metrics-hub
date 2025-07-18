@@ -55,9 +55,9 @@ export default function LanguageSwitcher({
                     onClick={() => setOpen(!open)}
                     aria-label="Change language"
                     className="w-10 h-10 rounded-full overflow-hidden object-fill border border-white/20 hover:border-white transition"
-                    title={currentLocale.name}
+                    title={currentLocale?.name}
                 >
-                    <currentLocale.Flag className="w-full h-full" />
+                    {currentLocale && <currentLocale.Flag className="w-full h-full" />}
                 </button>
 
                 {open && (
@@ -91,8 +91,8 @@ export default function LanguageSwitcher({
                     className="flex items-center w-full gap-2 px-3 py-2 justify-between text-gray-700 dark:text-gray-300 hover:bg-gray-300"
                 >
                     <div className="flex items-center gap-2">
-                        <currentLocale.Flag className="w-6 h-6" />
-                        <span>{currentLocale.name}</span>
+                        {currentLocale && <currentLocale.Flag className="w-6 h-6" />}
+                        <span>{currentLocale?.name}</span>
                     </div>
                     {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
@@ -127,7 +127,7 @@ export default function LanguageSwitcher({
                     aria-label="Change language"
                     className="flex items-center gap-1 px-2 py-1 border-none rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition"
                 >
-                    <currentLocale.Flag className="w-6 h-6 rounded-full" />
+                    {currentLocale && <currentLocale.Flag className="w-6 h-6 rounded-full" />}
                     {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 

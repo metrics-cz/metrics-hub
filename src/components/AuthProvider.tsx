@@ -40,8 +40,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const newUser = session?.user ?? null;
-      setUser(newUser);
+      let newUser: any = null;
+      
+      // For security, verify the user with the server when signing in
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
+          if (!error && verifiedUser) {
+            newUser = verifiedUser;
+            setUser(verifiedUser);
+          } else {
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Failed to verify user on sign in:', error);
+          setUser(null);
+        }
+      } else {
+        newUser = session?.user ?? null;
+        setUser(newUser);
+      }
 
       /* ––––––––––––––– Google-avatar cache (runs only once) ––––––––––– */
       if (

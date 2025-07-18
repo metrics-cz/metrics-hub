@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Error fetching automations:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch automations', details: error.message }, 
+        { error: 'Failed to fetch automations', details: (error instanceof Error ? error.message : String(error)) }, 
         { status: 500 }
       );
     }

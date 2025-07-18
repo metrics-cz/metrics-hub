@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { withAuth } from '@/lib/auth-middleware';
+import { withAuth, AuthContext } from '@/lib/auth-middleware';
 
-async function handler(request: NextRequest, context: { user: any }) {
+async function handler(request: NextRequest, context: AuthContext) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
@@ -74,7 +74,5 @@ async function handler(request: NextRequest, context: { user: any }) {
   }
 }
 
-// Export the authenticated handler
-export const GET = withAuth(handler, {
-  rateLimit: { limit: 100, windowMs: 15 * 60 * 1000 } // 100 requests per 15 minutes
-});
+// Export the authenticated handler using new middleware
+export const GET = withAuth(handler);

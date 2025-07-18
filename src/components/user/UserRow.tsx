@@ -97,7 +97,7 @@ export default function UserRow({ user }: Props) {
                     if (typeof companyId === 'string') {
                       await deleteUser(user.id, companyId);
                     } else if (Array.isArray(companyId) && companyId.length > 0) {
-                      await deleteUser(user.id, companyId[0]);
+                      await deleteUser(user.id, companyId[0] || '');
                     } else {
                       console.error('Invalid companyId:', companyId);
                     }

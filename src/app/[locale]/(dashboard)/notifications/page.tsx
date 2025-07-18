@@ -143,7 +143,7 @@ export default function NotificationsPage() {
         fetchNotifications();
       } else {
         const error = await response.json();
-        alert(error.error || `Failed to ${action} invitation`);
+        alert(error?.error || `Failed to ${action} invitation`);
       }
     } catch (error) {
       console.error(`Error ${action}ing invitation:`, error);

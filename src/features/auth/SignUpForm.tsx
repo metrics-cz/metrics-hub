@@ -132,10 +132,10 @@ export default function SignUpForm({
     });
 
     if (error) {
-      if (error.message.includes('already registered')) {
+      if (error instanceof Error && error.message.includes('already registered')) {
         setError('email', { message: 'E-mail už existuje' });
       } else {
-        setError('email', { message: error.message });
+        setError('email', { message: error instanceof Error ? error.message : 'Sign up failed' });
       }
       return;
     }

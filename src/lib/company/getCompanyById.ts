@@ -122,7 +122,7 @@ export async function getCompanyById(companyId: string): Promise<Company> {
     }
 
     // Handle Supabase auth errors
-    if (error?.message?.includes('auth') || error?.message?.includes('session')) {
+    if ((error instanceof Error && error.message.includes('auth')) || (error instanceof Error && error.message.includes('session'))) {
       throw new CompanyError(
         'Authentication error - please log in again',
         'UNAUTHORIZED',

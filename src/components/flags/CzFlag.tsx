@@ -1,5 +1,5 @@
 // src/components/flags/CzFlag.tsx
-export default function CzFlag(props) {
+export default function CzFlag(props: any) {
   return (
     <img
       {...props}

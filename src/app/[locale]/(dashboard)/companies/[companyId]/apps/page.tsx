@@ -36,7 +36,7 @@ const AppIcon = ({ iconUrl, appName, className }: { iconUrl?: string; appName: s
   const [hasError, setHasError] = useState(false);
 
   if (!iconUrl || hasError) {
-    return <FallbackIcon className={className} />;
+    return <FallbackIcon {...(className && { className })} />;
   }
 
   return (
@@ -79,8 +79,8 @@ export default function AppsPage() {
       tags: app.tags || [],
       installedAt: companyApp.installed_at,
       isActive: companyApp.is_active,
-      configuration: companyApp.configuration,
-      settings: companyApp.settings
+      ...(companyApp.configuration && { configuration: companyApp.configuration }),
+      ...(companyApp.settings && { settings: companyApp.settings })
     };
   };
 

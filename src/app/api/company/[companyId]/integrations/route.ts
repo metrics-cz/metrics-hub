@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { auditLogger } from '@/lib/audit-logger';
 
 // Get company's connected integrations
 export async function GET(
@@ -31,7 +32,7 @@ export async function GET(
     if (error) {
       console.error('Error fetching company integrations:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch company integrations', details: error.message }, 
+        { error: 'Failed to fetch company integrations', details: (error instanceof Error ? error.message : String(error)) }, 
         { status: 500 }
       );
     }
@@ -150,6 +151,94 @@ export async function POST(
 
   } catch (error) {
     console.error('Connect integration API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
+}
+
+// Disconnect an integration for a company
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ companyId: string }> }
+) {
+  try {
+    const { companyId } = await params;
+    const { searchParams } = new URL(request.url);
+    const integrationId = searchParams.get('integrationId');
+
+    if (!integrationId) {
+      return NextResponse.json(
+        { error: 'Integration ID is required' }, 
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createSupabaseServerClient();
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' }, 
+        { status: 401 }
+      );
+    }
+
+    // Get the integration before deleting for audit log
+    const { data: integration, error: fetchError } = await supabase
+      .from('company_integrations')
+      .select(`
+        *,
+        integration:integrations(name)
+      `)
+      .eq('company_id', companyId)
+      .eq('integration_id', integrationId)
+      .single();
+
+    if (fetchError || !integration) {
+      return NextResponse.json(
+        { error: 'Integration not found' }, 
+        { status: 404 }
+      );
+    }
+
+    // Delete the integration
+    const { error: deleteError } = await supabase
+      .from('company_integrations')
+      .delete()
+      .eq('company_id', companyId)
+      .eq('integration_id', integrationId);
+
+    if (deleteError) {
+      console.error('Error disconnecting integration:', deleteError);
+      return NextResponse.json(
+        { error: 'Failed to disconnect integration', details: deleteError.message }, 
+        { status: 500 }
+      );
+    }
+
+    // Log the disconnection
+    await auditLogger.logAuditEvent({
+      table_name: 'company_integrations',
+      operation: 'DELETE',
+      user_id: user.id,
+      metadata: {
+        action: 'integration_disconnected',
+        company_id: companyId,
+        integration_name: integration.integration?.name,
+        integration_id: integrationId,
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `${integration.integration?.name || 'Integration'} disconnected successfully`
+    });
+
+  } catch (error) {
+    console.error('Disconnect integration API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' }, 
       { status: 500 }

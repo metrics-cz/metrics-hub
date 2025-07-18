@@ -19,7 +19,20 @@
       "Bash(supabase migration:*)",
       "Bash(supabase db:*)",
       "Bash(supabase status:*)",
-      "Bash(npx supabase migration:*)"
+      "Bash(npx supabase migration:*)",
+      "Bash(mv:*)",
+      "Bash(rmdir:*)",
+      "Bash(git checkout:*)",
+      "Bash(rm:*)",
+      "Bash(supabase start:*)",
+      "Bash(mkdir:*)",
+      "Bash(true)",
+      "Bash(touch:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm run:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma:*)",
+      "Bash(psql:*)"
     ],
     "deny": []
   }

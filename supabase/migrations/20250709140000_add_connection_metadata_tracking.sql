@@ -10,7 +10,7 @@ ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 -- Add foreign key constraint for connected_by_user_id
 ALTER TABLE company_integrations
 ADD CONSTRAINT fk_connected_by_user
-FOREIGN KEY (connected_by_user_id) REFERENCES users(id) ON DELETE SET NULL;
+FOREIGN KEY (connected_by_user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
 
 -- Create trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_company_integrations_updated_at()

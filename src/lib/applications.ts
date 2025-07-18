@@ -131,7 +131,7 @@ export async function fetchApplication(id: string): Promise<Application | null> 
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
+      if (error instanceof Error && error.code === 'PGRST116') {
         return null; // Not found
       }
       console.error('Error fetching application:', error);
@@ -345,7 +345,7 @@ export async function isApplicationInstalled(
       .eq('is_active', true)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && error instanceof Error && error.code !== 'PGRST116') {
       console.error('Error checking application installation:', error);
       throw new Error('Failed to check application installation');
     }

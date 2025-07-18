@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import prisma from '@/lib/prisma';
-import { queryDb } from '@/lib/db';
 
 type RouteContext = { params: Promise<{ companyId: string }> };
 
@@ -48,41 +47,19 @@ export async function GET(
     }
 
     /* 3 ───────────────────────────────── Check if company exists and user membership */
-    let company, membership;
-    
-    if (process.env.NODE_ENV === 'development') {
-      // Use native PostgreSQL client for development
-      const companyQuery = `
-        SELECT * FROM companies WHERE id = $1
-      `;
-      
-      const membershipQuery = `
-        SELECT id, role FROM company_users 
-        WHERE company_id = $1 AND user_id = $2
-      `;
-      
-      const [companyResults, membershipResults] = await Promise.all([
-        queryDb(companyQuery, [companyId]),
-        queryDb(membershipQuery, [companyId, uid])
-      ]);
-      
-      company = companyResults[0];
-      membership = membershipResults[0];
-    } else {
-      // Use Prisma ORM in production
-      [company, membership] = await Promise.all([
-        prisma.companies.findUnique({
-          where: { id: companyId },
-        }),
-        prisma.company_users.findFirst({
-          where: {
-            company_id: companyId,
-            user_id: uid,
-          },
-          select: { id: true, role: true },
-        })
-      ]);
-    }
+    // Use Prisma ORM for all environments
+    const [company, membership] = await Promise.all([
+      prisma.companies.findUnique({
+        where: { id: companyId },
+      }),
+      prisma.company_users.findFirst({
+        where: {
+          company_id: companyId,
+          user_id: uid,
+        },
+        select: { id: true, role: true },
+      })
+    ]);
 
     if (!company) {
       return NextResponse.json({ 
@@ -112,7 +89,7 @@ export async function GET(
       { 
         error: 'Internal server error',
         code: 'INTERNAL_ERROR',
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       },
       { status: 500 }
     );
@@ -155,41 +132,19 @@ export async function DELETE(
     }
 
     /* 3 ───────────────────────────────── Check if company exists and user is owner */
-    let company, membership;
-    
-    if (process.env.NODE_ENV === 'development') {
-      // Use native PostgreSQL client for development
-      const companyQuery = `
-        SELECT * FROM companies WHERE id = $1
-      `;
-      
-      const membershipQuery = `
-        SELECT id, role FROM company_users 
-        WHERE company_id = $1 AND user_id = $2
-      `;
-      
-      const [companyResults, membershipResults] = await Promise.all([
-        queryDb(companyQuery, [companyId]),
-        queryDb(membershipQuery, [companyId, uid])
-      ]);
-      
-      company = companyResults[0];
-      membership = membershipResults[0];
-    } else {
-      // Use Prisma ORM in production
-      [company, membership] = await Promise.all([
-        prisma.companies.findUnique({
-          where: { id: companyId },
-        }),
-        prisma.company_users.findFirst({
-          where: {
-            company_id: companyId,
-            user_id: uid,
-          },
-          select: { id: true, role: true },
-        })
-      ]);
-    }
+    // Use Prisma ORM for all environments
+    const [company, membership] = await Promise.all([
+      prisma.companies.findUnique({
+        where: { id: companyId },
+      }),
+      prisma.company_users.findFirst({
+        where: {
+          company_id: companyId,
+          user_id: uid,
+        },
+        select: { id: true, role: true },
+      })
+    ]);
 
     if (!company) {
       return NextResponse.json({ 
@@ -214,44 +169,23 @@ export async function DELETE(
     }
 
     /* 4 ───────────────────────────────── Delete company with cascading operations */
-    if (process.env.NODE_ENV === 'development') {
-      // Use native PostgreSQL client for development with transaction
-      await queryDb('BEGIN', []);
-      
-      try {
-        // Delete all company invitations
-        await queryDb('DELETE FROM company_invitations WHERE company_id = $1', [companyId]);
-        
-        // Delete all company users
-        await queryDb('DELETE FROM company_users WHERE company_id = $1', [companyId]);
-        
-        // Delete the company
-        await queryDb('DELETE FROM companies WHERE id = $1', [companyId]);
-        
-        await queryDb('COMMIT', []);
-      } catch (error) {
-        await queryDb('ROLLBACK', []);
-        throw error;
-      }
-    } else {
-      // Use Prisma transaction in production
-      await prisma.$transaction(async (tx) => {
-        // Delete all company invitations
-        await tx.company_invitations.deleteMany({
-          where: { companyId: companyId }
-        });
-        
-        // Delete all company users
-        await tx.company_users.deleteMany({
-          where: { company_id: companyId }
-        });
-        
-        // Delete the company
-        await tx.companies.delete({
-          where: { id: companyId }
-        });
+    // Use Prisma transaction for all environments
+    await prisma.$transaction(async (tx) => {
+      // Delete all company invitations
+      await tx.company_invitations.deleteMany({
+        where: { companyId: companyId }
       });
-    }
+      
+      // Delete all company users
+      await tx.company_users.deleteMany({
+        where: { company_id: companyId }
+      });
+      
+      // Delete the company
+      await tx.companies.delete({
+        where: { id: companyId }
+      });
+    });
 
     return NextResponse.json({ 
       success: true,
@@ -265,7 +199,7 @@ export async function DELETE(
       { 
         error: 'Internal server error',
         code: 'INTERNAL_ERROR',
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       },
       { status: 500 }
     );
@@ -369,24 +303,14 @@ export async function PUT(
     }
 
     /* 4 ───────────────────────────────── Check company access and permissions */
-    let membership;
-    
-    if (process.env.NODE_ENV === 'development') {
-      const membershipQuery = `
-        SELECT id, role FROM company_users 
-        WHERE company_id = $1 AND user_id = $2
-      `;
-      const membershipResults = await queryDb(membershipQuery, [companyId, uid]);
-      membership = membershipResults[0];
-    } else {
-      membership = await prisma.company_users.findFirst({
-        where: {
-          company_id: companyId,
-          user_id: uid,
-        },
-        select: { id: true, role: true },
-      });
-    }
+    // Use Prisma ORM for all environments
+    const membership = await prisma.company_users.findFirst({
+      where: {
+        company_id: companyId,
+        user_id: uid,
+      },
+      select: { id: true, role: true },
+    });
 
     if (!membership) {
       return NextResponse.json({ 
@@ -404,33 +328,14 @@ export async function PUT(
     }
 
     /* 5 ───────────────────────────────── Update company */
-    let updatedCompany;
-    
-    if (process.env.NODE_ENV === 'development') {
-      // Build dynamic query
-      const setClause = Object.keys(updateFields)
-        .map((field, index) => `${field} = $${index + 2}`)
-        .join(', ');
-      
-      const updateQuery = `
-        UPDATE companies 
-        SET ${setClause}, updated_at = NOW()
-        WHERE id = $1 
-        RETURNING *
-      `;
-      
-      const values = [companyId, ...Object.values(updateFields)];
-      const results = await queryDb(updateQuery, values);
-      updatedCompany = results[0];
-    } else {
-      updatedCompany = await prisma.companies.update({
-        where: { id: companyId },
-        data: {
-          ...updateFields,
-          updated_at: new Date(),
-        },
-      });
-    }
+    // Use Prisma ORM for all environments
+    const updatedCompany = await prisma.companies.update({
+      where: { id: companyId },
+      data: {
+        ...updateFields,
+        updated_at: new Date(),
+      },
+    });
 
     if (!updatedCompany) {
       return NextResponse.json({ 
@@ -452,7 +357,7 @@ export async function PUT(
       { 
         error: 'Internal server error',
         code: 'INTERNAL_ERROR',
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       },
       { status: 500 }
     );

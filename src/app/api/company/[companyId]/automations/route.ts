@@ -35,7 +35,7 @@ export async function GET(
     if (error) {
       console.error('Error fetching company automations:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch company automations', details: error.message }, 
+        { error: 'Failed to fetch company automations', details: (error instanceof Error ? error.message : String(error)) }, 
         { status: 500 }
       );
     }
