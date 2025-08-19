@@ -169,6 +169,9 @@ export async function fetchApplicationCategories(): Promise<ApplicationCategory[
  * Fetch installed applications for a company
  */
 export async function fetchCompanyApplications(companyId: string): Promise<CompanyApplication[]> {
+  // TODO: Remove this - forcing error to see if this function is being called
+  throw new Error(`DIRECT_SUPABASE_CALL: fetchCompanyApplications called for ${companyId} - this should NOT be used!`);
+  
   try {
     const { data, error } = await supabase
       .from('company_applications')
