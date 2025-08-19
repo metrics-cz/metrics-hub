@@ -58,6 +58,7 @@ export async function GET(
       }
     );
 
+
     const { data: companyApplications, error } = await supabase
       .from('company_applications')
       .select(`
