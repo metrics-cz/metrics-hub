@@ -58,50 +58,6 @@ export async function GET(
       }
     );
 
-    // TODO: Remove these diagnostic checks once production issue is resolved
-    try {
-      // Check if company exists
-      const { data: company, error: companyError } = await supabase
-        .from('companies')
-        .select('id, name')
-        .eq('id', companyId)
-        .single();
-
-      if (companyError) {
-        console.error('Company validation failed:', { companyError, companyId });
-      }
-
-      if (!company) {
-        return NextResponse.json(
-          { error: 'Company not found', details: 'The specified company does not exist' },
-          { status: 404 }
-        );
-      }
-
-      // Check if company_applications table is accessible
-      const { count, error: countError } = await supabase
-        .from('company_applications')
-        .select('*', { count: 'exact', head: true })
-        .eq('company_id', companyId);
-
-      if (countError) {
-        console.error('company_applications table access failed:', { countError, companyId });
-        return NextResponse.json(
-          { 
-            error: 'Database access error', 
-            details: countError?.message || 'Cannot access company applications table',
-            errorCode: countError?.code
-          },
-          { status: 500 }
-        );
-      }
-
-      console.log(`Found ${count || 0} total applications for company ${companyId}`);
-
-    } catch (diagnosticError) {
-      console.error('Diagnostic checks failed:', { diagnosticError, companyId });
-    }
-
     const { data: companyApplications, error } = await supabase
       .from('company_applications')
       .select(`
