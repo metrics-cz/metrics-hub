@@ -130,7 +130,7 @@ export default function MarketplacePage() {
       integration.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       integration.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) || false;
     
-    const matchesCategory = selectedCategory === 'all' || integration.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || integration.category_id === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
@@ -163,7 +163,8 @@ export default function MarketplacePage() {
         } else if (error.message.includes('permission')) {
           errorMessage = 'You do not have permission to install applications for this company.';
         } else if (error.message.includes('already installed')) {
-          errorMessage = 'This application is already installed.';
+          // Use the detailed error message from the API which includes guidance
+          errorMessage = error.message;
         } else {
           errorMessage = error instanceof Error ? error.message : 'Installation failed';
         }
