@@ -13,7 +13,7 @@ interface App {
   id: string;
   name: string;
   description: string;
-  category: string;
+  category_id: string;
   iconUrl: string;
   rating: number;
   downloads: number;
@@ -70,7 +70,7 @@ export default function AppsPage() {
       id: app.id,
       name: app.name,
       description: app.description,
-      category: app.category,
+      category_id: app.category_id,
       iconUrl: app.icon_url || '',
       rating: app.rating,
       downloads: app.download_count,
@@ -79,7 +79,7 @@ export default function AppsPage() {
       tags: app.tags || [],
       installedAt: companyApp.installed_at,
       isActive: companyApp.is_active,
-      ...(companyApp.configuration && { configuration: companyApp.configuration }),
+      ...(companyApp.config && { configuration: companyApp.config }),
       ...(companyApp.settings && { settings: companyApp.settings })
     };
   };

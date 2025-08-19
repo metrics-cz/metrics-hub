@@ -46,12 +46,19 @@ export class AuthError extends Error {
 // Base authentication check
 export async function authenticateUser(request: NextRequest): Promise<AuthContext> {
   try {
+    console.log('Starting authentication check...');
     const supabase = await createSupabaseServerClient();
+    console.log('Created Supabase client');
+    
     const { data: { user }, error } = await supabase.auth.getUser();
+    console.log('Got user data:', { hasUser: !!user, error: error?.message });
 
     if (error || !user) {
       throw new AuthError('Authentication required', 'UNAUTHENTICATED', 401);
     }
+
+    const sessionResult = await supabase.auth.getSession();
+    console.log('Got session data:', { hasSession: !!sessionResult.data.session });
 
     return {
       user: {
@@ -60,7 +67,7 @@ export async function authenticateUser(request: NextRequest): Promise<AuthContex
         full_name: user.user_metadata?.full_name,
         avatar_url: user.user_metadata?.avatar_url,
       },
-      session: await supabase.auth.getSession(),
+      session: sessionResult,
     };
   } catch (error) {
     if (error instanceof AuthError) {
