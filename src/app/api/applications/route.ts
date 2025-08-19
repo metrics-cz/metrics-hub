@@ -4,13 +4,16 @@ import { withAuth, AuthContext } from '@/lib/auth-middleware';
 
 async function handler(request: NextRequest, context: AuthContext) {
   try {
+    console.log('Applications handler started with user:', context.user.id);
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const limit = searchParams.get('limit') || '50';
     const offset = searchParams.get('offset') || '0';
 
+    console.log('Creating Supabase client...');
     const supabase = await createSupabaseServerClient();
+    console.log('Supabase client created successfully');
     
     let query = supabase
       .from('applications')
@@ -26,7 +29,7 @@ async function handler(request: NextRequest, context: AuthContext) {
 
     // Filter by category if provided
     if (category && category !== 'all') {
-      query = query.eq('category', category);
+      query = query.eq('category_id', category);
     }
 
     // Search functionality - sanitize input to prevent SQL injection
@@ -43,12 +46,14 @@ async function handler(request: NextRequest, context: AuthContext) {
       }
     }
 
+    console.log('Executing applications query...');
     const { data: applications, error } = await query;
+    console.log('Query result:', { hasData: !!applications, dataLength: applications?.length, error: error?.message });
 
     if (error) {
       console.error('Error fetching applications:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch applications' }, 
+        { error: 'Failed to fetch applications', details: error?.message || JSON.stringify(error) }, 
         { status: 500 }
       );
     }
@@ -74,5 +79,5 @@ async function handler(request: NextRequest, context: AuthContext) {
   }
 }
 
-// Export the authenticated handler using new middleware
+// Export the authenticated handler
 export const GET = withAuth(handler);

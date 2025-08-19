@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { withAuth, AuthContext } from '@/lib/auth-middleware';
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest, context: AuthContext) {
   try {
     const supabase = await createSupabaseServerClient();
     const { data: categories, error } = await supabase
@@ -30,3 +31,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(handler);
