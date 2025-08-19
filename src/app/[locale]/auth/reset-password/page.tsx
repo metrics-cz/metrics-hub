@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(error instanceof Error ? error.message : "Unknown error");
     } else {
       setSuccess(true);
       setTimeout(() => {

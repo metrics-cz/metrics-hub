@@ -5,7 +5,8 @@
 -- =============================================
 
 -- Allow users to view invitations for companies they're part of, invitations they sent, or invitations sent to them
-CREATE POLICY "Users can view relevant company invitations" ON company_invitations
+DO $$ BEGIN
+    CREATE POLICY "Users can view relevant company invitations" ON company_invitations
     FOR SELECT USING (
         -- User is part of the company being invited to
         "companyId" IN (
@@ -144,15 +145,15 @@ CREATE POLICY "Company admins can manage automation runs" ON automation_runs
 
 -- Users can only see their own notifications
 CREATE POLICY "Users can view their own notifications" ON notifications
-    FOR SELECT USING (user_id = auth.uid());
+    FOR SELECT USING ("userId" = auth.uid());
 
 -- Users can update their own notifications (mark as read, etc.)
 CREATE POLICY "Users can update their own notifications" ON notifications
-    FOR UPDATE USING (user_id = auth.uid());
+    FOR UPDATE USING ("userId" = auth.uid());
 
 -- System can create notifications for users
 CREATE POLICY "System can create notifications" ON notifications
-    FOR INSERT WITH CHECK (user_id IS NOT NULL);
+    FOR INSERT WITH CHECK ("userId" IS NOT NULL);
 
 -- =============================================
 -- Revoke Overprivileged Anonymous Access

@@ -13,7 +13,7 @@ interface App {
   id: string;
   name: string;
   description: string;
-  category: string;
+  category_id: string;
   iconUrl: string;
   rating: number;
   downloads: number;
@@ -36,7 +36,7 @@ const AppIcon = ({ iconUrl, appName, className }: { iconUrl?: string; appName: s
   const [hasError, setHasError] = useState(false);
 
   if (!iconUrl || hasError) {
-    return <FallbackIcon className={className} />;
+    return <FallbackIcon {...(className && { className })} />;
   }
 
   return (
@@ -70,7 +70,7 @@ export default function AppsPage() {
       id: app.id,
       name: app.name,
       description: app.description,
-      category: app.category,
+      category_id: app.category_id,
       iconUrl: app.icon_url || '',
       rating: app.rating,
       downloads: app.download_count,
@@ -79,8 +79,8 @@ export default function AppsPage() {
       tags: app.tags || [],
       installedAt: companyApp.installed_at,
       isActive: companyApp.is_active,
-      configuration: companyApp.configuration,
-      settings: companyApp.settings
+      ...(companyApp.config && { configuration: companyApp.config }),
+      ...(companyApp.settings && { settings: companyApp.settings })
     };
   };
 

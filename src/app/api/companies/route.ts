@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import prisma from '@/lib/prisma';
-import { queryDb } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,47 +31,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let company, companyUser;
+    // Use Prisma ORM for all environments
+    const company = await prisma.companies.create({
+      data: {
+        name: name.trim(),
+        owner_uid: user.id,
+        active: true,
+      },
+    });
 
-    if (process.env.NODE_ENV === 'development') {
-      // Use native PostgreSQL client for development
-      const createCompanyQuery = `
-        INSERT INTO companies (name, owner_uid, active)
-        VALUES ($1, $2, true)
-        RETURNING *
-      `;
-
-      const createCompanyUserQuery = `
-        INSERT INTO company_users (company_id, user_id, role)
-        VALUES ($1, $2, 'owner')
-        RETURNING *
-      `;
-
-      // Create company
-      const companyResults = await queryDb(createCompanyQuery, [name.trim(), user.id]);
-      company = companyResults[0];
-
-      // Create company_user relationship
-      await queryDb(createCompanyUserQuery, [company.id, user.id]);
-    } else {
-      // Use Prisma ORM in production
-      company = await prisma.companies.create({
-        data: {
-          name: name.trim(),
-          owner_uid: user.id,
-          active: true,
-        },
-      });
-
-      // Create company_user relationship
-      companyUser = await prisma.company_users.create({
-        data: {
-          company_id: company.id,
-          user_id: user.id,
-          role: 'owner',
-        },
-      });
-    }
+    // Create company_user relationship
+    await prisma.company_users.create({
+      data: {
+        company_id: company.id,
+        user_id: user.id,
+        role: 'owner',
+      },
+    });
 
     return NextResponse.json({
       id: company.id,
@@ -87,7 +62,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       },
       { status: 500 }
     );

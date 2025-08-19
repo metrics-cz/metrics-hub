@@ -25,7 +25,7 @@ const AppIcon = ({ iconUrl, appName, className }: { iconUrl?: string; appName: s
   const [hasError, setHasError] = useState(false);
 
   if (!iconUrl || hasError) {
-    return <FallbackIcon className={className} />;
+    return <FallbackIcon {...(className && { className })} />;
   }
 
   return (
@@ -128,9 +128,9 @@ export default function MarketplacePage() {
   const filteredIntegrations = integrations.filter(integration => {
     const matchesSearch = integration.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       integration.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      integration.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      integration.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) || false;
     
-    const matchesCategory = selectedCategory === 'all' || integration.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || integration.category_id === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
@@ -163,9 +163,10 @@ export default function MarketplacePage() {
         } else if (error.message.includes('permission')) {
           errorMessage = 'You do not have permission to install applications for this company.';
         } else if (error.message.includes('already installed')) {
-          errorMessage = 'This application is already installed.';
-        } else {
+          // Use the detailed error message from the API which includes guidance
           errorMessage = error.message;
+        } else {
+          errorMessage = error instanceof Error ? error.message : 'Installation failed';
         }
       }
       
@@ -317,7 +318,7 @@ export default function MarketplacePage() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {integration.tags.slice(0, 3).map((tag, index) => (
+                {integration.tags?.slice(0, 3).map((tag, index) => (
                   <span
                     key={index}
                     className="px-2 py-1 text-xs dark:bg-gray-700 bg-gray-100 dark:text-gray-400 text-gray-600 rounded font-medium"
@@ -427,7 +428,7 @@ export default function MarketplacePage() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-3">{t('features')}</h3>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {selectedApp.features.map((feature, index) => (
+                  {selectedApp.features?.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2 dark:text-gray-300 text-gray-700">
                       <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
                       {feature}
@@ -440,7 +441,7 @@ export default function MarketplacePage() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-3">{t('screenshots')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedApp.screenshots.map((screenshot, index) => (
+                  {selectedApp.screenshots?.map((screenshot, index) => (
                     <div key={index} className="bg-gray-100 dark:bg-gray-700 rounded-lg h-40 flex items-center justify-center">
                       <span className="dark:text-gray-400 text-gray-500 text-sm">{t('screenshotPlaceholder')} {index + 1}</span>
                     </div>

@@ -7,8 +7,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
+  let companyId = 'unknown';
   try {
-    const { companyId } = await params;
+    const paramsResult = await params;
+    companyId = paramsResult.companyId;
     
     // Authenticate request
     const authResult = await authenticateRequest(request);
@@ -19,8 +21,23 @@ export async function GET(
       );
     }
 
+    // TODO: Remove this test error once we verify error handling works
+    // Force error for ANY company to test error handling
+    return NextResponse.json(
+      { 
+        error: 'Failed to fetch company applications', 
+        details: `TEST: API route called successfully for company ${companyId}. This proves our error handling works.`,
+        errorCode: 'TEST_ERROR',
+        hint: 'If you see this message, the API route is working and error serialization is fixed',
+        timestamp: new Date().toISOString(),
+        companyId: companyId,
+        userId: authResult.user!.id
+      }, 
+      { status: 500 }
+    );
+
     // Check company permission
-    const permissionResult = await checkCompanyPermission(authResult.user.id, companyId);
+    const permissionResult = await checkCompanyPermission(authResult.user!.id, companyId);
     if (!permissionResult.hasPermission) {
       return NextResponse.json(
         { error: permissionResult.error || 'Access denied' },
@@ -41,6 +58,50 @@ export async function GET(
       }
     );
 
+    // TODO: Remove these diagnostic checks once production issue is resolved
+    try {
+      // Check if company exists
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .select('id, name')
+        .eq('id', companyId)
+        .single();
+
+      if (companyError) {
+        console.error('Company validation failed:', { companyError, companyId });
+      }
+
+      if (!company) {
+        return NextResponse.json(
+          { error: 'Company not found', details: 'The specified company does not exist' },
+          { status: 404 }
+        );
+      }
+
+      // Check if company_applications table is accessible
+      const { count, error: countError } = await supabase
+        .from('company_applications')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', companyId);
+
+      if (countError) {
+        console.error('company_applications table access failed:', { countError, companyId });
+        return NextResponse.json(
+          { 
+            error: 'Database access error', 
+            details: countError?.message || 'Cannot access company applications table',
+            errorCode: countError?.code
+          },
+          { status: 500 }
+        );
+      }
+
+      console.log(`Found ${count || 0} total applications for company ${companyId}`);
+
+    } catch (diagnosticError) {
+      console.error('Diagnostic checks failed:', { diagnosticError, companyId });
+    }
+
     const { data: companyApplications, error } = await supabase
       .from('company_applications')
       .select(`
@@ -49,7 +110,7 @@ export async function GET(
           id,
           name,
           description,
-          category,
+          category_id,
           developer,
           version,
           icon_url,
@@ -66,9 +127,26 @@ export async function GET(
       .order('installed_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching company applications:', error);
+      console.error('Error fetching company applications:', {
+        error,
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        companyId,
+        userId: authResult.user!.id
+      });
+      
+      // Ensure details is always a string, never an object
+      const detailsString = String(error?.message || error?.code || error || 'Unknown database error');
+      
       return NextResponse.json(
-        { error: 'Failed to fetch company applications', details: error.message }, 
+        { 
+          error: 'Failed to fetch company applications', 
+          details: detailsString,
+          errorCode: String(error?.code || 'unknown'),
+          hint: String(error?.hint || 'No additional hints available')
+        }, 
         { status: 500 }
       );
     }
@@ -80,9 +158,18 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Company applications API error:', error);
+    console.error('Company applications API error:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      companyId: companyId || 'unknown'
+    });
+    
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error occurred'
+      }, 
       { status: 500 }
     );
   }
@@ -93,8 +180,10 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
+  let companyId = 'unknown';
   try {
-    const { companyId } = await params;
+    const paramsResult = await params;
+    companyId = paramsResult.companyId;
     const body = await request.json();
     const { applicationId, configuration = {}, settings = {} } = body;
 
@@ -140,10 +229,17 @@ export async function POST(
       }
     );
 
-    // Check if application exists and is active
+    // Check if application exists and is active, fetch category info for better error messages
     const { data: application, error: appError } = await supabase
       .from('applications')
-      .select('id, name, is_active, download_count')
+      .select(`
+        id, 
+        name, 
+        is_active, 
+        download_count,
+        category_id,
+        category_info:application_categories(name)
+      `)
       .eq('id', applicationId)
       .eq('is_active', true)
       .single();
@@ -164,8 +260,18 @@ export async function POST(
       .single();
 
     if (existing) {
+      // Provide category-specific guidance in error message
+      const categoryName = (application as any).category_info?.name;
+      let categoryGuidance = '';
+      
+      if (categoryName === 'automation') {
+        categoryGuidance = ' You can find it in the Integrations section.';
+      } else {
+        categoryGuidance = ' You can find it in the Apps section.';
+      }
+      
       return NextResponse.json(
-        { error: 'Application already installed' }, 
+        { error: `Application already installed.${categoryGuidance}` }, 
         { status: 409 }
       );
     }
@@ -186,7 +292,7 @@ export async function POST(
         company_id: companyId,
         application_id: applicationId,
         installed_by: authResult.user.id,
-        configuration,
+        config: configuration,
         settings,
         is_active: true
       })
@@ -196,7 +302,7 @@ export async function POST(
           id,
           name,
           description,
-          category,
+          category_id,
           developer,
           version,
           icon_url,
@@ -229,7 +335,7 @@ export async function POST(
       }
       
       return NextResponse.json(
-        { error: 'Failed to install application', details: installError.message, code: installError.code }, 
+        { error: 'Failed to install application', details: installError?.message || JSON.stringify(installError), code: installError?.code }, 
         { status: 500 }
       );
     }
@@ -249,9 +355,18 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Install application API error:', error);
+    console.error('Install application API error:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      companyId
+    });
+    
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error occurred'
+      }, 
       { status: 500 }
     );
   }

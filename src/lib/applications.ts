@@ -5,8 +5,7 @@ export interface Application {
   name: string;
   description: string;
   long_description?: string;
-  category: string;
-  category_id?: string;
+  category_id: string; // Now required (removed category string)
   developer: string;
   version: string;
   icon_url?: string;
@@ -20,7 +19,7 @@ export interface Application {
   download_count: number;
   is_premium: boolean;
   is_active: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any>; // Keep - used for flexible app-specific data
   created_at: string;
   updated_at: string;
 }
@@ -42,11 +41,10 @@ export interface CompanyApplication {
   installed_at: string;
   installed_by?: string;
   is_active: boolean;
-  configuration?: Record<string, any>;
+  config?: Record<string, any>;
   settings?: Record<string, any>;
-  credentials?: Record<string, any>;
-  last_used_at?: string;
-  usage_count: number;
+  last_run_at?: string;
+  run_count: number;
   created_at: string;
   updated_at: string;
   application?: Application;
@@ -85,7 +83,7 @@ export async function fetchApplications(filters: ApplicationFilters = {}): Promi
 
     // Apply filters
     if (category && category !== 'all') {
-      query = query.eq('category', category);
+      query = query.eq('category_id', category);
     }
 
     if (isPremium !== undefined) {
@@ -131,7 +129,7 @@ export async function fetchApplication(id: string): Promise<Application | null> 
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
+      if (error instanceof Error && error.code === 'PGRST116') {
         return null; // Not found
       }
       console.error('Error fetching application:', error);
@@ -171,6 +169,9 @@ export async function fetchApplicationCategories(): Promise<ApplicationCategory[
  * Fetch installed applications for a company
  */
 export async function fetchCompanyApplications(companyId: string): Promise<CompanyApplication[]> {
+  // TODO: Remove this - forcing error to see if this function is being called
+  throw new Error(`DIRECT_SUPABASE_CALL: fetchCompanyApplications called for ${companyId} - this should NOT be used!`);
+  
   try {
     const { data, error } = await supabase
       .from('company_applications')
@@ -345,7 +346,7 @@ export async function isApplicationInstalled(
       .eq('is_active', true)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && error instanceof Error && error.code !== 'PGRST116') {
       console.error('Error checking application installation:', error);
       throw new Error('Failed to check application installation');
     }
@@ -370,7 +371,7 @@ export async function getApplicationUsageStats(companyId: string): Promise<{
       .from('company_applications')
       .select(`
         is_active,
-        application:applications(category)
+        application:applications(category_id)
       `)
       .eq('company_id', companyId);
 
@@ -387,7 +388,7 @@ export async function getApplicationUsageStats(companyId: string): Promise<{
 
     // Count by category
     data?.forEach(app => {
-      const category = (app.application as any)?.category || 'other';
+      const category = (app.application as any)?.category_id || 'other';
       stats.byCategory[category] = (stats.byCategory[category] || 0) + 1;
     });
 

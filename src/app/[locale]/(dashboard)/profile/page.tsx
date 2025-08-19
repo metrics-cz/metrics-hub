@@ -104,7 +104,7 @@ export default function ProfilePage() {
       });
 
       if (error) {
-        alert(error.message);
+        alert(error instanceof Error ? error.message : "Unknown error");
         return;
       }
 
@@ -135,7 +135,7 @@ export default function ProfilePage() {
       });
 
       if (error) {
-        alert(error.message);
+        alert(error instanceof Error ? error.message : "Unknown error");
         return;
       }
 

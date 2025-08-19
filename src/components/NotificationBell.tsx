@@ -49,7 +49,7 @@ export default function NotificationBell({ showText = false, text = 'Notificatio
         // Notifications will be refreshed automatically via real-time subscription
       } else {
         const error = await response.json();
-        alert(error.error || `Failed to ${action} invitation`);
+        alert(error?.error || `Failed to ${action} invitation`);
       }
     } catch (error) {
       console.error(`Error ${action}ing invitation:`, error);

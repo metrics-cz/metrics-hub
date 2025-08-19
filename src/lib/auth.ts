@@ -74,9 +74,9 @@ export async function authenticateRequest(request: NextRequest): Promise<AuthRes
       }
     );
 
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (error || !session?.user) {
+    if (error || !user) {
       return {
         success: false,
         error: 'No valid session found'
@@ -86,10 +86,10 @@ export async function authenticateRequest(request: NextRequest): Promise<AuthRes
     return {
       success: true,
       user: {
-        id: session.user.id,
-        email: session.user.email,
-        aud: session.user.aud,
-        role: session.user.user_metadata?.role
+        id: user.id,
+        email: user.email,
+        aud: user.aud,
+        role: user.user_metadata?.role
       }
     };
 
@@ -174,7 +174,7 @@ export async function checkCompanyPermission(
       console.error('Company permission check failed:', { error, userId, companyId });
       return {
         hasPermission: false,
-        error: error ? `Database error: ${error.message}` : 'User not found in company'
+        error: error ? `Database error: ${error instanceof Error ? error.message : String(error)}` : 'User not found in company'
       };
     }
 

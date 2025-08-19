@@ -85,5 +85,6 @@ EOF
 *.sh
 
 CLAUDE.md
+.claude/
 
 .next/trace

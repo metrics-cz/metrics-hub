@@ -10,8 +10,15 @@ export interface CachedApiResponse<T> {
 class CachedApi {
   private async getAuthHeaders(): Promise<Record<string, string>> {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session?.access_token) {
+      // First try to get authenticated user (this validates the session server-side)
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('No authenticated user found');
+      }
+
+      // Then get the session for the access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
         throw new Error('No authentication token available');
       }
       
@@ -140,19 +147,62 @@ class CachedApi {
     
     return requestCache.get(cacheKey, async () => {
       try {
+        console.log(`[cachedApi] Fetching company applications for ${companyId}`);
         const headers = await this.getAuthHeaders();
         const response = await fetch(`/api/company/${companyId}/applications`, { headers });
         
         if (!response.ok) {
-          const errorText = await response.text().catch(() => 'Unknown error');
-          throw new Error(`Failed to fetch company applications (${response.status}): ${errorText}`);
+          console.error(`[cachedApi] API request failed with status ${response.status}`);
+          
+          try {
+            // Try to parse as JSON first to get structured error details
+            const errorData = await response.json();
+            console.error('[cachedApi] Error response data:', errorData);
+            
+            // Extract the details field which should now be a proper string
+            const errorMessage = errorData.details || errorData.error || `HTTP ${response.status}`;
+            const errorCode = errorData.errorCode || 'unknown';
+            const hint = errorData.hint || '';
+            
+            const fullError = `Failed to fetch company applications: ${errorMessage}`;
+            
+            if (errorCode !== 'unknown') {
+              throw new Error(`${fullError} (Code: ${errorCode})`);
+            }
+            
+            if (hint) {
+              throw new Error(`${fullError} (Hint: ${hint})`);
+            }
+            
+            throw new Error(fullError);
+          } catch (jsonError) {
+            // If JSON parsing fails, try text response
+            try {
+              const errorText = await response.text();
+              console.error('[cachedApi] Text error response:', errorText);
+              throw new Error(`Failed to fetch company applications (${response.status}): ${errorText}`);
+            } catch (textError) {
+              throw new Error(`Failed to fetch company applications (${response.status}): Unknown error`);
+            }
+          }
         }
         
         const data = await response.json();
+        console.log(`[cachedApi] Successfully fetched ${data.data?.length || 0} applications`);
         return data.success ? data.data : [];
       } catch (error) {
-        console.error('Error fetching company applications:', error);
-        throw error;
+        console.error('[cachedApi] Error in fetchCompanyApplications:', {
+          error,
+          message: error instanceof Error ? error.message : String(error),
+          companyId
+        });
+        
+        // Re-throw with preserved message
+        if (error instanceof Error) {
+          throw new Error(error.message);
+        }
+        
+        throw new Error(`Failed to fetch company applications: ${String(error)}`);
       }
     });
   }

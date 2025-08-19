@@ -7,7 +7,7 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-  schemas   = ["public", "auth"]
+  schemas   = ["auth", "public"]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -281,50 +281,56 @@ model sso_providers {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model users {
-  instance_id                 String?           @db.Uuid
-  id                          String            @id @db.Uuid
-  aud                         String?           @db.VarChar(255)
-  role                        String?           @db.VarChar(255)
-  email                       String?           @db.VarChar(255)
-  encrypted_password          String?           @db.VarChar(255)
-  email_confirmed_at          DateTime?         @db.Timestamptz(6)
-  invited_at                  DateTime?         @db.Timestamptz(6)
-  confirmation_token          String?           @db.VarChar(255)
-  confirmation_sent_at        DateTime?         @db.Timestamptz(6)
-  recovery_token              String?           @db.VarChar(255)
-  recovery_sent_at            DateTime?         @db.Timestamptz(6)
-  email_change_token_new      String?           @db.VarChar(255)
-  email_change                String?           @db.VarChar(255)
-  email_change_sent_at        DateTime?         @db.Timestamptz(6)
-  last_sign_in_at             DateTime?         @db.Timestamptz(6)
-  raw_app_meta_data           Json?
-  raw_user_meta_data          Json?
-  is_super_admin              Boolean?
-  created_at                  DateTime?         @db.Timestamptz(6)
-  updated_at                  DateTime?         @db.Timestamptz(6)
-  phone                       String?           @unique
-  phone_confirmed_at          DateTime?         @db.Timestamptz(6)
-  phone_change                String?           @default("")
-  phone_change_token          String?           @default("") @db.VarChar(255)
-  phone_change_sent_at        DateTime?         @db.Timestamptz(6)
-  confirmed_at                DateTime?         @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
-  email_change_token_current  String?           @default("") @db.VarChar(255)
-  email_change_confirm_status Int?              @default(0) @db.SmallInt
-  banned_until                DateTime?         @db.Timestamptz(6)
-  reauthentication_token      String?           @default("") @db.VarChar(255)
-  reauthentication_sent_at    DateTime?         @db.Timestamptz(6)
-  is_sso_user                 Boolean           @default(false)
-  deleted_at                  DateTime?         @db.Timestamptz(6)
-  is_anonymous                Boolean           @default(false)
-  identities                  identities[]
-  mfa_factors                 mfa_factors[]
-  one_time_tokens             one_time_tokens[]
-  sessions                    sessions[]
-  companies                   companies[]
-  notifications               notifications[]
-
-  company_invitations_sent     company_invitations[] @relation("Inviter")
-  company_invitations_received company_invitations[]
+  instance_id                                                   String?                @db.Uuid
+  id                                                            String                 @id @db.Uuid
+  aud                                                           String?                @db.VarChar(255)
+  role                                                          String?                @db.VarChar(255)
+  email                                                         String?                @db.VarChar(255)
+  encrypted_password                                            String?                @db.VarChar(255)
+  email_confirmed_at                                            DateTime?              @db.Timestamptz(6)
+  invited_at                                                    DateTime?              @db.Timestamptz(6)
+  confirmation_token                                            String?                @db.VarChar(255)
+  confirmation_sent_at                                          DateTime?              @db.Timestamptz(6)
+  recovery_token                                                String?                @db.VarChar(255)
+  recovery_sent_at                                              DateTime?              @db.Timestamptz(6)
+  email_change_token_new                                        String?                @db.VarChar(255)
+  email_change                                                  String?                @db.VarChar(255)
+  email_change_sent_at                                          DateTime?              @db.Timestamptz(6)
+  last_sign_in_at                                               DateTime?              @db.Timestamptz(6)
+  raw_app_meta_data                                             Json?
+  raw_user_meta_data                                            Json?
+  is_super_admin                                                Boolean?
+  created_at                                                    DateTime?              @db.Timestamptz(6)
+  updated_at                                                    DateTime?              @db.Timestamptz(6)
+  phone                                                         String?                @unique
+  phone_confirmed_at                                            DateTime?              @db.Timestamptz(6)
+  phone_change                                                  String?                @default("")
+  phone_change_token                                            String?                @default("") @db.VarChar(255)
+  phone_change_sent_at                                          DateTime?              @db.Timestamptz(6)
+  confirmed_at                                                  DateTime?              @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
+  email_change_token_current                                    String?                @default("") @db.VarChar(255)
+  email_change_confirm_status                                   Int?                   @default(0) @db.SmallInt
+  banned_until                                                  DateTime?              @db.Timestamptz(6)
+  reauthentication_token                                        String?                @default("") @db.VarChar(255)
+  reauthentication_sent_at                                      DateTime?              @db.Timestamptz(6)
+  is_sso_user                                                   Boolean                @default(false)
+  deleted_at                                                    DateTime?              @db.Timestamptz(6)
+  is_anonymous                                                  Boolean                @default(false)
+  identities                                                    identities[]
+  mfa_factors                                                   mfa_factors[]
+  one_time_tokens                                               one_time_tokens[]
+  sessions                                                      sessions[]
+  audit_logs                                                    audit_logs[]
+  automation_schedules                                          automation_schedules[]
+  companies                                                     companies[]
+  company_applications_company_applications_connected_byTousers company_applications[] @relation("company_applications_connected_byTousers")
+  company_applications_company_applications_created_byTousers   company_applications[] @relation("company_applications_created_byTousers")
+  company_applications                                          company_applications[]
+  company_invitations_sent                                      company_invitations[]  @relation("Inviter")
+  company_invitations_received                                  company_invitations[]
+  execution_runs                                                execution_runs[]
+  notifications                                                 notifications[]
+  secrets                                                       secrets[]
 
   @@index([instance_id])
   @@index([is_anonymous])
@@ -333,19 +339,29 @@ model users {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model companies {
-  id            String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name          String
-  billing_email String?         @unique
-  plan          String?         @default("free")
-  owner_uid     String?         @db.Uuid
-  created_at    DateTime?       @default(now()) @db.Timestamptz(6)
-  active        Boolean?        @default(true)
-  logo_url      String?
-  users         users?          @relation(fields: [owner_uid], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  company_users company_users[]
+  id                   String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                 String
+  billing_email        String?                @unique
+  plan                 String?                @default("free")
+  owner_uid            String?                @db.Uuid
+  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  active               Boolean?               @default(true)
+  logo_url             String?
+  square_logo_url      String?
+  rectangular_logo_url String?
+  primary_color        String?                @default("#3B82F6") @db.VarChar(7)
+  secondary_color      String?                @default("#1F2937") @db.VarChar(7)
+  contact_details      Json?                  @default("{}")
+  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  users                users?                 @relation(fields: [owner_uid], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  company_applications company_applications[]
+  company_invitations  company_invitations[]
+  company_users        company_users[]
+  execution_runs       execution_runs[]
+  secrets              secrets[]
 
-  company_invitations company_invitations[]
-
+  @@index([contact_details], map: "idx_companies_contact_details", type: Gin)
+  @@index([updated_at], map: "idx_companies_updated_at")
   @@schema("public")
 }
 
@@ -359,6 +375,10 @@ model company_users {
 
   @@unique([company_id, user_id], map: "company_id_user_id_unique")
   @@unique([company_id, user_id])
+  @@index([company_id], map: "idx_company_users_company_id")
+  @@index([company_id, user_id, role], map: "idx_company_users_lookup")
+  @@index([role, company_id], map: "idx_company_users_role_company_id")
+  @@index([user_id], map: "idx_company_users_user_id")
   @@schema("public")
 }
 
@@ -371,17 +391,15 @@ model company_invitations {
   role           company_invitation_role   @default(member)
   message        String?
   status         company_invitation_status @default(pending)
-  expiresAt      DateTime                  @db.Timestamptz
-  acceptedAt     DateTime?                 @db.Timestamptz
-  createdAt      DateTime                  @default(now()) @db.Timestamptz
-  updatedAt      DateTime                  @default(now()) @db.Timestamptz
+  expiresAt      DateTime                  @db.Timestamptz(6)
+  acceptedAt     DateTime?                 @db.Timestamptz(6)
+  createdAt      DateTime                  @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime                  @default(now()) @db.Timestamptz(6)
   notificationId String?                   @db.Uuid
-
-  // Relations
-  user         users          @relation(fields: [userId], references: [id])
-  company      companies      @relation(fields: [companyId], references: [id])
-  inviter      users          @relation("Inviter", fields: [invitedBy], references: [id])
-  notification notifications? @relation(fields: [notificationId], references: [id])
+  company        companies                 @relation(fields: [companyId], references: [id])
+  inviter        users                     @relation("Inviter", fields: [invitedBy], references: [id])
+  notification   notifications?            @relation(fields: [notificationId], references: [id])
+  user           users                     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([companyId])
@@ -389,29 +407,323 @@ model company_invitations {
   @@index([status])
   @@index([email])
   @@index([notificationId])
+  @@index([companyId, status], map: "idx_company_invitations_company_id_status")
+  @@index([email, status], map: "idx_company_invitations_email_status")
+  @@index([expiresAt], map: "idx_company_invitations_expires_at")
   @@schema("public")
 }
 
 model notifications {
-  id                    String              @id @default(uuid()) @db.Uuid
-  userId                String              @db.Uuid
-  type                  notification_type
-  title                 String
-  message               String
-  data                  Json?
-  read                  Boolean             @default(false)
-  actionUrl             String?
-  createdAt             DateTime            @default(now()) @db.Timestamptz
-  expiresAt             DateTime?           @db.Timestamptz
-
-  // Relations
-  user                  users               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company_invitations   company_invitations[]
+  id                  String                @id @default(uuid()) @db.Uuid
+  userId              String                @db.Uuid
+  type                notification_type
+  title               String
+  message             String
+  data                Json?
+  read                Boolean               @default(false)
+  actionUrl           String?
+  createdAt           DateTime              @default(now()) @db.Timestamptz(6)
+  expiresAt           DateTime?             @db.Timestamptz(6)
+  company_invitations company_invitations[]
+  user                users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([read])
   @@index([type])
   @@index([createdAt])
+  @@index([createdAt(sort: Desc)], map: "idx_notifications_created_at")
+  @@index([type], map: "idx_notifications_type")
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model application_categories {
+  id           String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name         String         @unique
+  description  String?
+  icon         String?
+  sort_order   Int?           @default(0)
+  created_at   DateTime?      @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?      @default(now()) @db.Timestamptz(6)
+  applications applications[]
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model applications {
+  id                      String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                    String                    @unique(map: "applications_name_unique")
+  description             String
+  long_description        String?
+  category_id             String                    @db.Uuid
+  developer               String
+  version                 String                    @default("1.0.0")
+  icon_url                String?
+  screenshots             String[]                  @default([])
+  documentation_url       String?
+  pricing_model           String?                   @default("free")
+  price                   String?
+  features                Json?                     @default("[]")
+  tags                    String[]                  @default([])
+  rating                  Decimal?                  @default(0.0) @db.Decimal(2, 1)
+  download_count          Int?                      @default(0)
+  is_premium              Boolean?                  @default(false)
+  is_active               Boolean?                  @default(true)
+  metadata                Json?                     @default("{}")
+  created_at              DateTime?                 @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime?                 @default(now()) @db.Timestamptz(6)
+  type                    String?                   @default("application")
+  app_type                String?                   @default("app")
+  has_frontend            Boolean?                  @default(false)
+  has_backend             Boolean?                  @default(false)
+  execution_type          String?                   @default("iframe")
+  storage_path            String?
+  manifest_data           Json?                     @default("{}")
+  required_secrets        String[]                  @default([])
+  cron_schedule           String?
+  timeout_seconds         Int?                      @default(300)
+  memory_limit            String?                   @default("256MB")
+  last_run_at             DateTime?                 @db.Timestamptz(6)
+  last_run_status         String?
+  integration_provider    String?
+  auth_type               String?                   @default("oauth2")
+  auth_config             Json?                     @default("{}")
+  supported_features      Json?                     @default("[]")
+  trigger_type            String?                   @default("schedule")
+  supported_frequencies   Json?                     @default("[\"1h\", \"6h\", \"24h\"]")
+  pricing_model_executor  String?                   @default("frequency")
+  pricing_config          Json?                     @default("{}")
+  default_config          Json?                     @default("{}")
+  health_check_url        String?
+  webhook_url             String?
+  application_permissions application_permissions[]
+  category_ref            application_categories    @relation(fields: [category_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  company_applications    company_applications[]
+  execution_runs          execution_runs[]
+  secrets                 secrets[]
+
+  @@index([category_id])
+  @@index([is_active])
+  @@index([is_premium])
+  @@index([rating])
+  @@index([tags], type: Gin)
+  @@index([app_type], map: "idx_applications_app_type")
+  @@index([auth_type], map: "idx_applications_auth_type")
+  @@index([category_id], map: "idx_applications_category_id")
+  @@index([execution_type], map: "idx_applications_execution_type")
+  @@index([has_backend], map: "idx_applications_has_backend")
+  @@index([has_frontend], map: "idx_applications_has_frontend")
+  @@index([last_run_at], map: "idx_applications_last_run_at")
+  @@index([manifest_data], map: "idx_applications_manifest_data", type: Gin)
+  @@index([storage_path], map: "idx_applications_storage_path")
+  @@index([trigger_type], map: "idx_applications_trigger_type")
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model company_applications {
+  id                                             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  company_id                                     String                @db.Uuid
+  application_id                                 String                @db.Uuid
+  installed_at                                   DateTime?             @default(now()) @db.Timestamptz(6)
+  installed_by                                   String?               @db.Uuid
+  settings                                       Json?                 @default("{}")
+  created_at                                     DateTime?             @default(now()) @db.Timestamptz(6)
+  updated_at                                     DateTime?             @default(now()) @db.Timestamptz(6)
+  is_active                                      Boolean               @default(true)
+  last_execution_at                              DateTime?             @db.Timestamptz(6)
+  execution_count                                Int?                  @default(0)
+  is_enabled                                     Boolean?              @default(false)
+  connected_at                                   DateTime?             @default(now()) @db.Timestamptz(6)
+  connected_by                                   String?               @db.Uuid
+  last_sync_at                                   DateTime?             @db.Timestamptz(6)
+  sync_status                                    String?               @default("pending")
+  config                                         Json?                 @default("{}")
+  notification_channels                          Json?                 @default("{}")
+  frequency                                      String?               @default("24h")
+  timezone                                       String?               @default("UTC")
+  next_run_at                                    DateTime?             @db.Timestamptz(6)
+  last_run_at                                    DateTime?             @db.Timestamptz(6)
+  run_count                                      Int?                  @default(0)
+  success_count                                  Int?                  @default(0)
+  error_count                                    Int?                  @default(0)
+  last_error_message                             String?
+  price_per_month                                Decimal?              @default(0) @db.Decimal(10, 2)
+  created_by                                     String?               @db.Uuid
+  automation_schedules                           automation_schedules?
+  application                                    applications          @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  company                                        companies             @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_company_applications_connected_byTousers users?                @relation("company_applications_connected_byTousers", fields: [connected_by], references: [id], onUpdate: NoAction)
+  users_company_applications_created_byTousers   users?                @relation("company_applications_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users                                          users?                @relation(fields: [installed_by], references: [id], onUpdate: NoAction)
+  integration_health                             integration_health[]
+
+  @@unique([company_id, application_id])
+  @@index([company_id])
+  @@index([application_id])
+  @@index([installed_at])
+  @@index([application_id], map: "idx_company_applications_app_id")
+  @@index([installed_at(sort: Desc)], map: "idx_company_applications_installed_at")
+  @@index([application_id], map: "idx_company_applications_application_id")
+  @@index([company_id], map: "idx_company_applications_company_id")
+  @@index([is_active], map: "idx_company_applications_is_active")
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model application_permissions {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  application_id  String       @db.Uuid
+  permission_name String
+  description     String?
+  is_required     Boolean?     @default(false)
+  created_at      DateTime?    @default(now()) @db.Timestamptz(6)
+  application     applications @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([application_id])
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model audit_logs {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  table_name String
+  operation  String
+  old_data   Json?
+  new_data   Json?
+  user_id    String?   @db.Uuid
+  timestamp  DateTime? @default(now()) @db.Timestamptz(6)
+  ip_address String?   @db.Inet
+  user_agent String?
+  metadata   Json?
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([operation], map: "idx_audit_logs_operation")
+  @@index([table_name], map: "idx_audit_logs_table_name")
+  @@index([timestamp], map: "idx_audit_logs_timestamp")
+  @@index([user_id], map: "idx_audit_logs_user_id")
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model automation_schedules {
+  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_application_id String               @unique @db.Uuid
+  cron_expression        String
+  timezone               String?              @default("UTC")
+  is_active              Boolean?             @default(true)
+  start_date             DateTime?            @db.Date
+  end_date               DateTime?            @db.Date
+  execution_window_start DateTime?            @db.Time(6)
+  execution_window_end   DateTime?            @db.Time(6)
+  next_run_at            DateTime             @db.Timestamptz(6)
+  last_run_at            DateTime?            @db.Timestamptz(6)
+  created_at             DateTime?            @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime?            @default(now()) @db.Timestamptz(6)
+  created_by             String?              @db.Uuid
+  company_applications   company_applications @relation(fields: [company_application_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                  users?               @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+
+  @@index([company_application_id], map: "idx_automation_schedules_company_app")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model execution_runs {
+  id             String       @id(map: "app_runs_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  app_id         String       @db.Uuid
+  company_id     String       @db.Uuid
+  build_id       String?      @db.Uuid
+  run_type       String
+  status         String       @default("pending")
+  executor_id    String?
+  started_at     DateTime?    @default(now()) @db.Timestamptz(6)
+  completed_at   DateTime?    @db.Timestamptz(6)
+  duration_ms    Int?
+  logs_path      String?
+  output_path    String?
+  error_message  String?
+  metadata       Json?        @default("{}")
+  execution_type String?      @default("server")
+  triggered_by   String?      @default("manual")
+  user_id        String?      @db.Uuid
+  output_data    Json?        @default("{}")
+  output_files   String[]
+  success        Boolean?     @default(false)
+  error_details  String?
+  bullmq_job_id  String?
+  applications   applications @relation(fields: [app_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "app_runs_app_id_fkey")
+  companies      companies    @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "app_runs_company_id_fkey")
+  users          users?       @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([app_id], map: "idx_app_runs_app_id")
+  @@index([company_id], map: "idx_app_runs_company_id")
+  @@index([run_type], map: "idx_app_runs_run_type")
+  @@index([started_at(sort: Desc)], map: "idx_app_runs_started_at")
+  @@index([status], map: "idx_app_runs_status")
+  @@index([execution_type], map: "idx_execution_runs_execution_type")
+  @@index([output_files], map: "idx_execution_runs_output_files", type: Gin)
+  @@index([success], map: "idx_execution_runs_success")
+  @@index([triggered_by], map: "idx_execution_runs_triggered_by")
+  @@index([user_id], map: "idx_execution_runs_user_id")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model integration_health {
+  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_application_id String               @db.Uuid
+  checked_at             DateTime?            @default(now()) @db.Timestamptz(6)
+  status                 String
+  response_time_ms       Int?
+  api_status             String?
+  api_response_code      Int?
+  api_error_message      String?
+  credentials_valid      Boolean?
+  credentials_expire_at  DateTime?            @db.Timestamptz(6)
+  daily_api_calls        Int?                 @default(0)
+  daily_quota_limit      Int?
+  monthly_usage_mb       Decimal?             @default(0) @db.Decimal(10, 2)
+  created_at             DateTime?            @default(now()) @db.Timestamptz(6)
+  company_applications   company_applications @relation(fields: [company_application_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([company_application_id], map: "idx_integration_health_company_app")
+  @@index([checked_at(sort: Desc)], map: "idx_integration_health_recent")
+  @@index([status, checked_at], map: "idx_integration_health_status")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model secrets {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id   String        @db.Uuid
+  key          String
+  value        String
+  app_id       String?       @db.Uuid
+  description  String?
+  created_by   String?       @db.Uuid
+  created_at   DateTime?     @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?     @default(now()) @db.Timestamptz(6)
+  last_used_at DateTime?     @db.Timestamptz(6)
+  applications applications? @relation(fields: [app_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  companies    companies     @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users        users?        @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+
+  @@unique([company_id, key], map: "unique_company_key")
+  @@index([app_id], map: "idx_secrets_app_id")
+  @@index([company_id], map: "idx_secrets_company_id")
+  @@index([key], map: "idx_secrets_key")
+  @@index([last_used_at], map: "idx_secrets_last_used")
   @@schema("public")
 }
 

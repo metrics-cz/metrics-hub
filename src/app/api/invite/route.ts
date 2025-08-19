@@ -275,12 +275,12 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Invitation sent successfully via in-app notification',
         data: {
-          invitation_id: invitation.id,
-          notification_id: notification.id,
-          email: invitation.email,
+          invitation_id: (invitation as any)?.id,
+          notification_id: (notification as any)?.id,
+          email: (invitation as any)?.email,
           company_name: companyName,
-          role: invitation.role,
-          expires_at: invitation.expiresAt,
+          role: (invitation as any)?.role,
+          expires_at: (invitation as any)?.expiresAt,
           type: 'in_app_notification',
         },
       }, { status: 200 });
@@ -362,7 +362,7 @@ export async function POST(request: NextRequest) {
       {
         error: 'Internal server error',
         code: 'INTERNAL_ERROR',
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined,
       },
       { status: 500 }
     );

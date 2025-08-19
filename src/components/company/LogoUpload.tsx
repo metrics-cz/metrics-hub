@@ -130,9 +130,9 @@ export function LogoUpload({
       let errorMessage = 'Upload failed';
 
       if (error instanceof FileValidationError) {
-        errorMessage = error.message;
+        errorMessage = error instanceof Error ? error.message : 'File validation failed';
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        errorMessage = error instanceof Error ? error.message : 'Upload failed';
       }
 
       setError(errorMessage);
@@ -145,7 +145,7 @@ export function LogoUpload({
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
-    uploadFile(file);
+    if (file) uploadFile(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {

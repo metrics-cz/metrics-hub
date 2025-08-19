@@ -31,7 +31,7 @@ export async function GET(
 
     if (error) {
       console.error('Error fetching company automation:', error);
-      if (error.code === 'PGRST116') {
+      if (error instanceof Error && error.code === 'PGRST116') {
         return NextResponse.json(
           { error: 'Automation not found' }, 
           { status: 404 }

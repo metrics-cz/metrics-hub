@@ -6,7 +6,7 @@ const nextConfig = {
 /*   eslint: { ignoreDuringBuilds: true }, */
 
   // alias @
-  webpack: (config) => {
+  webpack: (config: any) => {
     config.resolve.alias['@'] = path.resolve(__dirname, 'src');
     return config;
   },
@@ -14,7 +14,36 @@ const nextConfig = {
   // Optimize framer-motion bundling
   experimental: {
     optimizePackageImports: ['framer-motion']
-  }
+  },
+
+  // CSP and security optimizations
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
+    ];
+  },
+
+  // Production optimizations
+  compiler: {
+    // Remove console.log in production
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
 };
 
 // Wrap your existing nextConfig with the next-intl plugin

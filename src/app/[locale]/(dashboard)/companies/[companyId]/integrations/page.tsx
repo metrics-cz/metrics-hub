@@ -7,14 +7,14 @@ import { Plus, Trash2, Settings, MessageSquare, FileSpreadsheet, Target, Mail, B
 import { useActiveCompany } from '@/lib/activeCompany';
 import { useCompanyListLoading } from '@/lib/companyList';
 import { cachedApi } from '@/lib/cachedApi';
-import { CompanyApplication } from '@/lib/applications';
+import { CompanyApplication, fetchApplicationCategories } from '@/lib/applications';
 import { canManageIntegrationSettings, canManageIntegrations } from '@/lib/permissions';
 
 interface Integration {
   id: string;
   name: string;
   description: string;
-  category: string;
+  category_id: string;
   iconUrl: string;
   rating: number;
   downloads: number;
@@ -41,7 +41,7 @@ const IntegrationIcon = ({ iconUrl, integrationName, className }: { iconUrl?: st
   const [hasError, setHasError] = useState(false);
 
   if (!iconUrl || hasError) {
-    return <FallbackIcon className={className} />;
+    return <FallbackIcon {...(className && { className })} />;
   }
 
   return (
@@ -68,6 +68,7 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uninstalling, setUninstalling] = useState<string | null>(null);
+  const [automationCategoryId, setAutomationCategoryId] = useState<string | null>(null);
 
   // Convert CompanyApplication to Integration format
   const convertToIntegration = (companyApp: CompanyApplication): Integration => {
@@ -75,7 +76,7 @@ export default function IntegrationsPage() {
     if (!app) throw new Error('Application data missing');
 
     // Determine type from category or metadata
-    const type = app.category === 'automation' ? 'Automation' : 'Integration';
+    const type = app.category_id === 'automation' ? 'Automation' : 'Integration';
     
     // Determine status from company application
     const status = companyApp.is_active ? 'Active' : 'Inactive';
@@ -87,7 +88,7 @@ export default function IntegrationsPage() {
       id: app.id,
       name: app.name,
       description: app.description,
-      category: app.category,
+      category_id: app.category_id,
       iconUrl: app.icon_url || '',
       rating: app.rating,
       downloads: app.download_count,
@@ -96,8 +97,8 @@ export default function IntegrationsPage() {
       tags: app.tags || [],
       installedAt: companyApp.installed_at,
       isActive: companyApp.is_active,
-      configuration: companyApp.configuration,
-      settings: companyApp.settings,
+      ...(companyApp.config && { configuration: companyApp.config }),
+      ...(companyApp.settings && { settings: companyApp.settings }),
       type,
       status,
       connectedAccountsCount,
@@ -117,10 +118,25 @@ export default function IntegrationsPage() {
     return 0;
   };
 
+  // Fetch automation category ID
+  useEffect(() => {
+    const fetchAutomationCategoryId = async () => {
+      try {
+        const categories = await fetchApplicationCategories();
+        const automationCategory = categories.find(cat => cat.name === 'automation');
+        setAutomationCategoryId(automationCategory?.id || null);
+      } catch (error) {
+        console.error('Error fetching application categories:', error);
+      }
+    };
+
+    fetchAutomationCategoryId();
+  }, []);
+
   // Fetch installed integrations (filter by automation category)
   useEffect(() => {
     const fetchInstalledIntegrations = async () => {
-      if (!company?.id) return;
+      if (!company?.id || !automationCategoryId) return;
 
       try {
         setLoading(true);
@@ -128,7 +144,7 @@ export default function IntegrationsPage() {
 
         const companyApplications = await cachedApi.fetchCompanyApplications(company.id);
         const convertedIntegrations = companyApplications
-          .filter(ca => ca.application && ca.application.category === 'automation') // Only automation category
+          .filter(ca => ca.application && ca.application.category_id === automationCategoryId) // Only automation category
           .map(convertToIntegration);
         
         setInstalledIntegrations(convertedIntegrations);
@@ -141,7 +157,7 @@ export default function IntegrationsPage() {
     };
 
     fetchInstalledIntegrations();
-  }, [company?.id]);
+  }, [company?.id, automationCategoryId]);
 
   const handleConfigureIntegration = (integrationId: string) => {
     // Navigate to integration settings page
@@ -230,30 +246,30 @@ export default function IntegrationsPage() {
       </div>
 
       {installedIntegrations.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 dark:bg-gray-800 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-8 h-8 dark:text-gray-400 text-gray-500" />
-          </div>
-          <h3 className="dark:text-white text-gray-900 font-medium mb-2">{t('noIntegrationsInstalled')}</h3>
-          <p className="dark:text-gray-400 text-gray-600 mb-6 text-sm">
-            {t('noIntegrationsSubtitle')}
-          </p>
-          {canManage ? (
-            <button
-              className="bg-primary-600 text-white rounded-lg px-6 py-3 hover:bg-primary-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium"
-              onClick={() => router.push('/marketplace')}>
-              <Plus className="w-4 h-4" />
-              {t('browseMarketplace')}
-            </button>
-          ) : (
-            <div className="text-sm dark:text-gray-500 text-gray-400 py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              Contact an admin to install integrations
+          <div className="text-center py-16">
+            <div className="w-16 h-16 dark:bg-gray-800 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Plus className="w-8 h-8 dark:text-gray-400 text-gray-500" />
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {installedIntegrations.map((integration) => {
+            <h3 className="dark:text-white text-gray-900 font-medium mb-2">{t('noIntegrationsInstalled')}</h3>
+            <p className="dark:text-gray-400 text-gray-600 mb-6 text-sm">
+              {t('noIntegrationsSubtitle')}
+            </p>
+            {canManage ? (
+              <button
+                className="bg-primary-600 text-white rounded-lg px-6 py-3 hover:bg-primary-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium"
+                onClick={() => router.push('/marketplace')}>
+                <Plus className="w-4 h-4" />
+                {t('browseMarketplace')}
+              </button>
+            ) : (
+              <div className="text-sm dark:text-gray-500 text-gray-400 py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                Contact an admin to install integrations
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {installedIntegrations.map((integration) => {
             return (
               <div
                 key={integration.id}

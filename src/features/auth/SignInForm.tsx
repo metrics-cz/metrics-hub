@@ -36,7 +36,7 @@ export default function SignInForm() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Sign in failed');
     } else {
       router.replace('/');
     }
@@ -53,7 +53,7 @@ export default function SignInForm() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Sign in failed');
     }
   };
 
@@ -71,7 +71,7 @@ export default function SignInForm() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Sign in failed');
     } else {
       setResetEmailSent(true);
     }

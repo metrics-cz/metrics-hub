@@ -48,7 +48,7 @@ export async function GET(
     .eq('company_id', companyId);
 
   if (error) {
-    console.error('GET company users:', error.message);
+    console.error('GET company users:', (error instanceof Error ? error.message : String(error)));
     return NextResponse.json(
       { error: 'Database error' },
       { status: 500 }
@@ -60,7 +60,7 @@ export async function GET(
   for (const row of data) {
     const parsed = rowSchema.safeParse(row);
     if (!parsed.success) {
-      console.warn('Invalid row skipped:', parsed.error.flatten());
+      console.warn('Invalid row skipped:', parsed.error instanceof Error ? parsed.error.flatten() : parsed.error);
       continue;
     }
     users.push(parsed.data);

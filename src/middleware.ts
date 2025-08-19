@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 import { createServerClient } from '@supabase/ssr';
+import { generateNonce, generateCSPHeader } from './lib/csp-utils';
 
 // Create the internationalization middleware
 const intlMiddleware = createMiddleware(routing);
@@ -53,9 +54,8 @@ async function authMiddleware(request: NextRequest) {
       }
     );
 
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (isProtectedApiRoute && !session) {
+    // For protected API routes, check Bearer token first
+    if (isProtectedApiRoute) {
       const authHeader = request.headers.get('authorization');
       const token = authHeader?.replace('Bearer ', '');
 
@@ -64,16 +64,27 @@ async function authMiddleware(request: NextRequest) {
         if (!tokenError && user) return null;
       }
 
+      // If no valid Bearer token, try to get user from cookies
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (!userError && user) return null;
+
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    if (isProtectedRoute && !session) {
-      const redirectUrl = new URL('/auth/sign-in', request.url);
-      redirectUrl.searchParams.set('redirectTo', pathname);
-      return NextResponse.redirect(redirectUrl);
+    // For protected routes, securely verify user authentication
+    if (isProtectedRoute) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        const redirectUrl = new URL('/auth/sign-in', request.url);
+        redirectUrl.searchParams.set('redirectTo', pathname);
+        return NextResponse.redirect(redirectUrl);
+      }
     }
 
-    if (session && (pathWithoutLocale.startsWith('/auth') || pathWithoutLocale === '/')) {
+    // Check if authenticated user is trying to access auth pages
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!userError && user && (pathWithoutLocale.startsWith('/auth') || pathWithoutLocale === '/')) {
       const dashboardUrl = new URL('/dashboard', request.url);
       return NextResponse.redirect(dashboardUrl);
     }
@@ -98,34 +109,28 @@ export default async function middleware(request: NextRequest) {
   const authResponse = await authMiddleware(request);
   if (authResponse) return authResponse;
 
+  // Generate nonce for CSP
+  const nonce = generateNonce();
+
   // Skip internationalization middleware for API routes
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/');
   const response = isApiRoute ? NextResponse.next() : (intlMiddleware(request) || NextResponse.next());
 
+  // Add nonce to response headers for use in components
+  response.headers.set('X-CSP-Nonce', nonce);
+
+  // Security headers
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-  // CSP mode - now using production-compatible settings
-
-  response.headers.set(
-    'Content-Security-Policy',
-    [
-      "default-src 'self'",
-      // Allow Next.js inline scripts for production compatibility
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      // Allow Google Fonts and inline styles
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: https: blob:",
-      // Allow Google Fonts domains
-      "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
-      // Allow Supabase and other necessary API connections
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.vercel.com",
-      "frame-ancestors 'none'",
-    ].join('; ')
-  );
+  // Environment-specific CSP configuration
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const cspHeader = generateCSPHeader(isDevelopment, nonce);
+  
+  response.headers.set('Content-Security-Policy', cspHeader);
 
   if (request.nextUrl.protocol === 'https:') {
     response.headers.set(
