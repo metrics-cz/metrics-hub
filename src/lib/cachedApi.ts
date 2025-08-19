@@ -147,6 +147,7 @@ class CachedApi {
     
     return requestCache.get(cacheKey, async () => {
       try {
+        console.log(`[cachedApi] Fetching company applications for ${companyId}`);
         const headers = await this.getAuthHeaders();
         const response = await fetch(`/api/company/${companyId}/applications`, { headers });
         
@@ -187,6 +188,7 @@ class CachedApi {
         }
         
         const data = await response.json();
+        console.log(`[cachedApi] Successfully fetched ${data.data?.length || 0} applications`);
         return data.success ? data.data : [];
       } catch (error) {
         console.error('[cachedApi] Error in fetchCompanyApplications:', {
