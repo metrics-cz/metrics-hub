@@ -21,21 +21,6 @@ export async function GET(
       );
     }
 
-    // TODO: Remove this test error once we verify error handling works
-    // Force error for ANY company to test error handling
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch company applications', 
-        details: `TEST: API route called successfully for company ${companyId}. This proves our error handling works.`,
-        errorCode: 'TEST_ERROR',
-        hint: 'If you see this message, the API route is working and error serialization is fixed',
-        timestamp: new Date().toISOString(),
-        companyId: companyId,
-        userId: authResult.user!.id
-      }, 
-      { status: 500 }
-    );
-
     // Check company permission
     const permissionResult = await checkCompanyPermission(authResult.user!.id, companyId);
     if (!permissionResult.hasPermission) {
