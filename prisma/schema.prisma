@@ -541,7 +541,7 @@ model company_applications {
   sync_status                                    String?               @default("pending")
   config                                         Json?                 @default("{}")
   notification_channels                          Json?                 @default("{}")
-  frequency                                      String?               @default("24h")
+  frequency_seconds                              Int?                  @default(86400)
   timezone                                       String?               @default("UTC")
   next_run_at                                    DateTime?             @db.Timestamptz(6)
   last_run_at                                    DateTime?             @db.Timestamptz(6)
