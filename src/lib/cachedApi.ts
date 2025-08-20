@@ -134,6 +134,7 @@ class CachedApi {
       
       // Invalidate related caches
       this.invalidateCompanyApplications(companyId);
+      this.invalidateCompanyIntegrations(companyId);
       
       return data;
     } catch (error) {
@@ -224,6 +225,7 @@ class CachedApi {
       
       // Invalidate related caches
       this.invalidateCompanyApplications(companyId);
+      this.invalidateCompanyIntegrations(companyId);
       
       return data;
     } catch (error) {
@@ -250,6 +252,7 @@ class CachedApi {
       
       // Invalidate related caches
       this.invalidateCompanyApplications(companyId);
+      this.invalidateCompanyIntegrations(companyId);
       
       return data;
     } catch (error) {
@@ -258,9 +261,78 @@ class CachedApi {
     }
   }
 
+  async fetchCompanyIntegrations(companyId: string): Promise<any[]> {
+    const cacheKey = `company-integrations:${companyId}`;
+    
+    return requestCache.get(cacheKey, async () => {
+      try {
+        console.log(`[cachedApi] Fetching company integrations for ${companyId}`);
+        const headers = await this.getAuthHeaders();
+        const response = await fetch(`/api/company/${companyId}/integrations`, { headers });
+        
+        if (!response.ok) {
+          console.error(`[cachedApi] API request failed with status ${response.status}`);
+          
+          try {
+            // Try to parse as JSON first to get structured error details
+            const errorData = await response.json();
+            console.error('[cachedApi] Error response data:', errorData);
+            
+            // Extract the details field which should now be a proper string
+            const errorMessage = errorData.details || errorData.error || `HTTP ${response.status}`;
+            const errorCode = errorData.errorCode || 'unknown';
+            const hint = errorData.hint || '';
+            
+            const fullError = `Failed to fetch company integrations: ${errorMessage}`;
+            
+            if (errorCode !== 'unknown') {
+              throw new Error(`${fullError} (Code: ${errorCode})`);
+            }
+            
+            if (hint) {
+              throw new Error(`${fullError} (Hint: ${hint})`);
+            }
+            
+            throw new Error(fullError);
+          } catch (jsonError) {
+            // If JSON parsing fails, try text response
+            try {
+              const errorText = await response.text();
+              console.error('[cachedApi] Text error response:', errorText);
+              throw new Error(`Failed to fetch company integrations (${response.status}): ${errorText}`);
+            } catch (textError) {
+              throw new Error(`Failed to fetch company integrations (${response.status}): Unknown error`);
+            }
+          }
+        }
+        
+        const data = await response.json();
+        console.log(`[cachedApi] Successfully fetched ${data.data?.length || 0} integrations`);
+        return data.success ? data.data : [];
+      } catch (error) {
+        console.error('[cachedApi] Error in fetchCompanyIntegrations:', {
+          error,
+          message: error instanceof Error ? error.message : String(error),
+          companyId
+        });
+        
+        // Re-throw with preserved message
+        if (error instanceof Error) {
+          throw new Error(error.message);
+        }
+        
+        throw new Error(`Failed to fetch company integrations: ${String(error)}`);
+      }
+    });
+  }
+
   // Cache invalidation methods for applications
   invalidateCompanyApplications(companyId: string): void {
     requestCache.invalidate(`company-applications:${companyId}`);
+  }
+
+  invalidateCompanyIntegrations(companyId: string): void {
+    requestCache.invalidate(`company-integrations:${companyId}`);
   }
 }
 

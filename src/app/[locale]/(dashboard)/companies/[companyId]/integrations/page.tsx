@@ -142,9 +142,9 @@ export default function IntegrationsPage() {
         setLoading(true);
         setError(null);
 
-        const companyApplications = await cachedApi.fetchCompanyApplications(company.id);
-        const convertedIntegrations = companyApplications
-          .filter(ca => ca.application && ca.application.category_id === automationCategoryId) // Only automation category
+        const companyIntegrations = await cachedApi.fetchCompanyIntegrations(company.id);
+        const convertedIntegrations = companyIntegrations
+          .filter(ca => ca.application) // Ensure application data exists
           .map(convertToIntegration);
         
         setInstalledIntegrations(convertedIntegrations);
