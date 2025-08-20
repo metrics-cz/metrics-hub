@@ -21,18 +21,51 @@ export async function GET(
     }
 
     const { data: companyIntegrations, error } = await supabase
-      .from('company_integrations')
+      .from('company_applications')
       .select(`
         *,
-        integration:integrations(*)
+        application:applications(
+          id,
+          name,
+          description,
+          category_id,
+          type,
+          developer,
+          version,
+          icon_url,
+          rating,
+          download_count,
+          is_premium,
+          price,
+          features,
+          tags
+        )
       `)
       .eq('company_id', companyId)
-      .order('connected_at', { ascending: false });
+      .eq('is_active', true)
+      .eq('application.type', 'integration')
+      .order('installed_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching company integrations:', error);
+      console.error('Error fetching company integrations:', {
+        error,
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        companyId
+      });
+      
+      // Ensure details is always a string, never an object
+      const detailsString = String(error?.message || error?.code || error || 'Unknown database error');
+      
       return NextResponse.json(
-        { error: 'Failed to fetch company integrations', details: (error instanceof Error ? error.message : String(error)) }, 
+        { 
+          error: 'Failed to fetch company integrations', 
+          details: detailsString,
+          errorCode: String(error?.code || 'unknown'),
+          hint: String(error?.hint || 'No additional hints available')
+        }, 
         { status: 500 }
       );
     }
@@ -79,32 +112,33 @@ export async function POST(
       );
     }
 
-    // Check if integration exists and is active
-    const { data: integration, error: integrationError } = await supabase
-      .from('integrations')
-      .select('id, name, is_active')
+    // Check if application exists and is active and is an integration
+    const { data: application, error: applicationError } = await supabase
+      .from('applications')
+      .select('id, name, type, is_active')
       .eq('id', integrationId)
       .eq('is_active', true)
+      .eq('type', 'integration')
       .single();
 
-    if (integrationError || !integration) {
+    if (applicationError || !application) {
       return NextResponse.json(
         { error: 'Integration not found or inactive' }, 
         { status: 404 }
       );
     }
 
-    // Check if already connected
+    // Check if already installed
     const { data: existing, error: existingError } = await supabase
-      .from('company_integrations')
+      .from('company_applications')
       .select('id')
       .eq('company_id', companyId)
-      .eq('integration_id', integrationId)
+      .eq('application_id', integrationId)
       .single();
 
     if (existing) {
       return NextResponse.json(
-        { error: 'Integration already connected' }, 
+        { error: 'Integration already installed' }, 
         { status: 409 }
       );
     }
@@ -118,35 +152,35 @@ export async function POST(
       );
     }
 
-    // Connect the integration
-    const { data: connection, error: connectError } = await supabase
-      .from('company_integrations')
+    // Install the integration
+    const { data: installation, error: installError } = await supabase
+      .from('company_applications')
       .insert({
         company_id: companyId,
-        integration_id: integrationId,
-        connected_by: user.id,
+        application_id: integrationId,
+        installed_by: user.id,
         config,
-        auth_data: authData,
-        status: 'active'
+        settings: authData,
+        is_active: true
       })
       .select(`
         *,
-        integration:integrations(*)
+        application:applications(*)
       `)
       .single();
 
-    if (connectError) {
-      console.error('Error connecting integration:', connectError);
+    if (installError) {
+      console.error('Error installing integration:', installError);
       return NextResponse.json(
-        { error: 'Failed to connect integration', details: connectError.message }, 
+        { error: 'Failed to install integration', details: installError.message }, 
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: `${integration.name} connected successfully`,
-      data: connection
+      message: `${application.name} installed successfully`,
+      data: installation
     });
 
   } catch (error) {
@@ -187,17 +221,17 @@ export async function DELETE(
     }
 
     // Get the integration before deleting for audit log
-    const { data: integration, error: fetchError } = await supabase
-      .from('company_integrations')
+    const { data: installation, error: fetchError } = await supabase
+      .from('company_applications')
       .select(`
         *,
-        integration:integrations(name)
+        application:applications(name)
       `)
       .eq('company_id', companyId)
-      .eq('integration_id', integrationId)
+      .eq('application_id', integrationId)
       .single();
 
-    if (fetchError || !integration) {
+    if (fetchError || !installation) {
       return NextResponse.json(
         { error: 'Integration not found' }, 
         { status: 404 }
@@ -206,10 +240,10 @@ export async function DELETE(
 
     // Delete the integration
     const { error: deleteError } = await supabase
-      .from('company_integrations')
+      .from('company_applications')
       .delete()
       .eq('company_id', companyId)
-      .eq('integration_id', integrationId);
+      .eq('application_id', integrationId);
 
     if (deleteError) {
       console.error('Error disconnecting integration:', deleteError);
@@ -221,20 +255,20 @@ export async function DELETE(
 
     // Log the disconnection
     await auditLogger.logAuditEvent({
-      table_name: 'company_integrations',
+      table_name: 'company_applications',
       operation: 'DELETE',
       user_id: user.id,
       metadata: {
-        action: 'integration_disconnected',
+        action: 'integration_uninstalled',
         company_id: companyId,
-        integration_name: integration.integration?.name,
+        integration_name: installation.application?.name,
         integration_id: integrationId,
       }
     });
 
     return NextResponse.json({
       success: true,
-      message: `${integration.integration?.name || 'Integration'} disconnected successfully`
+      message: `${installation.application?.name || 'Integration'} uninstalled successfully`
     });
 
   } catch (error) {

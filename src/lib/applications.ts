@@ -1,11 +1,14 @@
 import { supabase } from '@/lib/supabaseClient';
 
+export type ApplicationType = 'application' | 'integration';
+
 export interface Application {
   id: string;
   name: string;
   description: string;
   long_description?: string;
   category_id: string; // Now required (removed category string)
+  type: ApplicationType; // New field to distinguish apps from integrations
   developer: string;
   version: string;
   icon_url?: string;
@@ -52,6 +55,7 @@ export interface CompanyApplication {
 
 export interface ApplicationFilters {
   category?: string;
+  type?: ApplicationType; // Filter by application type
   search?: string;
   isPremium?: boolean;
   limit?: number;
@@ -68,6 +72,7 @@ export async function fetchApplications(filters: ApplicationFilters = {}): Promi
   try {
     const {
       category,
+      type,
       search,
       isPremium,
       limit = 50,
@@ -84,6 +89,10 @@ export async function fetchApplications(filters: ApplicationFilters = {}): Promi
     // Apply filters
     if (category && category !== 'all') {
       query = query.eq('category_id', category);
+    }
+
+    if (type) {
+      query = query.eq('type', type);
     }
 
     if (isPremium !== undefined) {

@@ -53,6 +53,7 @@ export async function GET(
           name,
           description,
           category_id,
+          type,
           developer,
           version,
           icon_url,
@@ -66,6 +67,7 @@ export async function GET(
       `)
       .eq('company_id', companyId)
       .eq('is_active', true)
+      .eq('application.type', 'application')
       .order('installed_at', { ascending: false });
 
     if (error) {
@@ -177,6 +179,7 @@ export async function POST(
       .select(`
         id, 
         name, 
+        type,
         is_active, 
         download_count,
         category_id,
@@ -245,6 +248,7 @@ export async function POST(
           name,
           description,
           category_id,
+          type,
           developer,
           version,
           icon_url,
