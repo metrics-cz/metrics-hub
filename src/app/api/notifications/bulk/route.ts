@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth-middleware';
-import prisma, { executeWithRetry } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import { auditLogger } from '@/lib/audit-logger';
 
 async function handleBulkNotificationOperations(request: NextRequest, context: AuthContext) {
@@ -22,48 +22,39 @@ async function handleBulkNotificationOperations(request: NextRequest, context: A
         case 'mark_read':
           if (notificationIds.length === 0) {
             // Mark all unread notifications as read for this user
-            const result = await executeWithRetry(
-              () => prisma.notifications.updateMany({
-                where: {
-                  userId: userId,
-                  read: false,
-                },
-                data: {
-                  read: true,
-                },
-              }),
-              'mark all notifications as read'
-            );
+            const result = await prisma.notifications.updateMany({
+              where: {
+                userId: userId,
+                read: false,
+              },
+              data: {
+                read: true,
+              },
+            });
             affectedCount = result.count;
           } else {
             // Mark specific notifications as read
-            const result = await executeWithRetry(
-              () => prisma.notifications.updateMany({
-                where: {
-                  id: { in: notificationIds },
-                  userId: userId,
-                },
-                data: {
-                  read: true,
-                },
-              }),
-              'mark specific notifications as read'
-            );
+            const result = await prisma.notifications.updateMany({
+              where: {
+                id: { in: notificationIds },
+                userId: userId,
+              },
+              data: {
+                read: true,
+              },
+            });
             affectedCount = result.count;
           }
           break;
 
         case 'delete':
           // Bulk delete notifications (only user's own notifications for security)
-          const deleteResult = await executeWithRetry(
-            () => prisma.notifications.deleteMany({
-              where: {
-                id: { in: notificationIds },
-                userId: userId,
-              },
-            }),
-            'bulk delete notifications'
-          );
+          const deleteResult = await prisma.notifications.deleteMany({
+            where: {
+              id: { in: notificationIds },
+              userId: userId,
+            },
+          });
           affectedCount = deleteResult.count;
           break;
 

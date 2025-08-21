@@ -17,27 +17,26 @@ import {
   ExternalLink,
   Unplug
 } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
 import { format } from 'date-fns';
 import { GoogleOAuthSettings } from './GoogleOAuthSettings';
 
 interface ConnectedService {
   id: string;
-  integration_id: string;
+  application_id: string;
   name: string;
   description: string;
   icon_url: string;
-  status: 'active' | 'inactive' | 'error' | 'pending';
-  connected_at: string;
+  status: 'active' | 'inactive';
+  installed_at: string;
   last_sync: string | null;
-  connected_by: {
+  installed_by: {
     id: string;
     name: string;
     email: string;
     avatar_url?: string;
   };
   config?: Record<string, any>;
-  error_message?: string;
+  settings?: Record<string, any>;
 }
 
 interface ConnectedServicesOverviewProps {
@@ -54,51 +53,34 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('company_integrations')
-        .select(`
-          id,
-          integration_id,
-          status,
-          connected_at,
-          last_sync,
-          config,
-          error_message,
-          connected_by,
-          integrations (
-            id,
-            name,
-            description,
-            icon_url,
-            integration_key
-          )
-        `)
-        .eq('company_id', companyId)
-        .order('connected_at', { ascending: false });
-
-      if (fetchError) {
-        throw fetchError;
+      const response = await fetch(`/api/company/${companyId}/integrations`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch integrations');
       }
 
+      const { data } = await response.json();
+
       const transformedServices: ConnectedService[] = (data || [])
-        .filter((item: any) => item.integrations?.integration_key !== 'google') // Exclude Google since it's shown separately
+        .filter((item: any) => item.application?.type === 'integration')
         .map((item: any) => ({
           id: item.id,
-          integration_id: item.integration_id,
-          name: item.integrations?.name || 'Unknown Service',
-          description: item.integrations?.description || '',
-          icon_url: item.integrations?.icon_url || '',
-          status: item.status,
-          connected_at: item.connected_at,
+          application_id: item.application_id,
+          name: item.application?.name || 'Unknown Service',
+          description: item.application?.description || '',
+          icon_url: item.application?.icon_url || '',
+          status: item.is_active ? 'active' : 'inactive',
+          installed_at: item.installed_at,
           last_sync: item.last_sync,
-          connected_by: {
-            id: item.connected_by || '',
+          installed_by: {
+            id: item.installed_by || '',
             name: 'User', // We'll show just "User" since we can't easily fetch auth.users data
             email: '',
             avatar_url: undefined,
           },
           config: item.config,
-          error_message: item.error_message,
+          settings: item.settings,
         }));
 
       setServices(transformedServices);
@@ -120,10 +102,6 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'inactive':
         return <XCircle className="h-4 w-4 text-gray-500" />;
-      case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
       default:
         return <AlertCircle className="h-4 w-4 text-gray-500" />;
     }
@@ -133,8 +111,6 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
     const variants = {
       active: 'default',
       inactive: 'secondary',
-      error: 'destructive',
-      pending: 'outline',
     } as const;
 
     return (
@@ -144,15 +120,15 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
     );
   };
 
-  const handleDisconnect = async (serviceId: string) => {
+  const handleDisconnect = async (serviceId: string, applicationId: string) => {
     try {
-      const { error: deleteError } = await supabase
-        .from('company_integrations')
-        .delete()
-        .eq('id', serviceId);
+      const response = await fetch(`/api/company/${companyId}/integrations?integrationId=${applicationId}`, {
+        method: 'DELETE',
+      });
 
-      if (deleteError) {
-        throw deleteError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to disconnect service');
       }
 
       // Refresh the list
@@ -267,7 +243,7 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <span>Connected:</span>
-                        <span>{format(new Date(service.connected_at), 'MMM d, yyyy')}</span>
+                        <span>{format(new Date(service.installed_at), 'MMM d, yyyy')}</span>
                       </div>
                       
                       {service.last_sync && (
@@ -282,14 +258,6 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
                       </div>
                     </div>
                     
-                    {service.status === 'error' && service.error_message && (
-                      <Alert variant="destructive" className="mt-2">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription className="text-xs">
-                          {service.error_message}
-                        </AlertDescription>
-                      </Alert>
-                    )}
                   </div>
                   
                   <div className="flex gap-2">
@@ -298,7 +266,7 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
                       size="sm"
                       onClick={() => {
                         // Navigate to integration settings
-                        window.location.href = `/companies/${companyId}/integrations/${service.integration_id}/settings`;
+                        window.location.href = `/companies/${companyId}/integrations/${service.application_id}/settings`;
                       }}
                     >
                       <Settings className="h-4 w-4" />
@@ -307,7 +275,7 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDisconnect(service.id)}
+                      onClick={() => handleDisconnect(service.id, service.application_id)}
                     >
                       <Unplug className="h-4 w-4" />
                     </Button>

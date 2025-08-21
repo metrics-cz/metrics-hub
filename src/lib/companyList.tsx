@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/AuthProvider';
 import { type Company, type UserCompany } from '@/lib/validation/companySchema';
 
@@ -32,45 +31,22 @@ export function CompanyListProvider({ children }: { children: React.ReactNode })
 
     const fetchCompanies = async () => {
       setLoading(true);
-      // 1. Type the response explicitly
-     const { data, error } = await supabase
-         .from('company_users')
-        .select(`
-          role, 
-          company:companies (
-            id, 
-            name, 
-            billing_email, 
-            plan, 
-            owner_uid, 
-            created_at, 
-            active, 
-            logo_url, 
-            rectangular_logo_url, 
-            primary_color, 
-            secondary_color, 
-            contact_details, 
-            updated_at
-          )
-        `)
-        .eq('user_id', user.id) as { data: CompanyUserResponse[] | null; error: any };
+      
+      try {
+        const response = await fetch('/api/companies');
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch companies');
+        }
 
-      if (error) {
+        const { data } = await response.json();
+        setCompanies(data || []);
+      } catch (error) {
         console.error('Failed to fetch companies:', error instanceof Error ? error.message : String(error));
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // 2. Safely access nested properties with type assertion
-      const formatted = (data ?? [])
-        .filter(item => item.company) // Ensure company exists
-        .map(item => ({
-          ...item.company,
-          userRole: item.role,
-        }));
-
-      setCompanies(formatted);
-      setLoading(false);
     };
 
     fetchCompanies();
