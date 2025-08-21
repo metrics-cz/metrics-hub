@@ -65,18 +65,9 @@ const createPrismaClient = () => {
 // Enhanced singleton pattern with cleanup
 const prisma = global.__prisma ?? createPrismaClient();
 
-// Only cache in development, but add cleanup
+// Only cache in development
 if (process.env.NODE_ENV !== 'production') {
   global.__prisma = prisma;
-  
-  // Clean up on hot reload in development
-  if (module.hot) {
-    module.hot.dispose(() => {
-      console.log('[Prisma] Hot reload detected, disposing client...');
-      prisma.$disconnect();
-      global.__prisma = undefined;
-    });
-  }
 }
 
 // Add process cleanup handlers
