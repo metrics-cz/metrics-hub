@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { createClient } from '@supabase/supabase-js';
 import prisma, { safeQuery } from '@/lib/prisma';
 
 // Get user's companies
@@ -51,7 +52,6 @@ export async function GET(request: NextRequest) {
             created_at: true,
             active: true,
             logo_url: true,
-            square_logo_url: true,
             rectangular_logo_url: true,
             primary_color: true,
             secondary_color: true,
