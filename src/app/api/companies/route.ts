@@ -1,6 +1,90 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import prisma from '@/lib/prisma';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import prisma, { safeQuery } from '@/lib/prisma';
+
+// Get user's companies
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createSupabaseServerClient();
+
+    // Check authentication
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' }, 
+        { status: 401 }
+      );
+    }
+
+    // Fetch companies using Prisma with safe query execution
+    const companiesWithRoles = await safeQuery(
+      async () => {
+        // Get user's company relationships using Prisma
+        const companyUsers = await prisma.company_users.findMany({
+          where: {
+            user_id: user.id,
+          },
+          select: {
+            company_id: true,
+            role: true,
+          },
+        });
+
+        if (!companyUsers || companyUsers.length === 0) {
+          return [];
+        }
+
+        // Get company IDs
+        const companyIds = companyUsers.map(cu => cu.company_id);
+
+        // Get company details
+        const companies = await prisma.companies.findMany({
+          where: {
+            id: { in: companyIds },
+          },
+          select: {
+            id: true,
+            name: true,
+            billing_email: true,
+            plan: true,
+            owner_uid: true,
+            created_at: true,
+            active: true,
+            logo_url: true,
+            square_logo_url: true,
+            rectangular_logo_url: true,
+            primary_color: true,
+            secondary_color: true,
+            contact_details: true,
+            updated_at: true,
+          },
+        });
+
+        // Combine company data with user roles
+        return companies.map(company => {
+          const userRole = companyUsers.find(cu => cu.company_id === company.id)?.role;
+          return {
+            ...company,
+            userRole,
+          };
+        });
+      },
+      2 // Retry up to 2 times for prepared statement errors
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: companiesWithRoles
+    });
+
+  } catch (error) {
+    console.error('Companies API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

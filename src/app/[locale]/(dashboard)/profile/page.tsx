@@ -73,11 +73,12 @@ export default function ProfilePage() {
       return;
     }
 
-    // Optionally update user metadata in your `users` table if exists
-    await supabase
-      .from("users")
-      .update({ full_name: displayName })
-      .eq("id", user.id);
+    // Update user metadata via API
+    await fetch('/api/user/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ full_name: displayName }),
+    });
 
     resetName(data);
   };
@@ -108,7 +109,11 @@ export default function ProfilePage() {
         return;
       }
 
-      await supabase.from("users").update({ email: data.email }).eq("id", user.id);
+      await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email }),
+      });
       resetEmail({ ...data, password: "" });
     } catch (err) {
       alert("Chyba při aktualizaci e-mailu");
@@ -150,24 +155,21 @@ export default function ProfilePage() {
     if (!user) return;
 
     try {
-      const { error: rmErr } = await supabase
-        .storage
-        .from('avatars')
-        .remove([`avatars/${user.id}`]);
+      // Remove avatar via API
+      const response = await fetch('/api/user/avatar', {
+        method: 'DELETE',
+      });
 
-      if (rmErr) throw rmErr;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove avatar');
+      }
       
-      // 2. clear avatar_url in the auth profile
+      // Clear avatar_url in the auth profile
       const { error: upErr } = await supabase.auth.updateUser({
         data: { avatar_url: null },
       });
       if (upErr) throw upErr;
-
-      // 3. optionally clear it in your own users table
-      await supabase
-        .from('users')
-        .update({ avatar_url: null })
-        .eq('id', user.id);
 
     } catch (err) {
       console.error('remove avatar failed:', err);
@@ -187,23 +189,28 @@ export default function ProfilePage() {
 
     try {
       const file = e.target.files[0];
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(`avatars/${user.id}/${file.name}`, file, { upsert: true });
+      const formData = new FormData();
+      formData.append('file', file);
 
-      if (uploadError) throw uploadError;
+      // Upload via API
+      const response = await fetch('/api/user/avatar', {
+        method: 'POST',
+        body: formData,
+      });
 
-      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(uploadData.path);
-      const url = urlData.publicUrl; // Correct property name
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload avatar');
+      }
 
+      const { avatar_url } = await response.json();
+
+      // Update auth profile
       const { error: updateError } = await supabase.auth.updateUser({
-        data: { avatar_url: url },
+        data: { avatar_url },
       });
 
       if (updateError) throw updateError;
-
-      // Optionally update your users table
-      await supabase.from("users").update({ avatar_url: url }).eq("id", user.id);
     } catch (err) {
       console.error("Upload avatar failed:", err);
       alert(t("uploadFailed"));

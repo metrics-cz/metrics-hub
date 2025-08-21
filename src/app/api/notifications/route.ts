@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import prisma, { executeWithRetry } from '@/lib/prisma';
+import prisma, { safeQuery } from '@/lib/prisma';
 
 // GET endpoint for fetching user notifications
 export async function GET(request: NextRequest) {
@@ -47,47 +47,43 @@ export async function GET(request: NextRequest) {
       where.read = false;
     }
 
-    // Use transaction-based isolation to prevent prepared statement conflicts
-    const [notifications, unreadCount] = await executeWithRetry(
-      async () => {
-        return await prisma.$transaction(async (tx) => {
-          return await Promise.all([
-            tx.notifications.findMany({
-              where,
-              orderBy: {
-                createdAt: 'desc',
-              },
-              take: limit,
-              skip: offset,
+    // Fetch notifications and unread count with safe query execution
+    const [notifications, unreadCount] = await safeQuery(
+      () => Promise.all([
+        prisma.notifications.findMany({
+          where,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: limit,
+          skip: offset,
+          include: {
+            company_invitations: {
               include: {
-                company_invitations: {
-                  include: {
-                    company: {
-                      select: {
-                        name: true,
-                        logo_url: true,
-                      },
-                    },
-                    inviter: {
-                      select: {
-                        email: true,
-                      },
-                    },
+                company: {
+                  select: {
+                    name: true,
+                    logo_url: true,
+                  },
+                },
+                inviter: {
+                  select: {
+                    email: true,
                   },
                 },
               },
-            }),
-            // Get unread count
-            tx.notifications.count({
-              where: {
-                userId: user.id,
-                read: false,
-              },
-            }),
-          ]);
-        });
-      },
-      'notifications fetch operation'
+            },
+          },
+        }),
+        // Get unread count
+        prisma.notifications.count({
+          where: {
+            userId: user.id,
+            read: false,
+          },
+        }),
+      ]),
+      2 // Retry up to 2 times for prepared statement errors
     );
 
     // Format notifications for frontend
@@ -170,22 +166,18 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Mark all notifications as read using transaction isolation
-    const result = await executeWithRetry(
-      async () => {
-        return await prisma.$transaction(async (tx) => {
-          return await tx.notifications.updateMany({
-            where: {
-              userId: user.id,
-              read: false,
-            },
-            data: {
-              read: true,
-            },
-          });
-        });
-      },
-      'notifications update operation'
+    // Mark all notifications as read with safe query execution
+    const result = await safeQuery(
+      () => prisma.notifications.updateMany({
+        where: {
+          userId: user.id,
+          read: false,
+        },
+        data: {
+          read: true,
+        },
+      }),
+      2 // Retry up to 2 times for prepared statement errors
     );
 
     return NextResponse.json({

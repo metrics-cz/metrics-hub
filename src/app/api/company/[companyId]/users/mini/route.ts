@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma, { queryRawSafe, executeWithRetry } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import { createClient } from '@supabase/supabase-js';
 import {
   companyUserMiniSchema,
@@ -30,43 +30,38 @@ export async function GET(req: NextRequest, { params }: ParamsCtx) {
   /* ── Data fetch (Active users + Pending invitations) ───────── */
   const { companyId } = await params;
 
-  // Use enhanced Prisma queries with prepared statement handling
-  const [rawRows, pendingInvitations] = await executeWithRetry(
-    async () => {
-      return await Promise.all([
-        queryRawSafe`
-          SELECT
-            cu.company_id,
-            cu.role,
-            cu.user_id                                    AS id,
-            au.email,
-            (au.raw_user_meta_data ->> 'full_name')       AS full_name,
-            (au.raw_user_meta_data ->> 'avatar_url')      AS avatar_url,
-            au.last_sign_in_at,
-            'active'                                      AS status
-          FROM public.company_users cu
-          JOIN auth.users           au ON au.id = cu.user_id
-          WHERE cu.company_id = ${companyId}::uuid
-        `,
-        queryRawSafe`
-          SELECT
-            ci."companyId"                                AS company_id,
-            ci.role,
-            ci.id,
-            ci.email,
-            ''                                            AS full_name,
-            NULL                                          AS avatar_url,
-            NULL                                          AS last_sign_in_at,
-            'pending'                                     AS status
-          FROM public.company_invitations ci
-          WHERE ci."companyId" = ${companyId}::uuid 
-          AND ci.status = 'pending'
-          AND ci."expiresAt" > NOW()
-        `
-      ]);
-    },
-    'company users mini query'
-  );
+  // Fetch active users and pending invitations
+  const [rawRows, pendingInvitations] = await Promise.all([
+    prisma.$queryRaw`
+      SELECT
+        cu.company_id,
+        cu.role,
+        cu.user_id                                    AS id,
+        au.email,
+        (au.raw_user_meta_data ->> 'full_name')       AS full_name,
+        (au.raw_user_meta_data ->> 'avatar_url')      AS avatar_url,
+        au.last_sign_in_at,
+        'active'                                      AS status
+      FROM public.company_users cu
+      JOIN auth.users           au ON au.id = cu.user_id
+      WHERE cu.company_id = ${companyId}::uuid
+    `,
+    prisma.$queryRaw`
+      SELECT
+        ci."companyId"                                AS company_id,
+        ci.role,
+        ci.id,
+        ci.email,
+        ''                                            AS full_name,
+        NULL                                          AS avatar_url,
+        NULL                                          AS last_sign_in_at,
+        'pending'                                     AS status
+      FROM public.company_invitations ci
+      WHERE ci."companyId" = ${companyId}::uuid 
+      AND ci.status = 'pending'
+      AND ci."expiresAt" > NOW()
+    `
+  ]);
 
   // Combine both result sets - ensure they are arrays
   const allRows = [

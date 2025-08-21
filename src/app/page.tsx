@@ -1,39 +1,18 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+export default async function IndexRedirect() {
+  const supabase = await createSupabaseServerClient();
+  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-export default function IndexRedirect() {
-  const router = useRouter();
-
-  useEffect(() => {
-    async function checkAuth() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        router.replace('/en/auth');
-      } else {
-        router.replace('/en/companies');
-      }
-    }
-
-    checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user) {
-        router.replace('/en/auth');
-      } else {
-        router.replace('/en/companies');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [router]);
+  if (!session?.user) {
+    redirect('/en/auth');
+  } else {
+    redirect('/en/companies');
+  }
 
   return null;
 }

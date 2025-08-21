@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import prisma, { executeWithRetry } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 // Simple error logging utility
 function logError(error: any, context: string) {
   console.error(`[${context}]`, error instanceof Error ? error.message : String(error), error);
@@ -89,37 +89,29 @@ export async function authenticateCompanyUser(
 
   try {
     // Check company exists and user has access
-    const company = await executeWithRetry(
-      () => prisma.companies.findUnique({
-        where: { id: companyId },
-        select: {
-          id: true,
-          name: true,
-          active: true,
-        },
-      }),
-      'find company'
-    );
+    const company = await prisma.companies.findUnique({
+      where: { id: companyId },
+      select: {
+        id: true,
+        name: true,
+        active: true,
+      },
+    });
     
     if (!company) {
       throw new AuthError('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Check user permission in company
-    const permission = await executeWithRetry(
-      () => prisma.company_users.findUnique({
-        where: {
-          company_id_user_id: {
-            company_id: companyId,
-            user_id: authContext.user.id,
-          },
-        },
-        select: {
-          role: true,
-        },
-      }),
-      'check user permission'
-    );
+    const permission = await prisma.company_users.findFirst({
+      where: {
+        company_id: companyId,
+        user_id: authContext.user.id,
+      },
+      select: {
+        role: true,
+      },
+    });
 
     if (!permission) {
       throw new AuthError(
