@@ -57,8 +57,6 @@ export async function GET(
           developer,
           version,
           icon_url,
-          rating,
-          download_count,
           is_premium,
           price,
           features,
@@ -181,7 +179,6 @@ export async function POST(
         name, 
         type,
         is_active, 
-        download_count,
         category_id,
         category_info:application_categories(name)
       `)
@@ -252,8 +249,6 @@ export async function POST(
           developer,
           version,
           icon_url,
-          rating,
-          download_count,
           is_premium,
           price,
           features,
@@ -286,13 +281,7 @@ export async function POST(
       );
     }
 
-    // Update download count
-    await supabase
-      .from('applications')
-      .update({ 
-        download_count: application.download_count + 1 
-      })
-      .eq('id', applicationId);
+    // Note: download_count column was removed from database
 
     return NextResponse.json({
       success: true,

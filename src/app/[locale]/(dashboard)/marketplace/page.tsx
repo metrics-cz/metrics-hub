@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Search, Filter, Star, Download, ShoppingCart, Info, MessageSquare, FileSpreadsheet, Target, Mail, BarChart3, Trello, X } from 'lucide-react';
+import { Search, Filter, Star, ShoppingCart, Info, MessageSquare, FileSpreadsheet, Target, Mail, BarChart3, Trello, X } from 'lucide-react';
 import { cachedApi } from '@/lib/cachedApi';
 import { Application, ApplicationCategory } from '@/lib/applications';
 import { useActiveCompany } from '@/lib/activeCompany';
 
 interface Integration extends Omit<Application, 'download_count' | 'is_premium' | 'long_description' | 'documentation_url'> {
   iconUrl: string;
-  downloads: number;
   isPremium: boolean;
   longDescription: string;
   documentation: string;
@@ -67,7 +66,6 @@ export default function MarketplacePage() {
     return {
       ...app,
       iconUrl: app.icon_url || '',
-      downloads: app.download_count,
       isPremium: app.is_premium,
       longDescription: app.long_description || app.description,
       documentation: app.documentation_url || '',
@@ -309,11 +307,7 @@ export default function MarketplacePage() {
               <div className="flex items-center gap-4 mb-4 text-sm dark:text-gray-500 text-gray-600">
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <span>{integration.rating}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Download className="w-4 h-4" />
-                  <span>{integration.downloads.toLocaleString()}</span>
+                  <span>N/A</span>
                 </div>
               </div>
 
@@ -400,11 +394,7 @@ export default function MarketplacePage() {
               <div className="flex items-center gap-6 mb-6">
                 <div className="flex items-center gap-1">
                   <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  <span className="font-medium">{selectedApp.rating}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Download className="w-5 h-5 dark:text-gray-400 text-gray-500" />
-                  <span>{selectedApp.downloads.toLocaleString()} {t('downloads')}</span>
+                  <span className="font-medium">N/A</span>
                 </div>
                 <div className="text-sm dark:text-gray-400 text-gray-600">
                   {t('version')} {selectedApp.version}

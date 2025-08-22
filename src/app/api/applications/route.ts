@@ -22,8 +22,7 @@ async function handler(request: NextRequest, context: AuthContext) {
         category_info:application_categories(name, description, icon)
       `)
       .eq('is_active', true)
-      .order('rating', { ascending: false })
-      .order('download_count', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(parseInt(limit))
       .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 

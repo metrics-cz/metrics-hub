@@ -18,8 +18,6 @@ export interface Application {
   price?: string;
   features?: string[];
   tags?: string[];
-  rating: number;
-  download_count: number;
   is_premium: boolean;
   is_active: boolean;
   metadata?: Record<string, any>; // Keep - used for flexible app-specific data
@@ -83,8 +81,7 @@ export async function fetchApplications(filters: ApplicationFilters = {}): Promi
       .from('applications')
       .select('*', { count: 'exact' })
       .eq('is_active', true)
-      .order('rating', { ascending: false })
-      .order('download_count', { ascending: false });
+      .order('created_at', { ascending: false });
 
     // Apply filters
     if (category && category !== 'all') {
@@ -261,13 +258,7 @@ export async function installApplication(
       throw new Error('Failed to install application');
     }
 
-    // Update download count
-    await supabase
-      .from('applications')
-      .update({ 
-        download_count: application.download_count + 1 
-      })
-      .eq('id', applicationId);
+    // Note: download_count column was removed from database
 
     return data;
   } catch (error) {

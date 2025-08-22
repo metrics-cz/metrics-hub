@@ -15,8 +15,6 @@ interface App {
   description: string;
   category_id: string;
   iconUrl: string;
-  rating: number;
-  downloads: number;
   isInstalled: boolean;
   isPremium: boolean;
   tags: string[];
@@ -72,8 +70,6 @@ export default function AppsPage() {
       description: app.description,
       category_id: app.category_id,
       iconUrl: app.icon_url || '',
-      rating: app.rating,
-      downloads: app.download_count,
       isInstalled: companyApp.is_active,
       isPremium: app.is_premium,
       tags: app.tags || [],
