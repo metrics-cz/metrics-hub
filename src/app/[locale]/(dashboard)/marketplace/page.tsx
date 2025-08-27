@@ -53,6 +53,7 @@ export default function MarketplacePage() {
   const company = useActiveCompany();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [categories, setCategories] = useState(defaultCategories);
+  const [installedAppIds, setInstalledAppIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -82,13 +83,21 @@ export default function MarketplacePage() {
         setLoading(true);
         setError(null);
 
-        // Fetch applications and categories in parallel
-        const [appsResponse, categoriesResponse] = await Promise.all([
+        // Fetch applications, categories, and installed apps in parallel
+        const fetchPromises = [
           fetch('/api/applications'),
           fetch('/api/applications/categories')
-        ]);
+        ];
 
-        if (!appsResponse.ok || !categoriesResponse.ok) {
+        // Only fetch installed apps if we have a company
+        if (company?.id) {
+          fetchPromises.push(fetch(`/api/company/${company.id}/applications`));
+        }
+
+        const responses = await Promise.all(fetchPromises);
+        const [appsResponse, categoriesResponse, installedResponse] = responses;
+
+        if (!appsResponse?.ok || !categoriesResponse?.ok) {
           throw new Error('Failed to fetch applications');
         }
 
@@ -112,6 +121,19 @@ export default function MarketplacePage() {
           setCategories(dynamicCategories);
         }
 
+        // Handle installed applications if we fetched them
+        if (installedResponse && installedResponse.ok) {
+          const installedData = await installedResponse.json();
+          if (installedData.success && installedData.data) {
+            const installedIds = new Set<string>(
+              installedData.data
+                .filter((app: any) => app.application) // Filter out apps with null application
+                .map((app: any) => app.application.id as string)
+            );
+            setInstalledAppIds(installedIds);
+          }
+        }
+
       } catch (error) {
         console.error('Error fetching applications:', error);
         setError('Failed to load applications');
@@ -121,7 +143,7 @@ export default function MarketplacePage() {
     };
 
     fetchApplications();
-  }, []);
+  }, [company?.id]);
 
   const filteredIntegrations = integrations.filter(integration => {
     const matchesSearch = integration.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -145,6 +167,8 @@ export default function MarketplacePage() {
       const response = await cachedApi.installApplication(company.id, integrationId);
       
       if (response.success) {
+        // Add the app to installed apps list
+        setInstalledAppIds(prev => new Set([...prev, integrationId]));
         // Close modal after successful installation
         setSelectedApp(null);
         alert(response.message || t('installSuccess'));
@@ -285,7 +309,14 @@ export default function MarketplacePage() {
                     />
                   </div>
                   <div>
-                    <h3 className="font-semibold dark:text-white text-gray-900 text-sm">{integration.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold dark:text-white text-gray-900 text-sm">{integration.name}</h3>
+                      {installedAppIds.has(integration.id) && (
+                        <span className="inline-block px-2 py-0.5 text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full font-medium">
+                          {t('installed')}
+                        </span>
+                      )}
+                    </div>
                     {integration.isPremium && (
                       <span className="inline-block px-2 py-0.5 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded-full mt-1 font-medium">
                         Premium
@@ -323,16 +354,26 @@ export default function MarketplacePage() {
               </div>
 
               <div className="flex gap-2 pt-4 border-t dark:border-gray-700 border-gray-200">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedApp(integration);
-                  }}
-                  className="flex-1 py-2.5 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  {integration.isPremium ? t('buyNow') : t('install')}
-                </button>
+                {installedAppIds.has(integration.id) ? (
+                  <button
+                    disabled
+                    className="flex-1 py-2.5 px-4 bg-gray-400 text-white rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    {t('installed')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedApp(integration);
+                    }}
+                    className="flex-1 py-2.5 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    {integration.isPremium ? t('buyNow') : t('install')}
+                  </button>
+                )}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -376,7 +417,14 @@ export default function MarketplacePage() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold dark:text-white text-gray-900">{selectedApp.name}</h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold dark:text-white text-gray-900">{selectedApp.name}</h2>
+                    {installedAppIds.has(selectedApp.id) && (
+                      <span className="inline-block px-3 py-1 text-sm bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full font-medium">
+                        {t('installed')}
+                      </span>
+                    )}
+                  </div>
                   <p className="dark:text-gray-400 text-gray-600">{t('by')} {selectedApp.developer}</p>
                 </div>
               </div>
@@ -441,19 +489,29 @@ export default function MarketplacePage() {
 
               {/* Install Button */}
               <div className="flex gap-4 pt-6 border-t dark:border-gray-700 border-gray-200">
-                <button
-                  onClick={() => handleInstall(selectedApp.id)}
-                  disabled={installing === selectedApp.id}
-                  className="flex-1 py-3 px-6 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  {installing === selectedApp.id 
-                    ? t('installing') 
-                    : selectedApp.isPremium 
-                      ? t('buyAndInstall') 
-                      : t('addToCompany')
-                  }
-                </button>
+                {installedAppIds.has(selectedApp.id) ? (
+                  <button
+                    disabled
+                    className="flex-1 py-3 px-6 bg-gray-400 text-white rounded-lg cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    {t('installed')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleInstall(selectedApp.id)}
+                    disabled={installing === selectedApp.id}
+                    className="flex-1 py-3 px-6 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    {installing === selectedApp.id 
+                      ? t('installing') 
+                      : selectedApp.isPremium 
+                        ? t('buyAndInstall') 
+                        : t('addToCompany')
+                    }
+                  </button>
+                )}
                 <a
                   href={selectedApp.documentation}
                   target="_blank"
