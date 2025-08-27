@@ -6,7 +6,7 @@ import { type Company, type UserCompany } from '@/lib/validation/companySchema';
 import CompanyInitialsIcon from '@/components/company/CompanyInitialsIcon';
 import { LogoUpload } from '@/components/company/LogoUpload';
 import { ColorSchemeManager } from '@/components/company/ColorSchemeManager';
-import { ConnectedServicesOverview } from '@/components/company/ConnectedServicesOverview';
+import { AuthAndApiSettings } from '@/components/company/AuthAndApiSettings';
 import { ContactDetailsForm } from '@/components/company/ContactDetailsForm';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Settings, Palette, Link, Mail, Trash2, AlertCircle, Save, RefreshCw } from 'lucide-react';
+import { Settings, Palette, Key, Mail, Trash2, AlertCircle, Save, RefreshCw } from 'lucide-react';
 export default function CompanySettingsPage() {
   /* params from URL */
   const { companyId } = useParams<{ companyId: string }>();
@@ -190,7 +190,7 @@ export default function CompanySettingsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-semibold mb-2">Company Settings</h1>
-          <p className="text-muted-foreground">Manage your company profile, branding, and integrations</p>
+          <p className="text-muted-foreground">Manage your company profile, branding, and API connections</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -232,8 +232,8 @@ export default function CompanySettingsPage() {
             Branding
           </TabsTrigger>
           <TabsTrigger value="integrations" className="flex items-center gap-2">
-            <Link className="h-4 w-4" />
-            Integrations
+            <Key className="h-4 w-4" />
+            Auth & API's
           </TabsTrigger>
           <TabsTrigger value="contact" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
@@ -352,9 +352,9 @@ export default function CompanySettingsPage() {
           />
         </TabsContent>
 
-        {/* Integrations */}
+        {/* Auth & API's */}
         <TabsContent value="integrations" className="space-y-6">
-          <ConnectedServicesOverview companyId={companyId} />
+          <AuthAndApiSettings companyId={companyId} />
         </TabsContent>
 
         {/* Contact Details */}

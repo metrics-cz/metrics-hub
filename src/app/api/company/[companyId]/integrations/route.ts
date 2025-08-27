@@ -33,8 +33,6 @@ export async function GET(
           developer,
           version,
           icon_url,
-          rating,
-          download_count,
           is_premium,
           price,
           features,

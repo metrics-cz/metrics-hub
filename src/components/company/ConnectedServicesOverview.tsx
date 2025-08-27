@@ -63,16 +63,16 @@ export function ConnectedServicesOverview({ companyId }: ConnectedServicesOvervi
       const { data } = await response.json();
 
       const transformedServices: ConnectedService[] = (data || [])
-        .filter((item: any) => item.application?.type === 'integration')
+        .filter((item: any) => item.application?.type === 'integration') // Only marketplace integrations, not OAuth connections
         .map((item: any) => ({
           id: item.id,
           application_id: item.application_id,
-          name: item.application?.name || 'Unknown Service',
+          name: item.application?.name || item.name || 'Unknown Service',
           description: item.application?.description || '',
           icon_url: item.application?.icon_url || '',
           status: item.is_active ? 'active' : 'inactive',
           installed_at: item.installed_at,
-          last_sync: item.last_sync,
+          last_sync: null, // Marketplace integrations don't have sync status
           installed_by: {
             id: item.installed_by || '',
             name: 'User', // We'll show just "User" since we can't easily fetch auth.users data
