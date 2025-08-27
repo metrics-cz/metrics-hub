@@ -76,35 +76,35 @@ export function GoogleOAuthSettings({ companyId, onIntegrationChange }: GoogleOA
   const [disconnecting, setDisconnecting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch Google integration status
+  // Fetch Google connection status
   const fetchGoogleIntegration = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/company/${companyId}/integrations`);
+      const response = await fetch(`/api/company/${companyId}/connections`);
       const data = await response.json();
       
       if (data.success) {
-        // Find Google integration
-        const googleIntegration = data.data.find((int: any) => 
-          int.integration?.integration_key === 'google'
+        // Find Google connection
+        const googleConnection = data.data.find((conn: any) => 
+          conn.connection?.connection_key === 'google'
         );
         
-        if (googleIntegration) {
+        if (googleConnection) {
           setIntegration({
-            id: googleIntegration.id,
-            integration_id: googleIntegration.integration_id,
-            name: googleIntegration.name,
-            status: googleIntegration.status,
-            connected_at: googleIntegration.connected_at,
-            config: googleIntegration.config,
-            error_message: googleIntegration.error_message,
+            id: googleConnection.id,
+            integration_id: googleConnection.connection_id,
+            name: googleConnection.name,
+            status: googleConnection.status,
+            connected_at: googleConnection.connected_at,
+            config: googleConnection.config,
+            error_message: googleConnection.error_message,
           });
         } else {
           setIntegration(null);
         }
       }
     } catch (error) {
-      console.error('Error fetching Google integration:', error);
+      console.error('Error fetching Google connection:', error);
     } finally {
       setLoading(false);
     }
@@ -149,7 +149,7 @@ export function GoogleOAuthSettings({ companyId, onIntegrationChange }: GoogleOA
       setDisconnecting(true);
       
       const response = await fetch(
-        `/api/company/${companyId}/integrations?integrationId=${integration.integration_id}`,
+        `/api/company/${companyId}/connections?connectionId=${integration.integration_id}`,
         { method: 'DELETE' }
       );
       
@@ -158,13 +158,13 @@ export function GoogleOAuthSettings({ companyId, onIntegrationChange }: GoogleOA
       if (data.success) {
         setIntegration(null);
         onIntegrationChange?.();
-        alert('Google integration disconnected successfully');
+        alert('Google connection disconnected successfully');
       } else {
-        alert(data.message || 'Failed to disconnect Google integration');
+        alert(data.message || 'Failed to disconnect Google connection');
       }
     } catch (error) {
       console.error('Error disconnecting Google:', error);
-      alert('Failed to disconnect Google integration');
+      alert('Failed to disconnect Google connection');
     } finally {
       setDisconnecting(false);
     }

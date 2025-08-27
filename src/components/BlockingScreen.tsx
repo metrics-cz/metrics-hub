@@ -8,10 +8,10 @@ export function BlockingScreen({ companyId }: { companyId: string }) {
     const router = useRouter();
 
     return (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white">
-            <h1 className="text-2xl font-bold mb-4">Unauthorized access</h1>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900 p-6 ">
+            <h1 className="text-2xl font-bold mb-4 dark:text-white">Unauthorized access</h1>
 
-            <p className="text-lg text-gray-600 mb-6">
+            <p className="text-lg text-gray-600 mb-6 dark:text-gray-400">
                 You do not have permission to access this page.
             </p>
 

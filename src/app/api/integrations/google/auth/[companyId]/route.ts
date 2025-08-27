@@ -4,12 +4,34 @@ import { checkCompanyPermission } from '@/lib/auth';
 import { auditLogger } from '@/lib/audit-logger';
 
 const GOOGLE_OAUTH_SCOPES = [
+  // User identification
   'https://www.googleapis.com/auth/userinfo.profile',
   'https://www.googleapis.com/auth/userinfo.email',
+  
+  // Google Ads - comprehensive access for campaigns, keywords, etc.
   'https://www.googleapis.com/auth/adwords',
+  
+  // Google Analytics - read access for reporting and data
+  'https://www.googleapis.com/auth/analytics.readonly',
+  
+  // Google Sheets - for data export/import and reporting
   'https://www.googleapis.com/auth/spreadsheets',
+  
+  // Gmail - readonly for email marketing insights
   'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/analytics.readonly'
+  
+  // Google Search Console - SEO and search performance data
+  'https://www.googleapis.com/auth/webmasters.readonly',
+  
+  // YouTube Analytics - for video marketing metrics
+  'https://www.googleapis.com/auth/youtube.readonly',
+  'https://www.googleapis.com/auth/yt-analytics.readonly',
+  
+  // Google My Business - local business metrics
+  'https://www.googleapis.com/auth/business.manage',
+  
+  // Google Drive - for accessing shared reports and assets
+  'https://www.googleapis.com/auth/drive.readonly'
 ];
 
 export async function GET(

@@ -4,20 +4,30 @@ import { encryptOAuthTokens } from '@/lib/encryption';
 import { auditLogger } from '@/lib/audit-logger';
 
 export async function GET(request: NextRequest) {
+  console.log('[OAUTH-CALLBACK] Google OAuth callback initiated');
+  console.log('[OAUTH-CALLBACK] Request URL:', request.url);
+  
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const error = searchParams.get('error');
 
+    console.log('[OAUTH-CALLBACK] URL parameters:', { 
+      hasCode: !!code, 
+      hasState: !!state, 
+      error: error || 'none' 
+    });
+
     if (error) {
-      console.error('OAuth error:', error);
+      console.error('[OAUTH-CALLBACK] OAuth error from Google:', error);
       return NextResponse.redirect(
         new URL(`/en/companies/settings?tab=integrations&error=${encodeURIComponent(error)}`, request.url)
       );
     }
 
     if (!code || !state) {
+      console.error('[OAUTH-CALLBACK] Missing required parameters:', { code: !!code, state: !!state });
       return NextResponse.redirect(
         new URL('/en/companies/settings?tab=integrations&error=missing_parameters', request.url)
       );
@@ -27,7 +37,13 @@ export async function GET(request: NextRequest) {
     let stateData;
     try {
       stateData = JSON.parse(Buffer.from(state, 'base64').toString());
-    } catch {
+      console.log('[OAUTH-CALLBACK] Decoded state data:', { 
+        companyId: stateData.companyId, 
+        userId: stateData.userId, 
+        timestamp: stateData.timestamp 
+      });
+    } catch (stateError) {
+      console.error('[OAUTH-CALLBACK] Failed to decode state:', stateError);
       return NextResponse.redirect(
         new URL('/en/companies/settings?tab=integrations&error=invalid_state', request.url)
       );
@@ -36,13 +52,18 @@ export async function GET(request: NextRequest) {
     const { companyId, userId, timestamp } = stateData;
 
     // Check if state is not too old (15 minutes)
-    if (Date.now() - timestamp > 15 * 60 * 1000) {
+    const stateAge = Date.now() - timestamp;
+    console.log('[OAUTH-CALLBACK] State age check:', { stateAge, maxAge: 15 * 60 * 1000, isExpired: stateAge > 15 * 60 * 1000 });
+    
+    if (stateAge > 15 * 60 * 1000) {
+      console.error('[OAUTH-CALLBACK] State expired:', { stateAge, timestamp });
       return NextResponse.redirect(
         new URL(`/en/companies/${companyId}/settings?tab=integrations&error=expired_state`, request.url)
       );
     }
 
     // Exchange authorization code for tokens
+    console.log('[OAUTH-CALLBACK] Starting token exchange with Google');
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
@@ -58,15 +79,25 @@ export async function GET(request: NextRequest) {
     });
 
     const tokens = await tokenResponse.json();
+    
+    console.log('[OAUTH-CALLBACK] Token exchange response:', { 
+      success: tokenResponse.ok, 
+      status: tokenResponse.status,
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
+      expiresIn: tokens.expires_in,
+      scope: tokens.scope
+    });
 
     if (!tokenResponse.ok) {
-      console.error('Token exchange failed:', tokens);
+      console.error('[OAUTH-CALLBACK] Token exchange failed:', tokens);
       return NextResponse.redirect(
         new URL(`/en/companies/${companyId}/settings?tab=integrations&error=token_exchange_failed`, request.url)
       );
     }
 
     // Get user info from Google
+    console.log('[OAUTH-CALLBACK] Fetching user info from Google');
     const userInfoResponse = await fetch(
       'https://www.googleapis.com/oauth2/v2/userinfo',
       {
@@ -77,29 +108,46 @@ export async function GET(request: NextRequest) {
     );
 
     const userInfo = await userInfoResponse.json();
+    
+    console.log('[OAUTH-CALLBACK] User info response:', { 
+      success: userInfoResponse.ok,
+      status: userInfoResponse.status,
+      email: userInfo.email,
+      name: userInfo.name,
+      id: userInfo.id
+    });
 
     if (!userInfoResponse.ok) {
-      console.error('Failed to get user info:', userInfo);
+      console.error('[OAUTH-CALLBACK] Failed to get user info:', userInfo);
       return NextResponse.redirect(
         new URL(`/en/companies/${companyId}/settings?tab=integrations&error=user_info_failed`, request.url)
       );
     }
 
-    // Find or create Google integration
+    // Find or create Google connection
+    console.log('[OAUTH-CALLBACK] Looking up Google connection in database');
     const supabase = createSupabaseServiceClient();
-    const { data: integration } = await supabase
-      .from('integrations')
+    const { data: connection, error: connectionError } = await supabase
+      .from('connections')
       .select('id')
-      .eq('integration_key', 'google')
+      .eq('connection_key', 'google')
       .single();
 
-    if (!integration) {
+    console.log('[OAUTH-CALLBACK] Connection lookup result:', { 
+      found: !!connection, 
+      connectionId: connection?.id,
+      error: connectionError?.message || 'none'
+    });
+
+    if (!connection) {
+      console.error('[OAUTH-CALLBACK] Google connection not found in database:', connectionError);
       return NextResponse.redirect(
-        new URL(`/en/companies/${companyId}/settings?tab=integrations&error=integration_not_found`, request.url)
+        new URL(`/en/companies/${companyId}/settings?tab=integrations&error=connection_not_found`, request.url)
       );
     }
 
     // Prepare token data for encryption
+    console.log('[OAUTH-CALLBACK] Preparing tokens for encryption');
     const tokenData = {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
@@ -107,41 +155,114 @@ export async function GET(request: NextRequest) {
       scope: tokens.scope,
     };
 
-    const encryptedTokens = encryptOAuthTokens(tokenData);
+    console.log('[OAUTH-CALLBACK] Token data prepared:', {
+      hasAccessToken: !!tokenData.access_token,
+      hasRefreshToken: !!tokenData.refresh_token,
+      expiresAt: tokenData.expires_at,
+      scopeCount: tokenData.scope?.split(' ').length || 0,
+      accessTokenLength: tokenData.access_token?.length || 0,
+      refreshTokenLength: tokenData.refresh_token?.length || 0,
+      scopesList: tokenData.scope?.split(' ') || []
+    });
+    
+    // Log full tokens for debugging (WARNING: Contains sensitive data!)
+    console.log('[OAUTH-CALLBACK] FULL ACCESS TOKEN:', tokenData.access_token);
+    console.log('[OAUTH-CALLBACK] FULL REFRESH TOKEN:', tokenData.refresh_token);
+    console.log('[OAUTH-CALLBACK] FULL TOKEN DATA:', JSON.stringify(tokenData, null, 2));
 
-    // Store the integration
-    const { error: insertError } = await supabase
-      .from('company_integrations')
+    console.log('[OAUTH-CALLBACK] Encrypting OAuth tokens');
+    const encryptedTokens = encryptOAuthTokens(tokenData);
+    console.log('[OAUTH-CALLBACK] Tokens encrypted successfully, length:', encryptedTokens.length);
+
+    // Store encrypted tokens in secrets table
+    console.log('[OAUTH-CALLBACK] Storing encrypted tokens in secrets table');
+    const secretKey = `google_oauth_tokens_${companyId.replace(/-/g, '_')}`;
+    console.log('[OAUTH-CALLBACK] Secret key:', secretKey);
+    
+    const { data: secret, error: secretError } = await supabase
+      .from('secrets')
       .upsert({
         company_id: companyId,
-        integration_id: integration.id,
-        name: `Google Account (${userInfo.email})`,
-        status: 'connected',
-        connected_at: new Date().toISOString(),
-        connected_by: userId,
-        auth_data: encryptedTokens,
-        config: {
-          user_info: {
-            email: userInfo.email,
-            name: userInfo.name,
-            picture: userInfo.picture,
-            google_id: userInfo.id,
-          },
-        },
+        key: secretKey,
+        encrypted_value: encryptedTokens,
+        key_version: 1,
+        description: `Google OAuth tokens for company ${companyId}`,
+        app_permissions: [],
+        created_by: userId
       }, {
-        onConflict: 'company_id,integration_id'
+        onConflict: 'company_id,key'
+      })
+      .select('id')
+      .single();
+
+    console.log('[OAUTH-CALLBACK] Secrets table operation result:', {
+      success: !!secret && !secretError,
+      secretId: secret?.id,
+      error: secretError?.message || 'none',
+      errorCode: secretError?.code || 'none'
+    });
+
+    if (secretError) {
+      console.error('[OAUTH-CALLBACK] Failed to store tokens in secrets table:', secretError);
+      return NextResponse.redirect(
+        new URL(`/en/companies/${companyId}/settings?tab=integrations&error=token_storage_failed`, request.url)
+      );
+    }
+
+    // Store the connection
+    console.log('[OAUTH-CALLBACK] Storing connection in company_connections table');
+    const connectionData = {
+      company_id: companyId,
+      connection_id: connection.id,
+      name: `Google Account (${userInfo.email})`,
+      status: 'connected',
+      connected_at: new Date().toISOString(),
+      connected_by: userId,
+      config: {
+        user_info: {
+          email: userInfo.email,
+          name: userInfo.name,
+          picture: userInfo.picture,
+          google_id: userInfo.id,
+        },
+        secret_id: secret.id,
+        scopes: tokens.scope?.split(' ') || []
+      },
+      last_sync_at: new Date().toISOString(),
+      sync_status: 'success'
+    };
+    
+    console.log('[OAUTH-CALLBACK] Connection data to store:', {
+      companyId,
+      connectionId: connection.id,
+      email: userInfo.email,
+      secretId: secret.id,
+      scopesCount: connectionData.config.scopes.length
+    });
+
+    const { error: insertError } = await supabase
+      .from('company_connections')
+      .upsert(connectionData, {
+        onConflict: 'company_id,connection_id'
       });
 
+    console.log('[OAUTH-CALLBACK] Company connections table operation result:', {
+      success: !insertError,
+      error: insertError?.message || 'none',
+      errorCode: insertError?.code || 'none'
+    });
+
     if (insertError) {
-      console.error('Failed to store integration:', insertError);
+      console.error('[OAUTH-CALLBACK] Failed to store connection:', insertError);
       return NextResponse.redirect(
         new URL(`/en/companies/${companyId}/settings?tab=integrations&error=storage_failed`, request.url)
       );
     }
 
-    // Log successful integration
+    // Log successful connection
+    console.log('[OAUTH-CALLBACK] Logging audit event');
     await auditLogger.logAuditEvent({
-      table_name: 'company_integrations',
+      table_name: 'company_connections',
       operation: 'INSERT',
       user_id: userId,
       metadata: {
@@ -149,15 +270,21 @@ export async function GET(request: NextRequest) {
         company_id: companyId,
         google_email: userInfo.email,
         scopes: tokens.scope,
+        connection_id: connection.id
       }
     });
 
     // Redirect to success page
+    console.log('[OAUTH-CALLBACK] OAuth flow completed successfully, redirecting to settings');
+    const successUrl = `/en/companies/${companyId}/settings?tab=integrations&success=google_connected`;
+    console.log('[OAUTH-CALLBACK] Success redirect URL:', successUrl);
+    
     return NextResponse.redirect(
-      new URL(`/en/companies/${companyId}/settings?tab=integrations&success=google_connected`, request.url)
+      new URL(successUrl, request.url)
     );
   } catch (error) {
-    console.error('Callback error:', error);
+    console.error('[OAUTH-CALLBACK] Unexpected error in OAuth callback:', error);
+    console.error('[OAUTH-CALLBACK] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.redirect(
       new URL('/en/companies/settings?tab=integrations&error=callback_failed', request.url)
     );
