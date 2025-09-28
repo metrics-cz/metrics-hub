@@ -1,0 +1,233 @@
+/**
+ * Google Ads Customer Manager Links API
+ *
+ * This endpoint implements the Funnel.io/Make.com pattern for discovering MCC → Child account relationships
+ * using the Google Ads customerManagerLinks resource.
+ *
+ * Key: This is the missing piece that enables comprehensive account discovery!
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { getGoogleOAuthTokens } from '@/lib/oauth-tokens';
+
+interface CustomerManagerLink {
+  managerCustomer: string;
+  customerClient: string;
+  status: string;
+  startTime?: string;
+}
+
+interface CustomerManagerLinksResponse {
+  results: Array<{
+    customerManagerLink: CustomerManagerLink;
+  }>;
+}
+
+// Helper function to normalize customer IDs (remove dashes and spaces)
+function normalizeCustomerId(customerId: string): string {
+  return customerId.replace(/[-\s]/g, '');
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const companyId = searchParams.get('companyId');
+    const rawMccCustomerId = searchParams.get('mccCustomerId');
+
+    if (!companyId || !rawMccCustomerId) {
+      return NextResponse.json(
+        { success: false, error: 'companyId and mccCustomerId are required' },
+        { status: 400 }
+      );
+    }
+
+    // Normalize MCC Customer ID (remove dashes)
+    const mccCustomerId = normalizeCustomerId(rawMccCustomerId);
+
+    console.log(`[MCC-LINKS] Discovering child accounts for MCC ${mccCustomerId}`);
+
+    // Get company's Google OAuth tokens
+    const tokens = await getGoogleOAuthTokens(companyId);
+    if (!tokens) {
+      return NextResponse.json(
+        { success: false, error: 'No Google OAuth tokens found for company' },
+        { status: 401 }
+      );
+    }
+
+    // Try different API versions for compatibility
+    const apiVersions = ['v21', 'v20', 'v19'];
+    let response = null;
+    let workingVersion = 'v21';
+
+    for (const version of apiVersions) {
+      try {
+        console.log(`[MCC-LINKS] Trying Google Ads API ${version} for MCC ${mccCustomerId}`);
+
+        // Query customerManagerLinks to find child accounts
+        const googleAdsUrl = `https://googleads.googleapis.com/${version}/customers/${mccCustomerId}/googleAds:searchStream`;
+
+        const query = `
+          SELECT
+            customer_manager_link.manager_customer,
+            customer_manager_link.manager_link_id,
+            customer_manager_link.status
+          FROM customer_manager_link
+          WHERE customer_manager_link.status = 'ACTIVE'
+        `;
+
+        response = await fetch(googleAdsUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tokens.access_token}`,
+            'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
+            'Content-Type': 'application/json',
+            'login-customer-id': mccCustomerId // Key: Use MCC credentials
+          },
+          body: JSON.stringify({ query })
+        });
+
+        if (response.ok) {
+          workingVersion = version;
+          console.log(`[MCC-LINKS] SUCCESS with ${version} for MCC ${mccCustomerId}`);
+          break;
+        } else {
+          console.log(`[MCC-LINKS] ${version} failed with ${response.status} for MCC ${mccCustomerId}`);
+        }
+      } catch (error) {
+        console.log(`[MCC-LINKS] ${version} threw error for MCC ${mccCustomerId}:`, error);
+        continue;
+      }
+    }
+
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : 'All API versions failed';
+      console.error(`[MCC-LINKS] Failed to get manager links for MCC ${mccCustomerId}:`, errorText);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Failed to query MCC relationships: ${response?.status || 'Network error'}`,
+          details: errorText
+        },
+        { status: response?.status || 500 }
+      );
+    }
+
+    const data: CustomerManagerLinksResponse = await response.json();
+
+    // Transform Google Ads API response to our format
+    const managerLinks = (data.results || []).map(result => {
+      const link = result.customerManagerLink;
+      return {
+        managerCustomerId: link.managerCustomer?.replace('customers/', ''),
+        childCustomerId: link.managerLinkId?.replace('customers/', ''),
+        status: link.status,
+        relationship: 'manager_client'
+      };
+    });
+
+    console.log(`[MCC-LINKS] Found ${managerLinks.length} child accounts for MCC ${mccCustomerId}`);
+
+    // Log discovered relationships for debugging
+    managerLinks.forEach(link => {
+      console.log(`[MCC-LINKS] Relationship: MCC ${link.managerCustomerId} → Child ${link.childCustomerId}`);
+    });
+
+    return NextResponse.json({
+      success: true,
+      mccCustomerId,
+      managerLinks,
+      total: managerLinks.length,
+      apiVersion: workingVersion,
+      discoveryMethod: 'customer_manager_links'
+    });
+
+  } catch (error) {
+    console.error('[MCC-LINKS] Error:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to discover MCC relationships'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { companyId, mccCustomerIds: rawMccCustomerIds } = body;
+
+    if (!companyId || !Array.isArray(rawMccCustomerIds)) {
+      return NextResponse.json(
+        { success: false, error: 'companyId and mccCustomerIds array are required' },
+        { status: 400 }
+      );
+    }
+
+    // Normalize all MCC Customer IDs
+    const mccCustomerIds = rawMccCustomerIds.map(id => normalizeCustomerId(id));
+
+    console.log(`[MCC-LINKS-BATCH] Discovering relationships for ${mccCustomerIds.length} MCCs`);
+
+    const tokens = await getGoogleOAuthTokens(companyId);
+    if (!tokens) {
+      return NextResponse.json(
+        { success: false, error: 'No Google OAuth tokens found for company' },
+        { status: 401 }
+      );
+    }
+
+    const allRelationships: any[] = [];
+    const errors: any[] = [];
+
+    // Process each MCC in parallel for efficiency
+    const promises = mccCustomerIds.map(async (mccId: string) => {
+      try {
+        const url = new URL(`${request.url.split('?')[0]}?companyId=${companyId}&mccCustomerId=${mccId}`);
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: request.headers
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return data.managerLinks || [];
+        } else {
+          errors.push({ mccId, error: `HTTP ${response.status}` });
+          return [];
+        }
+      } catch (error) {
+        errors.push({ mccId, error: error.message });
+        return [];
+      }
+    });
+
+    const results = await Promise.all(promises);
+    results.forEach(links => allRelationships.push(...links));
+
+    console.log(`[MCC-LINKS-BATCH] Total relationships discovered: ${allRelationships.length}`);
+
+    return NextResponse.json({
+      success: true,
+      relationships: allRelationships,
+      total: allRelationships.length,
+      processed: mccCustomerIds.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
+
+  } catch (error) {
+    console.error('[MCC-LINKS-BATCH] Error:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to discover batch MCC relationships'
+      },
+      { status: 500 }
+    );
+  }
+}

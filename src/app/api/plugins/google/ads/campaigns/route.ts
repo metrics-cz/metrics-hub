@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server'
 import { getGoogleOAuthTokens } from '@/lib/oauth-tokens'
 
+// Helper function to normalize customer IDs (remove dashes and spaces)
+function normalizeCustomerId(customerId: string): string {
+  return customerId.replace(/[-\s]/g, '');
+}
+
 /**
  * GOOGLE ADS CAMPAIGNS API ROUTE
  * 
@@ -16,9 +21,10 @@ import { getGoogleOAuthTokens } from '@/lib/oauth-tokens'
 
 // TypeScript interfaces to define what data looks like
 interface GoogleAdsCampaignRequest {
-  companyId: string   // Company ID to get OAuth tokens for
-  customerId: string  // Google Ads Customer ID (looks like: 123-456-7890)
-  query?: string      // GAQL query (Google's SQL-like language for ads data)
+  companyId: string     // Company ID to get OAuth tokens for
+  customerId: string    // Google Ads Customer ID (looks like: 123-456-7890)
+  loginCustomerId?: string // MCC Customer ID for accessing child accounts (optional)
+  query?: string        // GAQL query (Google's SQL-like language for ads data)
 }
 
 interface GoogleAdsCampaignResponse {
@@ -49,7 +55,12 @@ export async function GET(request: NextRequest) {
     // STEP 1: Extract parameters from URL
     const { searchParams } = new URL(request.url)
     const companyId = searchParams.get('companyId')
-    const customerId = searchParams.get('customerId')
+    const rawCustomerId = searchParams.get('customerId')
+    const rawLoginCustomerId = searchParams.get('loginCustomerId') // MCC ID for child account access
+
+    // Normalize customer IDs
+    const customerId = rawCustomerId ? normalizeCustomerId(rawCustomerId) : null;
+    const loginCustomerId = rawLoginCustomerId ? normalizeCustomerId(rawLoginCustomerId) : null;
     
     // Validate required parameters
     if (!companyId) {
@@ -89,27 +100,65 @@ export async function GET(request: NextRequest) {
       WHERE campaign.status != 'REMOVED'
     `
 
-    // STEP 4: Make the actual API call to Google Ads
-    // This is the server-side fetch that bypasses CORS restrictions
-    const response = await fetch(`https://googleads.googleapis.com/v14/customers/${customerId}/googleAds:searchStream`, {
-      method: 'POST', // Google Ads API uses POST even for reading data
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,           // OAuth token for authentication
-        'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN!, // Your Google Ads API developer token
-        'Content-Type': 'application/json',
-        'login-customer-id': customerId // Required when using manager accounts
-      },
-      body: JSON.stringify({
-        query: defaultQuery // The GAQL query we prepared above
-      })
-    })
+    // STEP 4: Make the actual API call to Google Ads with version negotiation
+    // Try different API versions for compatibility with accounts endpoint
+    const apiVersions = ['v21', 'v20', 'v19']; // Use same versions as accounts endpoint
+    let response = null;
+    let workingVersion = 'v21';
+
+    for (const version of apiVersions) {
+      try {
+        console.log(`[ADS-CAMPAIGNS] Trying Google Ads API ${version} for customer ${customerId}`);
+
+        response = await fetch(`https://googleads.googleapis.com/${version}/customers/${customerId}/googleAds:searchStream`, {
+          method: 'POST', // Google Ads API uses POST even for reading data
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,           // OAuth token for authentication
+            'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN!, // Your Google Ads API developer token
+            'Content-Type': 'application/json',
+            'login-customer-id': loginCustomerId || customerId // Use MCC ID if provided, otherwise use customer ID
+          },
+          body: JSON.stringify({
+            query: defaultQuery // The GAQL query we prepared above
+          })
+        });
+
+        if (response.ok) {
+          workingVersion = version;
+          console.log(`[ADS-CAMPAIGNS] SUCCESS with ${version} for customer ${customerId}`);
+          break;
+        } else {
+          console.log(`[ADS-CAMPAIGNS] ${version} failed with ${response.status} for customer ${customerId}`);
+        }
+      } catch (error) {
+        console.log(`[ADS-CAMPAIGNS] ${version} threw error for customer ${customerId}:`, error);
+        continue;
+      }
+    }
 
     // STEP 5: Handle API errors
+    if (!response) {
+      throw new Error('All API versions failed to make requests');
+    }
+
     if (!response.ok) {
-      const error = await response.json()
-      return Response.json({ 
-        error: 'Google Ads API error', 
-        details: error 
+      let errorDetails;
+      try {
+        errorDetails = await response.json();
+      } catch (parseError) {
+        // Handle case where error response is HTML instead of JSON
+        const errorText = await response.text();
+        console.error(`[ADS-CAMPAIGNS] Non-JSON error response for customer ${customerId}:`, errorText.substring(0, 200));
+        errorDetails = {
+          error: 'Google Ads API returned non-JSON response',
+          statusCode: response.status,
+          preview: errorText.substring(0, 200)
+        };
+      }
+
+      return Response.json({
+        error: 'Google Ads API error',
+        details: errorDetails
       }, { status: response.status })
     }
 
@@ -156,7 +205,11 @@ export async function POST(request: NextRequest) {
   try {
     // STEP 1: Parse request body
     const body: GoogleAdsCampaignRequest = await request.json()
-    const { companyId, customerId, query } = body
+    const { companyId, customerId: rawCustomerId, loginCustomerId: rawLoginCustomerId, query } = body
+
+    // Normalize customer IDs
+    const customerId = rawCustomerId ? normalizeCustomerId(rawCustomerId) : null;
+    const loginCustomerId = rawLoginCustomerId ? normalizeCustomerId(rawLoginCustomerId) : null;
 
     if (!companyId) {
       return Response.json({ error: 'companyId is required' }, { status: 400 })
@@ -187,25 +240,50 @@ export async function POST(request: NextRequest) {
       FROM campaign
     `
 
-    // STEP 4: Make Google Ads API call
-    const response = await fetch(`https://googleads.googleapis.com/v14/customers/${customerId}/googleAds:searchStream`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query: gaqlQuery
-      })
-    })
+    // STEP 4: Make Google Ads API call with version fallback
+    const apiVersions = ['v21', 'v20', 'v19'];
+    let response = null;
+    let workingVersion = 'v21';
 
-    if (!response.ok) {
-      const error = await response.json()
-      return Response.json({ 
-        error: 'Google Ads API error', 
-        details: error 
-      }, { status: response.status })
+    for (const version of apiVersions) {
+      try {
+        console.log(`[ADS-CAMPAIGNS-POST] Trying Google Ads API ${version} for customer ${customerId}`);
+
+        response = await fetch(`https://googleads.googleapis.com/${version}/customers/${customerId}/googleAds:searchStream`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
+            'Content-Type': 'application/json',
+            'login-customer-id': loginCustomerId || customerId // Use MCC ID if provided
+          },
+          body: JSON.stringify({
+            query: gaqlQuery
+          })
+        });
+
+        if (response.ok) {
+          workingVersion = version;
+          console.log(`[ADS-CAMPAIGNS-POST] SUCCESS with ${version} for customer ${customerId}`);
+          break;
+        } else {
+          console.log(`[ADS-CAMPAIGNS-POST] ${version} failed with ${response.status} for customer ${customerId}`);
+        }
+      } catch (error) {
+        console.log(`[ADS-CAMPAIGNS-POST] ${version} threw error for customer ${customerId}:`, error);
+        continue;
+      }
+    }
+
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : 'All API versions failed';
+      console.error(`[ADS-CAMPAIGNS-POST] Failed for customer ${customerId}:`, errorText);
+
+      return Response.json({
+        error: 'Google Ads API error',
+        details: errorText,
+        workingVersion: workingVersion
+      }, { status: response?.status || 500 })
     }
 
     // STEP 5: Return raw Google response for custom queries

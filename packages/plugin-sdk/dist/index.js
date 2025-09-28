@@ -56,11 +56,15 @@ class BaseClient {
 }
 
 class GoogleAdsClient extends BaseClient {
-    async getCampaigns(customerId) {
+    async getCampaigns(customerId, loginCustomerId) {
         const params = new URLSearchParams({
             companyId: this.config.companyId,
             customerId
         });
+        // Add MCC context if provided for accessing child accounts
+        if (loginCustomerId) {
+            params.set('loginCustomerId', loginCustomerId);
+        }
         const endpoint = `/api/plugins/google/ads/campaigns?${params.toString()}`;
         return this.makeRequest(endpoint);
     }
@@ -75,8 +79,33 @@ class GoogleAdsClient extends BaseClient {
         if (options.adGroupId) {
             params.set('adGroupId', options.adGroupId);
         }
+        // Add MCC context if provided for accessing child accounts
+        if (options.loginCustomerId) {
+            params.set('loginCustomerId', options.loginCustomerId);
+        }
         const endpoint = `/api/plugins/google/ads/keywords?${params.toString()}`;
         return this.makeRequest(endpoint);
+    }
+    /**
+     * Get campaigns for child account through MCC permissions
+     * This method implements the Funnel.io/Make.com pattern for accessing child accounts
+     * @param childCustomerId - The child account ID to get campaigns for
+     * @param mccCustomerId - The parent MCC account ID to use for permissions
+     */
+    async getCampaignsForChildAccount(childCustomerId, mccCustomerId) {
+        return this.getCampaigns(childCustomerId, mccCustomerId);
+    }
+    /**
+     * Get keywords for child account through MCC permissions
+     * @param childCustomerId - The child account ID to get keywords for
+     * @param mccCustomerId - The parent MCC account ID to use for permissions
+     * @param options - Additional options like campaignId, adGroupId
+     */
+    async getKeywordsForChildAccount(childCustomerId, mccCustomerId, options = {}) {
+        return this.getKeywords(childCustomerId, {
+            ...options,
+            loginCustomerId: mccCustomerId
+        });
     }
 }
 

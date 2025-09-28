@@ -88,3 +88,6 @@ CLAUDE.md
 .claude/
 
 .next/
+scripts/
+.temp/
+packages/

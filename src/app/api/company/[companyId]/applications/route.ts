@@ -60,7 +60,9 @@ export async function GET(
           is_premium,
           price,
           features,
-          tags
+          tags,
+          execution_type,
+          storage_path
         )
       `)
       .eq('company_id', companyId)
@@ -252,7 +254,9 @@ export async function POST(
           is_premium,
           price,
           features,
-          tags
+          tags,
+          execution_type,
+          storage_path
         )
       `)
       .single();

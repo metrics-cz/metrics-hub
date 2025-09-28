@@ -1,0 +1,259 @@
+/**
+ * Google Ads Account Details with MCC Credentials API
+ *
+ * This endpoint enables getting detailed account information for child accounts
+ * using parent MCC credentials via the login-customer-id header pattern.
+ * Essential for comprehensive account discovery in the Funnel.io/Make.com pattern.
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { getGoogleOAuthTokens } from '@/lib/oauth-tokens';
+
+// Helper function to normalize customer IDs (remove dashes and spaces)
+function normalizeCustomerId(customerId: string): string {
+  return customerId.replace(/[-\s]/g, '');
+}
+
+interface CustomerDetails {
+  id: string;
+  descriptiveName: string;
+  currencyCode: string;
+  timeZone: string;
+  autoTaggingEnabled: boolean;
+  hasPartnersBadge: boolean;
+  manager: boolean;
+  testAccount: boolean;
+  paymentAccountId?: string;
+  status: string;
+}
+
+interface CustomerDetailsResponse {
+  results: Array<{
+    customer: CustomerDetails;
+  }>;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { companyId, accountId: rawAccountId, mccCustomerId: rawMccCustomerId } = body;
+
+    if (!companyId || !rawAccountId) {
+      return NextResponse.json(
+        { success: false, error: 'companyId and accountId are required' },
+        { status: 400 }
+      );
+    }
+
+    // Normalize customer IDs
+    const accountId = normalizeCustomerId(rawAccountId);
+    const mccCustomerId = rawMccCustomerId ? normalizeCustomerId(rawMccCustomerId) : undefined;
+
+    console.log(`[ACCOUNT-DETAILS-MCC] Getting details for account ${accountId} via MCC ${mccCustomerId}`);
+
+    // Get company's Google OAuth tokens
+    const tokens = await getGoogleOAuthTokens(companyId);
+    if (!tokens) {
+      return NextResponse.json(
+        { success: false, error: 'No Google OAuth tokens found for company' },
+        { status: 401 }
+      );
+    }
+
+    // Try different API versions for compatibility
+    const apiVersions = ['v21', 'v20', 'v19'];
+    let response = null;
+    let workingVersion = 'v21';
+
+    for (const version of apiVersions) {
+      try {
+        console.log(`[ACCOUNT-DETAILS-MCC] Trying Google Ads API ${version} for account ${accountId}`);
+
+        // Query customer details using GAQL
+        const googleAdsUrl = `https://googleads.googleapis.com/${version}/customers/${accountId}/googleAds:searchStream`;
+
+        const query = `
+          SELECT
+            customer.id,
+            customer.descriptive_name,
+            customer.currency_code,
+            customer.time_zone,
+            customer.auto_tagging_enabled,
+            customer.has_partners_badge,
+            customer.manager,
+            customer.test_account,
+            customer.pay_per_conversion_eligibility_failure_reasons,
+            customer.status
+          FROM customer
+          LIMIT 1
+        `;
+
+        const headers: Record<string, string> = {
+          'Authorization': `Bearer ${tokens.access_token}`,
+          'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
+          'Content-Type': 'application/json',
+        };
+
+        // Key: Use MCC credentials to access child account details
+        if (mccCustomerId) {
+          headers['login-customer-id'] = mccCustomerId;
+          console.log(`[ACCOUNT-DETAILS-MCC] Using MCC ${mccCustomerId} credentials for account ${accountId}`);
+        }
+
+        response = await fetch(googleAdsUrl, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ query })
+        });
+
+        if (response.ok) {
+          workingVersion = version;
+          console.log(`[ACCOUNT-DETAILS-MCC] SUCCESS with ${version} for account ${accountId}`);
+          break;
+        } else {
+          console.log(`[ACCOUNT-DETAILS-MCC] ${version} failed with ${response.status} for account ${accountId}`);
+        }
+      } catch (error) {
+        console.log(`[ACCOUNT-DETAILS-MCC] ${version} threw error for account ${accountId}:`, error);
+        continue;
+      }
+    }
+
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : 'All API versions failed';
+      console.error(`[ACCOUNT-DETAILS-MCC] Failed to get account details for ${accountId}:`, errorText);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Failed to get account details: ${response?.status || 'Network error'}`,
+          details: errorText,
+          accountId,
+          mccCustomerId: mccCustomerId || 'none'
+        },
+        { status: response?.status || 500 }
+      );
+    }
+
+    const data: CustomerDetailsResponse = await response.json();
+
+    // Extract account details from Google Ads API response
+    if (!data.results || data.results.length === 0) {
+      console.warn(`[ACCOUNT-DETAILS-MCC] No customer data found for account ${accountId}`);
+
+      return NextResponse.json({
+        success: true,
+        account: {
+          id: accountId,
+          name: `Account ${accountId}`,
+          displayName: `Account (${accountId.substring(0, 6)}...)`,
+          type: 'account',
+          status: 'unknown',
+          permissions: [],
+          metadata: {
+            platform: 'google_ads',
+            hasGenericName: true,
+            hierarchy: { level: 1, path: [accountId] },
+            accountDetails: { accessible: false, reason: 'no_data_returned' }
+          }
+        },
+        accessMethod: mccCustomerId ? 'parent_mcc_credentials' : 'direct',
+        apiVersion: workingVersion
+      });
+    }
+
+    const customer = data.results[0].customer;
+
+    // Transform to our ServiceAccount format
+    const account = {
+      id: customer.id?.toString() || accountId,
+      name: customer.descriptiveName || `Account ${customer.id}`,
+      displayName: customer.descriptiveName || `Account (${customer.id?.toString().substring(0, 6)}...)`,
+      type: customer.manager ? 'manager' : 'account' as 'manager' | 'account',
+      status: customer.status?.toLowerCase() === 'enabled' ? 'active' : 'suspended' as 'active' | 'suspended',
+      permissions: ['read'], // Basic read permission assumed
+      metadata: {
+        platform: 'google_ads',
+        originalName: customer.descriptiveName,
+        hasGenericName: !customer.descriptiveName ||
+                       customer.descriptiveName.startsWith('Account ') ||
+                       customer.descriptiveName.trim() === '',
+        hierarchy: {
+          level: customer.manager ? 0 : 1,
+          path: mccCustomerId ? [mccCustomerId, accountId] : [accountId]
+        },
+        lastAccessed: new Date(),
+        accountDetails: {
+          currencyCode: customer.currencyCode,
+          timeZone: customer.timeZone,
+          autoTaggingEnabled: customer.autoTaggingEnabled,
+          hasPartnersBadge: customer.hasPartnersBadge,
+          testAccount: customer.testAccount,
+          paymentAccountId: customer.paymentAccountId
+        }
+      }
+    };
+
+    console.log(`[ACCOUNT-DETAILS-MCC] Successfully retrieved details for account ${accountId}: ${account.name}`);
+
+    return NextResponse.json({
+      success: true,
+      account,
+      accessMethod: mccCustomerId ? 'parent_mcc_credentials' : 'direct',
+      mccCustomerId: mccCustomerId || null,
+      apiVersion: workingVersion
+    });
+
+  } catch (error) {
+    console.error('[ACCOUNT-DETAILS-MCC] Error:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get account details with MCC credentials'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const companyId = searchParams.get('companyId');
+    const rawAccountId = searchParams.get('accountId');
+    const rawMccCustomerId = searchParams.get('mccCustomerId');
+
+    if (!companyId || !rawAccountId) {
+      return NextResponse.json(
+        { success: false, error: 'companyId and accountId are required' },
+        { status: 400 }
+      );
+    }
+
+    // Delegate to POST method with body from query params
+    const body = {
+      companyId,
+      accountId: rawAccountId,
+      mccCustomerId: rawMccCustomerId
+    };
+    const postRequest = new NextRequest(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(body)
+    });
+
+    return await POST(postRequest);
+
+  } catch (error) {
+    console.error('[ACCOUNT-DETAILS-MCC] GET Error:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get account details'
+      },
+      { status: 500 }
+    );
+  }
+}

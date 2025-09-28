@@ -165,14 +165,8 @@ export async function GET(request: NextRequest) {
       scopesList: tokenData.scope?.split(' ') || []
     });
     
-    // Log full tokens for debugging (WARNING: Contains sensitive data!)
-    console.log('[OAUTH-CALLBACK] FULL ACCESS TOKEN:', tokenData.access_token);
-    console.log('[OAUTH-CALLBACK] FULL REFRESH TOKEN:', tokenData.refresh_token);
-    console.log('[OAUTH-CALLBACK] FULL TOKEN DATA:', JSON.stringify(tokenData, null, 2));
-
-    console.log('[OAUTH-CALLBACK] Encrypting OAuth tokens');
+   
     const encryptedTokens = encryptOAuthTokens(tokenData);
-    console.log('[OAUTH-CALLBACK] Tokens encrypted successfully, length:', encryptedTokens.length);
 
     // Store encrypted tokens in secrets table
     console.log('[OAUTH-CALLBACK] Storing encrypted tokens in secrets table');

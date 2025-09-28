@@ -145,6 +145,7 @@ Apps must include a `manifest.json` file with the following structure:
       "type": "nodejs",
       "version": "18",
       "entrypoint": "index.js",
+      "package_manager": "pnpm",
       "dependencies": {
         "express": "^4.18.2"
       }
@@ -177,10 +178,33 @@ Apps must include a `manifest.json` file with the following structure:
 
 ## Execution Architecture
 
+### Package Management
+
+The system now uses **pnpm** as the default package manager for better performance and dependency management:
+
+#### pnpm Benefits
+- **Faster installs**: pnpm uses hard links and symlinks for efficient storage
+- **Space efficient**: Shared dependency storage across projects  
+- **Better dependency resolution**: Strict handling of peer dependencies
+- **npm compatibility**: All npm scripts work seamlessly with pnpm
+
+#### Configuration Files
+Apps can include these pnpm configuration files:
+- **`.pnpmrc`**: pnpm-specific configuration
+- **`pnpm-lock.yaml`**: Dependency lockfile (replaces package-lock.json)
+- **`package.json`**: Standard package configuration (works with both npm and pnpm)
+
+#### Dependency Installation Process
+1. System checks for `package.json` in extracted app directory
+2. If found, runs `pnpm install` with 5-minute timeout
+3. Falls back to npm if pnpm is not available
+4. Logs installation output for debugging
+
 ### Executor Server Integration
 The system is designed to work with a separate executor server that:
 - Pulls app files from `app-storage` bucket
 - Executes apps in sandboxed Docker containers
+- Uses pnpm for dependency installation by default
 - Writes logs to `app-logs` bucket
 - Updates run status in database
 - Handles cron scheduling
