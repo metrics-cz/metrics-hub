@@ -20,11 +20,11 @@ INSERT INTO public.applications (
   created_at,
   updated_at
 ) 
-SELECT 
+SELECT
   'ee582805-1029-4d59-8887-6649c6f83be1'::uuid,
   'Google Ads Central Overview',
   'Comprehensive dashboard for Google Ads accounts overview with performance metrics, account hierarchy, and advanced analytics',
-  NULL, -- No category for now
+  (SELECT id FROM public.application_categories WHERE name = 'marketing' LIMIT 1),
   'application',
   'MetricsHub Team',
   '1.0.0',
@@ -47,8 +47,8 @@ SELECT
   NOW(),
   NOW()
 WHERE NOT EXISTS (
-  SELECT 1 FROM public.applications 
-  WHERE id = 'ee582805-1029-4d59-8887-6649c6f83be1'::uuid
+  SELECT 1 FROM public.applications
+  WHERE name = 'Google Ads Central Overview' OR id = 'ee582805-1029-4d59-8887-6649c6f83be1'::uuid
 );
 
 -- Log the result
