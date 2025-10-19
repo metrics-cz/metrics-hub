@@ -1,5 +1,5 @@
 // src/app/[locale]/layout.tsx
-import LocaleProvider from "@/components/LocaleProvider";
+import LocaleProvider from "@/components/providers/LocaleProvider";
 import type { ReactNode } from "react";
 
 export default async function LocaleLayout({

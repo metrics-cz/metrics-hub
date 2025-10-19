@@ -7,6 +7,10 @@ import { ArrowLeft, Save, X, Settings, AlertCircle } from 'lucide-react';
 import { useActiveCompany } from '@/lib/activeCompany';
 import { cachedApi } from '@/lib/cachedApi';
 import { CompanyApplication } from '@/lib/applications';
+import { NotificationInput } from '@/components/company/integrations/NotificationInput';
+import { MetricConfig } from '@/components/company/integrations/MetricConfig';
+import { FrequencySelector } from '@/components/company/integrations/FrequencySelector';
+import { AccountSelector } from '@/components/company/integrations/AccountSelector';
 
 interface IntegrationSettings {
   // Google Ads Guard specific settings
@@ -210,34 +214,14 @@ export default function IntegrationSettingsPage() {
               <label className="block text-sm font-medium dark:text-gray-300 text-gray-700 mb-2">
                 Account Type
               </label>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    value="mcc"
-                    checked={settings.accountSelection?.type === 'mcc'}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      accountSelection: { ...prev.accountSelection, type: 'mcc' as const }
-                    }))}
-                    className="mr-2"
-                  />
-                  <span className="text-sm dark:text-gray-300 text-gray-700">MCC Account (viktorymcc@gmail.com)</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    value="direct"
-                    checked={settings.accountSelection?.type === 'direct'}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      accountSelection: { ...prev.accountSelection, type: 'direct' as const }
-                    }))}
-                    className="mr-2"
-                  />
-                  <span className="text-sm dark:text-gray-300 text-gray-700">Direct Account</span>
-                </label>
-              </div>
+              <AccountSelector
+                accountType={settings.accountSelection?.type || 'mcc'}
+                mccEmail="viktorymcc@gmail.com"
+                onChange={(type) => setSettings(prev => ({
+                  ...prev,
+                  accountSelection: { ...prev.accountSelection, type }
+                }))}
+              />
             </div>
           </div>
         </div>
@@ -253,32 +237,14 @@ export default function IntegrationSettingsPage() {
               <span className="text-sm dark:text-gray-400 text-gray-600">/month</span>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            {Object.entries(FREQUENCY_PRICING).map(([freq, price]) => (
-              <label key={freq} className="relative">
-                <input
-                  type="radio"
-                  value={freq}
-                  checked={settings.scriptConfig?.frequency === freq}
-                  onChange={(e) => setSettings(prev => ({
-                    ...prev,
-                    scriptConfig: { ...prev.scriptConfig!, frequency: freq as any }
-                  }))}
-                  className="sr-only"
-                />
-                <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                  settings.scriptConfig?.frequency === freq
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                    : 'border-gray-300 dark:border-gray-600 hover:border-primary-300'
-                }`}>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm dark:text-white text-gray-900">{freq}</div>
-                    <div className="text-xs dark:text-gray-400 text-gray-600">${price}/mo</div>
-                  </div>
-                </div>
-              </label>
-            ))}
-          </div>
+          <FrequencySelector
+            selected={settings.scriptConfig?.frequency || '24h'}
+            pricing={FREQUENCY_PRICING}
+            onChange={(frequency) => setSettings(prev => ({
+              ...prev,
+              scriptConfig: { ...prev.scriptConfig!, frequency }
+            }))}
+          />
         </div>
 
         {/* Monitored Metrics */}
@@ -286,44 +252,26 @@ export default function IntegrationSettingsPage() {
           <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-4">Monitored Metrics</h3>
           <div className="space-y-4">
             {Object.entries(settings.guardMetrics || {}).map(([metricKey, metricValue]) => (
-              <div key={metricKey} className="flex items-center justify-between p-4 border dark:border-gray-700 border-gray-200 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={metricValue.enabled}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      guardMetrics: {
-                        ...prev.guardMetrics!,
-                        [metricKey]: { ...metricValue, enabled: e.target.checked }
-                      }
-                    }))}
-                    className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <span className="text-sm font-medium dark:text-gray-300 text-gray-700 capitalize">
-                    {metricKey}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm dark:text-gray-400 text-gray-600">Drop threshold:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={metricValue.dropThreshold}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      guardMetrics: {
-                        ...prev.guardMetrics!,
-                        [metricKey]: { ...metricValue, dropThreshold: parseInt(e.target.value) }
-                      }
-                    }))}
-                    disabled={!metricValue.enabled}
-                    className="w-16 px-2 py-1 text-sm border dark:border-gray-600 border-gray-300 rounded dark:bg-gray-700 dark:text-white bg-white text-gray-900 disabled:opacity-50"
-                  />
-                  <span className="text-sm dark:text-gray-400 text-gray-600">%</span>
-                </div>
-              </div>
+              <MetricConfig
+                key={metricKey}
+                name={metricKey}
+                enabled={metricValue.enabled}
+                dropThreshold={metricValue.dropThreshold}
+                onEnabledChange={(enabled) => setSettings(prev => ({
+                  ...prev,
+                  guardMetrics: {
+                    ...prev.guardMetrics!,
+                    [metricKey]: { ...metricValue, enabled }
+                  }
+                }))}
+                onThresholdChange={(dropThreshold) => setSettings(prev => ({
+                  ...prev,
+                  guardMetrics: {
+                    ...prev.guardMetrics!,
+                    [metricKey]: { ...metricValue, dropThreshold }
+                  }
+                }))}
+              />
             ))}
           </div>
         </div>
@@ -367,150 +315,85 @@ export default function IntegrationSettingsPage() {
         <div className="dark:bg-gray-800 bg-white border dark:border-gray-700 border-gray-200 rounded-xl p-6">
           <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-4">Output Delivery Options</h3>
           <div className="space-y-4">
-            
-            {/* Email Notifications */}
-            <div className="p-4 border dark:border-gray-700 border-gray-200 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications?.email?.enabled || false}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      notifications: {
-                        ...prev.notifications!,
-                        email: { ...prev.notifications?.email!, enabled: e.target.checked }
-                      }
-                    }))}
-                    className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <span className="text-sm font-medium dark:text-gray-300 text-gray-700">Email</span>
-                </div>
-              </div>
-              {settings.notifications?.email?.enabled && (
-                <input
-                  type="email"
-                  placeholder="Enter email address"
-                  value={settings.notifications?.email?.address || ''}
-                  onChange={(e) => setSettings(prev => ({
-                    ...prev,
-                    notifications: {
-                      ...prev.notifications!,
-                      email: { ...prev.notifications?.email!, address: e.target.value }
-                    }
-                  }))}
-                  className="w-full px-3 py-2 text-sm border dark:border-gray-600 border-gray-300 rounded dark:bg-gray-700 dark:text-white bg-white text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              )}
-            </div>
+            <NotificationInput
+              type="email"
+              enabled={settings.notifications?.email?.enabled || false}
+              value={settings.notifications?.email?.address || ''}
+              onEnabledChange={(enabled) => setSettings(prev => ({
+                ...prev,
+                notifications: {
+                  ...prev.notifications!,
+                  email: { ...prev.notifications?.email!, enabled }
+                }
+              }))}
+              onValueChange={(address) => setSettings(prev => ({
+                ...prev,
+                notifications: {
+                  ...prev.notifications!,
+                  email: { ...prev.notifications?.email!, address }
+                }
+              }))}
+            />
 
-            {/* Slack Notifications */}
-            <div className="p-4 border dark:border-gray-700 border-gray-200 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications?.slack?.enabled || false}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      notifications: {
-                        ...prev.notifications!,
-                        slack: { ...prev.notifications?.slack!, enabled: e.target.checked }
-                      }
-                    }))}
-                    className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <span className="text-sm font-medium dark:text-gray-300 text-gray-700">Slack</span>
-                </div>
-              </div>
-              {settings.notifications?.slack?.enabled && (
-                <input
-                  type="url"
-                  placeholder="Enter Slack webhook URL"
-                  value={settings.notifications?.slack?.webhook || ''}
-                  onChange={(e) => setSettings(prev => ({
-                    ...prev,
-                    notifications: {
-                      ...prev.notifications!,
-                      slack: { ...prev.notifications?.slack!, webhook: e.target.value }
-                    }
-                  }))}
-                  className="w-full px-3 py-2 text-sm border dark:border-gray-600 border-gray-300 rounded dark:bg-gray-700 dark:text-white bg-white text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              )}
-            </div>
+            <NotificationInput
+              type="slack"
+              enabled={settings.notifications?.slack?.enabled || false}
+              value={settings.notifications?.slack?.webhook || ''}
+              onEnabledChange={(enabled) => setSettings(prev => ({
+                ...prev,
+                notifications: {
+                  ...prev.notifications!,
+                  slack: { ...prev.notifications?.slack!, enabled }
+                }
+              }))}
+              onValueChange={(webhook) => setSettings(prev => ({
+                ...prev,
+                notifications: {
+                  ...prev.notifications!,
+                  slack: { ...prev.notifications?.slack!, webhook }
+                }
+              }))}
+            />
 
-            {/* Discord Notifications */}
-            <div className="p-4 border dark:border-gray-700 border-gray-200 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications?.discord?.enabled || false}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      notifications: {
-                        ...prev.notifications!,
-                        discord: { ...prev.notifications?.discord!, enabled: e.target.checked }
-                      }
-                    }))}
-                    className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <span className="text-sm font-medium dark:text-gray-300 text-gray-700">Discord</span>
-                </div>
-              </div>
-              {settings.notifications?.discord?.enabled && (
-                <input
-                  type="url"
-                  placeholder="Enter Discord webhook URL"
-                  value={settings.notifications?.discord?.webhook || ''}
-                  onChange={(e) => setSettings(prev => ({
-                    ...prev,
-                    notifications: {
-                      ...prev.notifications!,
-                      discord: { ...prev.notifications?.discord!, webhook: e.target.value }
-                    }
-                  }))}
-                  className="w-full px-3 py-2 text-sm border dark:border-gray-600 border-gray-300 rounded dark:bg-gray-700 dark:text-white bg-white text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              )}
-            </div>
+            <NotificationInput
+              type="discord"
+              enabled={settings.notifications?.discord?.enabled || false}
+              value={settings.notifications?.discord?.webhook || ''}
+              onEnabledChange={(enabled) => setSettings(prev => ({
+                ...prev,
+                notifications: {
+                  ...prev.notifications!,
+                  discord: { ...prev.notifications?.discord!, enabled }
+                }
+              }))}
+              onValueChange={(webhook) => setSettings(prev => ({
+                ...prev,
+                notifications: {
+                  ...prev.notifications!,
+                  discord: { ...prev.notifications?.discord!, webhook }
+                }
+              }))}
+            />
 
-            {/* WhatsApp Notifications */}
-            <div className="p-4 border dark:border-gray-700 border-gray-200 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications?.whatsapp?.enabled || false}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      notifications: {
-                        ...prev.notifications!,
-                        whatsapp: { ...prev.notifications?.whatsapp!, enabled: e.target.checked }
-                      }
-                    }))}
-                    className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <span className="text-sm font-medium dark:text-gray-300 text-gray-700">WhatsApp</span>
-                </div>
-              </div>
-              {settings.notifications?.whatsapp?.enabled && (
-                <input
-                  type="url"
-                  placeholder="Enter WhatsApp webhook URL"
-                  value={settings.notifications?.whatsapp?.webhook || ''}
-                  onChange={(e) => setSettings(prev => ({
-                    ...prev,
-                    notifications: {
-                      ...prev.notifications!,
-                      whatsapp: { ...prev.notifications?.whatsapp!, webhook: e.target.value }
-                    }
-                  }))}
-                  className="w-full px-3 py-2 text-sm border dark:border-gray-600 border-gray-300 rounded dark:bg-gray-700 dark:text-white bg-white text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              )}
-            </div>
+            <NotificationInput
+              type="whatsapp"
+              enabled={settings.notifications?.whatsapp?.enabled || false}
+              value={settings.notifications?.whatsapp?.webhook || ''}
+              onEnabledChange={(enabled) => setSettings(prev => ({
+                ...prev,
+                notifications: {
+                  ...prev.notifications!,
+                  whatsapp: { ...prev.notifications?.whatsapp!, enabled }
+                }
+              }))}
+              onValueChange={(webhook) => setSettings(prev => ({
+                ...prev,
+                notifications: {
+                  ...prev.notifications!,
+                  whatsapp: { ...prev.notifications?.whatsapp!, webhook }
+                }
+              }))}
+            />
           </div>
         </div>
 

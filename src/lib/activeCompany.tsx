@@ -1,6 +1,6 @@
 import { useCompanyList } from '@/lib/companyList';
 import { useParams } from 'next/navigation';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { getLastSelectedCompany } from '@/lib/userPreferences';
 import { type UserCompany } from '@/lib/validation/companySchema';
 

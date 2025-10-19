@@ -80,7 +80,7 @@ export function GoogleOAuthSettings({ companyId, onIntegrationChange }: GoogleOA
   const fetchGoogleIntegration = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/company/${companyId}/connections`);
+      const response = await fetch(`/api/companies/${companyId}/connections`);
       const data = await response.json();
       
       if (data.success) {
@@ -121,7 +121,7 @@ export function GoogleOAuthSettings({ companyId, onIntegrationChange }: GoogleOA
       setConnecting(true);
       
       // Get OAuth URL
-      const response = await fetch(`/api/integrations/google/auth/${companyId}`);
+      const response = await fetch(`/api/connections/google/auth/${companyId}`);
       const data = await response.json();
       
       if (data.authUrl) {
@@ -149,7 +149,7 @@ export function GoogleOAuthSettings({ companyId, onIntegrationChange }: GoogleOA
       setDisconnecting(true);
       
       const response = await fetch(
-        `/api/company/${companyId}/connections?connectionId=${integration.integration_id}`,
+        `/api/companies/${companyId}/connections?connectionId=${integration.integration_id}`,
         { method: 'DELETE' }
       );
       
@@ -176,7 +176,7 @@ export function GoogleOAuthSettings({ companyId, onIntegrationChange }: GoogleOA
     try {
       setRefreshing(true);
       
-      const response = await fetch('/api/integrations/google/refresh', {
+      const response = await fetch('/api/connections/google/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

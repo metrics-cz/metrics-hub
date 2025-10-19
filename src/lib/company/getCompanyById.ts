@@ -32,7 +32,7 @@ export async function getCompanyById(companyId: string): Promise<Company> {
     }
 
     // Make API request
-    const response = await fetch(`/api/company/${companyId}`, {
+    const response = await fetch(`/api/companies/${companyId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

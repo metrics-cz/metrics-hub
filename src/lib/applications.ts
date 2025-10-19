@@ -20,7 +20,7 @@ export interface Application {
   tags?: string[];
   is_premium: boolean;
   is_active: boolean;
-  execution_type?: 'iframe' | 'server'; // Added for iframe support
+  execution_type?: 'iframe' | 'server' | 'both'; // Added for iframe support
   storage_path?: string; // Added for iframe apps
   metadata?: Record<string, any>; // Keep - used for flexible app-specific data
   created_at: string;

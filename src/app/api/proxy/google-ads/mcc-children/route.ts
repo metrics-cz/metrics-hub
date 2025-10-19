@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     console.log(`[MCC-CHILDREN] Fetching child accounts for MCC ${mccCustomerId}`);
 
     // Get company's Google OAuth tokens
-    const tokenResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/company/${companyId}/oauth-tokens`, {
+    const tokenResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/companies/${companyId}/oauth-tokens`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

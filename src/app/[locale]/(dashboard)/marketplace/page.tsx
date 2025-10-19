@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Search, Filter, Star, ShoppingCart, Info, MessageSquare, FileSpreadsheet, Target, Mail, BarChart3, Trello, X } from 'lucide-react';
+import * as Tabs from '@radix-ui/react-tabs';
 import { cachedApi } from '@/lib/cachedApi';
 import { Application, ApplicationCategory } from '@/lib/applications';
 import { useActiveCompany } from '@/lib/activeCompany';
@@ -61,6 +62,7 @@ export default function MarketplacePage() {
   const [selectedApp, setSelectedApp] = useState<Integration | null>(null);
   const [installing, setInstalling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'applications' | 'integrations'>('applications');
 
   // Convert Application to Integration format
   const convertToIntegration = (app: Application): Integration => {
@@ -91,7 +93,7 @@ export default function MarketplacePage() {
 
         // Only fetch installed apps if we have a company
         if (company?.id) {
-          fetchPromises.push(fetch(`/api/company/${company.id}/applications`));
+          fetchPromises.push(fetch(`/api/companies/${company.id}/applications`));
         }
 
         const responses = await Promise.all(fetchPromises);
@@ -149,10 +151,15 @@ export default function MarketplacePage() {
     const matchesSearch = integration.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       integration.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       integration.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) || false;
-    
+
     const matchesCategory = selectedCategory === 'all' || integration.category_id === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
+
+    // Filter by tab - applications (iframe) vs integrations (server)
+    const matchesTab = activeTab === 'applications'
+      ? integration.execution_type === 'iframe'
+      : integration.execution_type === 'server' || integration.execution_type === 'both';
+
+    return matchesSearch && matchesCategory && matchesTab;
   });
 
   const handleInstall = async (integrationId: string) => {
@@ -290,8 +297,26 @@ export default function MarketplacePage() {
         )}
       </div>
 
-      {/* Integration Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Tabs for Applications vs Integrations */}
+      <Tabs.Root value={activeTab} onValueChange={(value) => setActiveTab(value as 'applications' | 'integrations')}>
+        <Tabs.List className="flex gap-2 mb-6 border-b dark:border-gray-700 border-gray-200">
+          <Tabs.Trigger
+            value="applications"
+            className="px-4 py-3 text-sm font-medium transition-all duration-200 border-b-2 data-[state=active]:border-primary-600 data-[state=active]:text-primary-600 dark:data-[state=active]:text-primary-400 data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+          >
+            {t('applications') || 'Applications'}
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="integrations"
+            className="px-4 py-3 text-sm font-medium transition-all duration-200 border-b-2 data-[state=active]:border-primary-600 data-[state=active]:text-primary-600 dark:data-[state=active]:text-primary-400 data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+          >
+            {t('integrations') || 'Integrations'}
+          </Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Content value="applications">
+          {/* Integration Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredIntegrations.map((integration) => {
           return (
             <div
@@ -387,20 +412,136 @@ export default function MarketplacePage() {
             </div>
           );
         })}
-      </div>
-
-      {/* No Results */}
-      {filteredIntegrations.length === 0 && (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 dark:bg-gray-700 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <Search className="w-8 h-8 dark:text-gray-400 text-gray-500" />
           </div>
-          <h3 className="dark:text-white text-gray-900 font-medium mb-2">{t('noResults')}</h3>
-          <p className="dark:text-gray-400 text-gray-600 text-sm">
-            {t('noResultsSubtitle')}
-          </p>
-        </div>
-      )}
+
+          {/* No Results */}
+          {filteredIntegrations.length === 0 && (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 dark:bg-gray-700 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 dark:text-gray-400 text-gray-500" />
+              </div>
+              <h3 className="dark:text-white text-gray-900 font-medium mb-2">{t('noResults')}</h3>
+              <p className="dark:text-gray-400 text-gray-600 text-sm">
+                {t('noResultsSubtitle')}
+              </p>
+            </div>
+          )}
+        </Tabs.Content>
+
+        <Tabs.Content value="integrations">
+          {/* Integration Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredIntegrations.map((integration) => {
+          return (
+            <div
+              key={integration.id}
+              className="dark:bg-gray-800 bg-white border dark:border-gray-700 border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              onClick={() => setSelectedApp(integration)}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 dark:bg-gray-700 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <AppIcon
+                      iconUrl={integration.iconUrl}
+                      appName={integration.name}
+                      className="w-6 h-6 text-primary-600 dark:text-primary-400"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold dark:text-white text-gray-900 text-sm">{integration.name}</h3>
+                      {installedAppIds.has(integration.id) && (
+                        <span className="inline-block px-2 py-0.5 text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full font-medium">
+                          {t('installed')}
+                        </span>
+                      )}
+                    </div>
+                    {integration.isPremium && (
+                      <span className="inline-block px-2 py-0.5 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded-full mt-1 font-medium">
+                        Premium
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {integration.price && (
+                  <div className="text-sm font-semibold text-primary-600 dark:text-primary-400">
+                    {integration.price}
+                  </div>
+                )}
+              </div>
+
+              <p className="dark:text-gray-400 text-gray-600 text-sm mb-4 leading-relaxed">
+                {integration.description}
+              </p>
+
+              <div className="flex items-center gap-4 mb-4 text-sm dark:text-gray-500 text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span>N/A</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                {integration.tags?.slice(0, 3).map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 text-xs dark:bg-gray-700 bg-gray-100 dark:text-gray-400 text-gray-600 rounded font-medium"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex gap-2 pt-4 border-t dark:border-gray-700 border-gray-200">
+                {installedAppIds.has(integration.id) ? (
+                  <button
+                    disabled
+                    className="flex-1 py-2.5 px-4 bg-gray-400 text-white rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    {t('installed')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedApp(integration);
+                    }}
+                    className="flex-1 py-2.5 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    {integration.isPremium ? t('buyNow') : t('install')}
+                  </button>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedApp(integration);
+                  }}
+                  className="px-4 py-2.5 dark:bg-gray-700 bg-gray-100 dark:text-white text-gray-900 rounded-lg hover:dark:bg-gray-800 hover:bg-gray-200 transition-all duration-200"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+          </div>
+
+          {/* No Results */}
+          {filteredIntegrations.length === 0 && (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 dark:bg-gray-700 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 dark:text-gray-400 text-gray-500" />
+              </div>
+              <h3 className="dark:text-white text-gray-900 font-medium mb-2">{t('noResults')}</h3>
+              <p className="dark:text-gray-400 text-gray-600 text-sm">
+                {t('noResultsSubtitle')}
+              </p>
+            </div>
+          )}
+        </Tabs.Content>
+      </Tabs.Root>
 
       {/* App Detail Modal */}
       {selectedApp && (

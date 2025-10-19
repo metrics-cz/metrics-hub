@@ -145,7 +145,7 @@ export default function AppsPage() {
 
   const handleRemoveApp = async (appId: string) => {
     if (!company?.id) return;
-    
+
     const app = installedApps.find(a => a.id === appId);
     if (!app) return;
 
@@ -154,7 +154,7 @@ export default function AppsPage() {
     }
 
     setUninstalling(appId);
-    
+
     try {
       await cachedApi.uninstallApplication(company.id, appId);
       setInstalledApps(prev => prev.filter(app => app.id !== appId));
@@ -222,39 +222,12 @@ export default function AppsPage() {
         </button>
       </div>
 
-      {/* Integration Health Status */}
-      {installedApps.length > 0 && company?.id && (
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Integration Status</h2>
-          <IntegrationResultsWidget
-            companyId={company.id}
-            showSummary={true}
-            className="mb-4"
-          />
-        </div>
-      )}
+     
 
-      {installedApps.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 dark:bg-gray-800 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-8 h-8 dark:text-gray-400 text-gray-500" />
-          </div>
-          <h3 className="dark:text-white text-gray-900 font-medium mb-2">{t('noAppsInstalled')}</h3>
-          <p className="dark:text-gray-400 text-gray-600 mb-6 text-sm">
-            {t('noAppsSubtitle')}
-          </p>
-          <button
-            className="bg-primary-600 text-white rounded-lg px-6 py-3 hover:bg-primary-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium"
-            onClick={() => router.push('/marketplace')}>
-            <Plus className="w-4 h-4" />
-            {t('browseMarketplace')}
-          </button>
-        </div>
-      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {installedApps.map((app) => {
             const isIframeApp = app.execution_type === 'iframe';
-            
+
             return (
               <div
                 key={app.id}
@@ -315,9 +288,9 @@ export default function AppsPage() {
                       Launch
                     </button>
                   )}
-                  
+
                   {/* Configuration button for other apps */}
-                  {app.execution_type !== 'iframe' && (
+                  {!isIframeApp && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -351,7 +324,7 @@ export default function AppsPage() {
             );
           })}
         </div>
-      )}
+      
     </div>
   );
 }

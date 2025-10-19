@@ -1,6 +1,6 @@
 'use client';
-import { BlockingScreen } from '@/components/BlockingScreen';
-import { LoadingSpinner } from '@/components/Spinner';
+import { BlockingScreen } from '@/components/common/BlockingScreen';
+import { LoadingSpinner } from '@/components/common/Spinner';
 import React from 'react';
 import { useActiveCompany } from '@/lib/activeCompany';
 import { useCompanyList } from '@/lib/companyList';

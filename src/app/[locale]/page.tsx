@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function LocaleLandingPage() {
   const router = useRouter();

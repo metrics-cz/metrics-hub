@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { type Company, type UserCompany } from '@/lib/validation/companySchema';
 
 // Define type for the nested company response

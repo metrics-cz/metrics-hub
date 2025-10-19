@@ -231,49 +231,51 @@ export async function POST(
       );
     }
 
-    // Calculate statistics
-    const stats = {
-      totalLogs: typedStatLogs?.length || 0,
-      errorCount: typedStatLogs?.filter(log => ['error', 'fatal'].includes(log.log_level)).length || 0,
-      warningCount: typedStatLogs?.filter(log => log.log_level === 'warn').length || 0,
-      infoCount: typedStatLogs?.filter(log => log.log_level === 'info').length || 0,
-      debugCount: typedStatLogs?.filter(log => log.log_level === 'debug').length || 0,
-
-      // Sources breakdown
-      sourceBreakdown: typedStatLogs?.reduce((acc: Record<string, number>, log) => {
-        acc[log.log_source] = (acc[log.log_source] || 0) + 1;
-        return acc;
-      }, {}) || {},
-
-      // Categories breakdown
-      categoryBreakdown: typedStatLogs?.reduce((acc: Record<string, number>, log) => {
-        const category = log.log_category || 'uncategorized';
-        acc[category] = (acc[category] || 0) + 1;
-        return acc;
-      }, {}) || {},
-
-      // Integrations breakdown
-      integrationBreakdown: typedStatLogs?.reduce((acc: Record<string, number>, log) => {
-        acc[log.integration_name] = (acc[log.integration_name] || 0) + 1;
-        return acc;
-      }, {}) || {},
-
-      // Timeline data (hourly breakdown)
-      timeline: typedStatLogs?.reduce((acc: Record<string, number>, log) => {
-        const hour = new Date(log.logged_at).toISOString().substring(0, 13) + ':00:00.000Z';
-        acc[hour] = (acc[hour] || 0) + 1;
-        return acc;
-      }, {}) || {},
-
-      // Last updated
-      lastLogAt: typedStatLogs && typedStatLogs.length > 0 ? typedStatLogs[0]!.logged_at : null,
-
-      // Time range
+    // Calculate statistics in a single pass for better performance
+    const initialStats = {
+      totalLogs: 0,
+      errorCount: 0,
+      warningCount: 0,
+      infoCount: 0,
+      debugCount: 0,
+      sourceBreakdown: {} as Record<string, number>,
+      categoryBreakdown: {} as Record<string, number>,
+      integrationBreakdown: {} as Record<string, number>,
+      timeline: {} as Record<string, number>,
+      lastLogAt: null as string | null,
       timeRange: {
         from: dateFrom.toISOString(),
         to: dateTo.toISOString()
       }
     };
+
+    const stats = typedStatLogs?.reduce((acc, log) => {
+      // Count log levels
+      acc.totalLogs++;
+      if (log.log_level === 'error' || log.log_level === 'fatal') acc.errorCount++;
+      else if (log.log_level === 'warn') acc.warningCount++;
+      else if (log.log_level === 'info') acc.infoCount++;
+      else if (log.log_level === 'debug') acc.debugCount++;
+
+      // Breakdown by source, category, integration
+      acc.sourceBreakdown[log.log_source] = (acc.sourceBreakdown[log.log_source] || 0) + 1;
+
+      const category = log.log_category || 'uncategorized';
+      acc.categoryBreakdown[category] = (acc.categoryBreakdown[category] || 0) + 1;
+
+      acc.integrationBreakdown[log.integration_name] = (acc.integrationBreakdown[log.integration_name] || 0) + 1;
+
+      // Timeline (hourly breakdown)
+      const hour = new Date(log.logged_at).toISOString().substring(0, 13) + ':00:00.000Z';
+      acc.timeline[hour] = (acc.timeline[hour] || 0) + 1;
+
+      return acc;
+    }, initialStats) || initialStats;
+
+    // Set last log timestamp (logs are already ordered by logged_at DESC)
+    if (typedStatLogs && typedStatLogs.length > 0) {
+      stats.lastLogAt = typedStatLogs[0]!.logged_at;
+    }
 
     return NextResponse.json({
       success: true,

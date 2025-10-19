@@ -14,7 +14,7 @@ export async function deleteUser(
     throw new Error('Not authenticated – unable to obtain access token.');
   }
 
-  const res = await fetch(`/api/company/${companyId}/users/${userId}`, {
+  const res = await fetch(`/api/companies/${companyId}/users/${userId}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,

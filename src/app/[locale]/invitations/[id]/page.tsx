@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { Building, Check, X, Clock, AlertCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 

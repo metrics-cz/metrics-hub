@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Plus, Trash2, Settings, MessageSquare, FileSpreadsheet, Target, Mail, BarChart3, Trello, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Settings, MessageSquare, FileSpreadsheet, Target, Mail, BarChart3, Trello, AlertCircle, Play } from 'lucide-react';
 import { useActiveCompany } from '@/lib/activeCompany';
 import { useCompanyListLoading } from '@/lib/companyList';
 import { cachedApi } from '@/lib/cachedApi';
@@ -27,6 +27,8 @@ interface Integration {
   status?: string; // "active" or "inactive"
   connectedAccountsCount?: number;
   linkedAutomationsCount?: number;
+  companyApplicationId?: string; // ID of the company_application record
+  execution_type?: string; // 'server', 'client', 'iframe', 'both'
 }
 
 // Fallback icon component for when image fails to load
@@ -66,6 +68,7 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uninstalling, setUninstalling] = useState<string | null>(null);
+  const [triggering, setTriggering] = useState<string | null>(null);
   const [automationCategoryId, setAutomationCategoryId] = useState<string | null>(null);
 
   // Convert CompanyApplication to Integration format
@@ -75,10 +78,10 @@ export default function IntegrationsPage() {
 
     // Determine type from category or metadata
     const type = app.category_id === 'automation' ? 'Automation' : 'Integration';
-    
+
     // Determine status from company application
     const status = companyApp.is_active ? 'Active' : 'Inactive';
-    
+
     // Calculate connected accounts from settings
     const connectedAccountsCount = getConnectedAccountsCount(companyApp.settings);
 
@@ -93,6 +96,8 @@ export default function IntegrationsPage() {
       tags: app.tags || [],
       installedAt: companyApp.installed_at,
       isActive: companyApp.is_active,
+      companyApplicationId: companyApp.id, // Store the company application ID
+      execution_type: app.execution_type,
       ...(companyApp.config && { configuration: companyApp.config }),
       ...(companyApp.settings && { settings: companyApp.settings }),
       type,
@@ -162,7 +167,7 @@ export default function IntegrationsPage() {
 
   const handleRemoveIntegration = async (integrationId: string) => {
     if (!company?.id) return;
-    
+
     const integration = installedIntegrations.find(i => i.id === integrationId);
     if (!integration) return;
 
@@ -171,7 +176,7 @@ export default function IntegrationsPage() {
     }
 
     setUninstalling(integrationId);
-    
+
     try {
       await cachedApi.uninstallApplication(company.id, integrationId);
       setInstalledIntegrations(prev => prev.filter(integration => integration.id !== integrationId));
@@ -182,6 +187,29 @@ export default function IntegrationsPage() {
       alert(error instanceof Error ? error.message : 'Failed to uninstall integration');
     } finally {
       setUninstalling(null);
+    }
+  };
+
+  const handleRunIntegration = async (integration: Integration) => {
+    if (!company?.id || !integration.companyApplicationId) return;
+
+    setTriggering(integration.id);
+
+    try {
+      const result = await cachedApi.triggerIntegration(company.id, integration.companyApplicationId);
+
+      // Show success message with job ID
+      const jobId = result.data?.jobId;
+      const message = jobId
+        ? `${integration.name} triggered successfully!\nJob ID: ${jobId}\n\nYou can monitor the execution in the logs.`
+        : `${integration.name} triggered successfully!`;
+
+      alert(message);
+    } catch (error) {
+      console.error('Error triggering integration:', error);
+      alert(error instanceof Error ? error.message : 'Failed to trigger integration');
+    } finally {
+      setTriggering(null);
     }
   };
 
@@ -318,6 +346,23 @@ export default function IntegrationsPage() {
                 </p>
 
                 <div className="flex gap-3 pt-4 border-t dark:border-gray-700 border-gray-200">
+                  {/* Run Now button for server integrations */}
+                  {(integration.execution_type === 'server' || integration.execution_type === 'both') && canManageSettings && (
+                    <button
+                      onClick={() => handleRunIntegration(integration)}
+                      disabled={triggering === integration.id}
+                      className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Run integration now"
+                    >
+                      {triggering === integration.id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                      {triggering === integration.id ? 'Running...' : 'Run Now'}
+                    </button>
+                  )}
+
                   {canManageSettings && (
                     <button
                       onClick={() => handleConfigureIntegration(integration.id)}
@@ -327,7 +372,7 @@ export default function IntegrationsPage() {
                       <Settings className="w-4 h-4" />
                     </button>
                   )}
-                  
+
                   {canManage && (
                     <button
                       onClick={() => handleRemoveIntegration(integration.id)}
@@ -342,7 +387,7 @@ export default function IntegrationsPage() {
                       )}
                     </button>
                   )}
-                  
+
                   {!canManageSettings && !canManage && (
                     <div className="text-xs dark:text-gray-500 text-gray-400 py-2 px-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       Contact admin to manage this integration

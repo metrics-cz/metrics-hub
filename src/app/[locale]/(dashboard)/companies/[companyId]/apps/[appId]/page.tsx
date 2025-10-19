@@ -54,7 +54,7 @@ export default function IframeAppPage() {
     const sendTokensToIframe = async () => {
       try {
         // Fetch OAuth tokens for this company
-        const response = await fetch(`/api/company/${companyId}/oauth-tokens`);
+        const response = await fetch(`/api/companies/${companyId}/oauth-tokens`);
         const tokens = response.ok ? await response.json() : null;
 
         console.log('Sending tokens to iframe:', { companyId, tokens: tokens ? 'present' : 'false', tokenDetails: tokens });
