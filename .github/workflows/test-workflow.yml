@@ -1,0 +1,17 @@
+# Simple test workflow to verify GitHub Actions is working
+name: Test Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Echo test
+        run: |
+          echo "✅ GitHub Actions is working!"
+          echo "Workflows are properly configured."

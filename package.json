@@ -8,7 +8,13 @@
     "lint": "next lint",
     "create-plugin": "node scripts/create-plugin.js",
     "playground:validate": "curl \"http://localhost:3000/api/plugin-playground/validate?dir=${PLUGIN_DIR}\"",
-    "playground:open": "open \"http://localhost:3000/api/plugin-playground/index.html?dir=${PLUGIN_DIR}\""
+    "playground:open": "open \"http://localhost:3000/api/plugin-playground/index.html?dir=${PLUGIN_DIR}\"",
+    "migration:new": "supabase migration new",
+    "migration:validate": "./scripts/validate-migration.sh",
+    "migration:up": "supabase migration up",
+    "migration:list": "supabase migration list",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

@@ -1,0 +1,100 @@
+name: Validate Migrations (PR)
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+
+jobs:
+  validate-pr-migrations:
+    name: Validate Migration Changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get changed migration files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            supabase/migrations/*.sql
+
+      - name: List changed migrations
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "🔍 Changed migration files:"
+          echo "${{ steps.changed-files.outputs.all_changed_files }}"
+
+      - name: Setup Node.js
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Supabase CLI
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          npm install -g supabase@latest
+          supabase --version
+
+      - name: Make validation script executable
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: chmod +x ./scripts/validate-migration.sh
+
+      - name: Run validation script
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: ./scripts/validate-migration.sh
+
+      - name: Check for migration conflicts
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "🔍 Checking for duplicate timestamps..."
+
+          # Extract timestamps from filenames
+          TIMESTAMPS=$(ls supabase/migrations/*.sql 2>/dev/null | sed 's/.*\///;s/_.*//' | sort)
+
+          # Check for duplicates
+          DUPLICATES=$(echo "$TIMESTAMPS" | uniq -d)
+
+          if [ -n "$DUPLICATES" ]; then
+            echo "❌ ERROR: Duplicate migration timestamps found:"
+            echo "$DUPLICATES"
+            echo ""
+            echo "This can cause migration order issues. Please regenerate with unique timestamps."
+            exit 1
+          else
+            echo "✅ No duplicate timestamps found"
+          fi
+
+      - name: Suggest running local tests
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "💡 Reminder: Test migrations locally before merging"
+          echo "Run: supabase db reset"
+          echo "This will apply all migrations to your local database"
+
+      - name: Comment on PR
+        if: steps.changed-files.outputs.any_changed == 'true' && success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Migration validation passed! The migrations look good and will be applied automatically when merged to `main`.'
+            })
+
+      - name: Comment on PR failure
+        if: steps.changed-files.outputs.any_changed == 'true' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Migration validation failed. Please review the errors above and fix before merging.'
+            })

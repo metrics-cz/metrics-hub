@@ -184,6 +184,8 @@
     "searchPlaceholder": "Search apps...",
     "filters": "Filters",
     "categoriesLabel": "Categories",
+    "applications": "Applications",
+    "integrations": "Integrations",
     "install": "Install",
     "installed": "Installed",
     "buyNow": "Buy Now",

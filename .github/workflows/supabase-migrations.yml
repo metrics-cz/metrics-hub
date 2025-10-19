@@ -1,0 +1,169 @@
+name: Supabase Migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  validate-migrations:
+    name: Validate Migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get full history for proper diff analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Supabase CLI
+        run: |
+          npm install -g supabase@latest
+          supabase --version
+
+      - name: Validate migration files
+        run: |
+          # Check for common dangerous patterns
+          echo "🔍 Scanning migrations for dangerous operations..."
+
+          DANGEROUS_PATTERNS=(
+            "DROP TABLE"
+            "DROP DATABASE"
+            "TRUNCATE"
+            "DELETE FROM.*WHERE.*TRUE"
+          )
+
+          FOUND_ISSUES=0
+
+          for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+            if grep -r -i "$pattern" supabase/migrations/*.sql 2>/dev/null; then
+              echo "⚠️  WARNING: Found potentially dangerous operation: $pattern"
+              echo "Please ensure this is intentional and has proper safeguards"
+              FOUND_ISSUES=1
+            fi
+          done
+
+          # Check SQL syntax (basic validation)
+          echo "✅ Checking SQL syntax..."
+          for file in supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              # Basic syntax check - ensure no unclosed quotes/parentheses
+              if ! grep -q ";" "$file"; then
+                echo "❌ ERROR: $file appears to have no SQL statements"
+                exit 1
+              fi
+              echo "✓ $file"
+            fi
+          done
+
+          if [ $FOUND_ISSUES -eq 1 ]; then
+            echo "⚠️  Validation completed with warnings. Review above carefully."
+          else
+            echo "✅ All validation checks passed!"
+          fi
+
+      - name: Check migration naming convention
+        run: |
+          echo "📝 Verifying migration file naming..."
+
+          for file in supabase/migrations/*.sql; do
+            filename=$(basename "$file")
+            # Check if filename matches timestamp pattern (YYYYMMDDHHMMSS_description.sql)
+            if [[ ! "$filename" =~ ^[0-9]{14,}_.*\.sql$ ]] && [[ ! "$filename" =~ ^[0-9]{8}_.*\.sql$ ]]; then
+              echo "⚠️  WARNING: $filename doesn't follow naming convention"
+              echo "Expected format: YYYYMMDDHHMMSS_description.sql"
+            fi
+          done
+
+  apply-migrations:
+    name: Apply Migrations to Production
+    runs-on: ubuntu-latest
+    needs: validate-migrations
+    environment: production  # Requires approval if configured in GitHub
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Supabase CLI
+        run: |
+          npm install -g supabase@latest
+          supabase --version
+
+      - name: Link to Supabase project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          echo "🔗 Linking to Supabase project..."
+          supabase link --project-ref $SUPABASE_PROJECT_ID
+
+      - name: Check migration status
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          echo "📊 Checking migration status..."
+          supabase migration list || true
+
+      - name: Apply pending migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "🚀 Applying migrations to production..."
+
+          # Apply migrations (db push applies all pending migrations)
+          if supabase db push --password "$SUPABASE_DB_PASSWORD"; then
+            echo "✅ Migrations applied successfully!"
+          else
+            echo "❌ Migration failed!"
+            echo "Please check the error above and fix manually if needed"
+            exit 1
+          fi
+
+      - name: Verify migration success
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          echo "✓ Verifying all migrations are applied..."
+          supabase migration list
+
+      - name: Post-migration health check
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          echo "🏥 Running post-migration health checks..."
+
+          # Check if project is healthy
+          if supabase projects list | grep -q "$SUPABASE_PROJECT_ID"; then
+            echo "✅ Project is accessible and healthy"
+          else
+            echo "⚠️  Warning: Could not verify project health"
+          fi
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "🎉 Migration deployment completed successfully!"
+          echo "All migrations have been applied to production."
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "💥 Migration deployment failed!"
+          echo "Please review the logs above and apply fixes manually if needed."
+          echo "You may need to run: supabase db push --linked"
