@@ -56,7 +56,7 @@ export function AuthAndApiSettings({ companyId }: AuthAndApiSettingsProps) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/company/${companyId}/connections`);
+      const response = await fetch(`/api/companies/${companyId}/connections`);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -124,7 +124,7 @@ export function AuthAndApiSettings({ companyId }: AuthAndApiSettingsProps) {
 
   const handleDisconnect = async (connectionId: string) => {
     try {
-      const response = await fetch(`/api/company/${companyId}/connections?connectionId=${connectionId}`, {
+      const response = await fetch(`/api/companies/${companyId}/connections?connectionId=${connectionId}`, {
         method: 'DELETE',
       });
 

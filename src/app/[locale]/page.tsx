@@ -1,30 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function LocaleLandingPage() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const params = useParams();
+  const locale = params?.locale || 'en';
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        router.replace('/companies'); // or your main authenticated route
+    if (!loading) {
+      if (user) {
+        console.log('User authenticated, redirecting to companies');
+        router.replace(`/${locale}/companies`);
       } else {
-        setChecking(false);
-        router.replace('/auth')
+        console.log('User not authenticated, redirecting to auth');
+        router.replace(`/${locale}/auth`);
       }
-    };
-    checkUser();
-  }, [router]);
+    }
+  }, [user, loading, router, locale]);
 
-  if (checking) return null; // or loading spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+        <div className="text-gray-900 dark:text-gray-100">Loading...</div>
+      </div>
+    );
+  }
 
   return (
-    <div />
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+      <div className="text-gray-900 dark:text-gray-100">Redirecting...</div>
+    </div>
   );
 }

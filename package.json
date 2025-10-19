@@ -5,7 +5,10 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "create-plugin": "node scripts/create-plugin.js",
+    "playground:validate": "curl \"http://localhost:3000/api/plugin-playground/validate?dir=${PLUGIN_DIR}\"",
+    "playground:open": "open \"http://localhost:3000/api/plugin-playground/index.html?dir=${PLUGIN_DIR}\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -21,6 +24,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",
     "@types/pg": "^8.15.4",
+    "adm-zip": "^0.5.16",
     "class-variance-authority": "^0.7.1",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
@@ -43,11 +47,13 @@
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
+    "@types/adm-zip": "^0.5.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.5"
+    "tailwindcss": "^3.4.5",
+    "typescript": "5.9.2"
   }
 }

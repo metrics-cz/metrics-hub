@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Activity, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { Activity, AlertTriangle, CheckCircle, Zap, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+import IntegrationResultsWidget from '@/components/integration-logs/IntegrationResultsWidget';
 
 interface DashboardStats {
   activeIntegrations: number;
-  activeAutomations: number;
-  jobsLast24h: number;
-  errorsLast24h: number;
+  totalJobsLast24h: number;
+  errorJobsLast24h: number;
+  successJobsLast24h: number;
+  lastUpdated: string;
 }
 
 interface ActivityItem {
@@ -23,64 +26,50 @@ interface ActivityItem {
 
 export default function DashboardPage() {
   const { companyId } = useParams<{ companyId: string }>();
+  const t = useTranslations('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     activeIntegrations: 0,
-    activeAutomations: 0,
-    jobsLast24h: 0,
-    errorsLast24h: 0,
+    totalJobsLast24h: 0,
+    errorJobsLast24h: 0,
+    successJobsLast24h: 0,
+    lastUpdated: new Date().toISOString(),
   });
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [filter, setFilter] = useState<'all' | 'success' | 'error'>('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Replace with real API calls
-    // For now, using mock data to demonstrate the UI
-    const mockStats: DashboardStats = {
-      activeIntegrations: 5,
-      activeAutomations: 8,
-      jobsLast24h: 142,
-      errorsLast24h: 3,
+    const fetchDashboardData = async () => {
+      if (!companyId) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(`/api/companies/${companyId}/dashboard-stats`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch dashboard data: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          setStats(data.data.stats);
+          setActivities(data.data.activities);
+        } else {
+          throw new Error(data.error || 'Failed to load dashboard data');
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const mockActivities: ActivityItem[] = [
-      {
-        id: '1',
-        type: 'success',
-        integration: 'Google Sheets',
-        automation: 'Denní export dat',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 minutes ago
-        result: 'Data úspěšně exportována (247 řádků)',
-      },
-      {
-        id: '2',
-        type: 'success',
-        integration: 'Slack',
-        automation: 'Týdenní report',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-        result: 'Report odeslán do #general kanálu',
-      },
-      {
-        id: '3',
-        type: 'error',
-        integration: 'Gmail',
-        automation: 'Email kampaň',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), // 4 hours ago
-        result: 'Chyba: Překročen denní limit API',
-      },
-      {
-        id: '4',
-        type: 'success',
-        integration: 'Trello',
-        automation: 'Sync úkolů',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6 hours ago
-        result: 'Synchronizováno 23 karet',
-      },
-    ];
-
-    setStats(mockStats);
-    setActivities(mockActivities);
-    setLoading(false);
+    fetchDashboardData();
   }, [companyId]);
 
   const formatTimeAgo = (timestamp: string) => {
@@ -103,10 +92,10 @@ export default function DashboardPage() {
     return (
       <div className="p-8">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-8"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+              <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
             ))}
           </div>
         </div>
@@ -114,9 +103,32 @@ export default function DashboardPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="text-center py-16">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('failedToLoad')}</h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+            {error}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            {t('retry')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 min-h-screen">
-      <h1 className="text-3xl font-semibold mb-8">Dashboard</h1>
+      <h1 className="text-3xl font-semibold mb-8">{t('title')}</h1>
 
       {/* KPI Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -124,7 +136,7 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500/50 transition-colors cursor-pointer shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Aktivní integrace</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('activeIntegrations')}</p>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats.activeIntegrations}</p>
               </div>
               <div className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center">
@@ -134,28 +146,14 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        <Link href={`/companies/${companyId}/integrations`}>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500/50 transition-colors cursor-pointer shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Aktivní automatizace</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats.activeAutomations}</p>
-              </div>
-              <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                <Activity className="w-6 h-6 text-green-400" />
-              </div>
-            </div>
-          </div>
-        </Link>
-
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-neutral-400">Proběhlé úlohy (24h)</p>
-              <p className="text-2xl font-semibold text-white">{stats.jobsLast24h}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('successfulJobsLast24h')}</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats.successJobsLast24h}</p>
             </div>
-            <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-purple-400" />
+            <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-green-400" />
             </div>
           </div>
         </div>
@@ -163,8 +161,20 @@ export default function DashboardPage() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-neutral-400">Chybové stavy (24h)</p>
-              <p className="text-2xl font-semibold text-white">{stats.errorsLast24h}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('totalJobsLast24h')}</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats.totalJobsLast24h}</p>
+            </div>
+            <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
+              <Activity className="w-6 h-6 text-purple-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('errorJobsLast24h')}</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats.errorJobsLast24h}</p>
             </div>
             <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
               <AlertTriangle className="w-6 h-6 text-red-400" />
@@ -173,11 +183,31 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Integration Health Overview */}
+      {stats.activeIntegrations > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('integrationHealth')}</h2>
+            <Link
+              href={`/companies/${companyId}/apps`}
+              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-medium"
+            >
+              {t('viewAllIntegrations')}
+            </Link>
+          </div>
+          <IntegrationResultsWidget
+            companyId={companyId}
+            showSummary={false}
+            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm"
+          />
+        </div>
+      )}
+
       {/* Activity Feed */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Poslední aktivita</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('lastActivity')}</h2>
             <div className="flex gap-2">
               <button
                 onClick={() => setFilter('all')}
@@ -187,7 +217,7 @@ export default function DashboardPage() {
                     : 'bg-gray-100 dark:bg-gray-500 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
-                Vše
+                {t('filterAll')}
               </button>
               <button
                 onClick={() => setFilter('success')}
@@ -197,7 +227,7 @@ export default function DashboardPage() {
                     : 'bg-gray-100 dark:bg-gray-500 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
-                Úspěšné
+                {t('filterSuccess')}
               </button>
               <button
                 onClick={() => setFilter('error')}
@@ -207,24 +237,24 @@ export default function DashboardPage() {
                     : 'bg-gray-100 dark:bg-gray-500 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
-                Chybné
+                {t('filterError')}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="divide-y divide-white/10">
+        <div className="divide-y divide-gray-200 dark:divide-gray-700">
           {filteredActivities.length === 0 ? (
-            <div className="p-8 text-center text-neutral-500">
-              {filter === 'all' ? 'Žádná aktivita' : `Žádné ${filter === 'success' ? 'úspěšné' : 'chybné'} záznamy`}
+            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+              {filter === 'all' ? t('noActivity') : (filter === 'success' ? t('noSuccessRecords') : t('noErrorRecords'))}
             </div>
           ) : (
             filteredActivities.map((activity) => (
-              <div key={activity.id} className="p-4 hover:bg-white/5 transition-colors">
+              <div key={activity.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex items-start gap-4">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.type === 'success' 
-                      ? 'bg-green-500/20' 
+                    activity.type === 'success'
+                      ? 'bg-green-500/20'
                       : activity.type === 'error'
                       ? 'bg-red-500/20'
                       : 'bg-blue-500/20'
@@ -235,14 +265,14 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-white">{activity.integration}</span>
-                      <span className="text-neutral-400">•</span>
-                      <span className="text-neutral-300">{activity.automation}</span>
-                      <span className="text-sm text-neutral-500 ml-auto">
+                      <span className="font-medium text-gray-900 dark:text-white">{activity.integration}</span>
+                      <span className="text-gray-400 dark:text-gray-500">•</span>
+                      <span className="text-gray-600 dark:text-gray-300">{activity.automation}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">
                         {formatTimeAgo(activity.timestamp)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{activity.result}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{activity.result}</p>
                   </div>
                 </div>
               </div>

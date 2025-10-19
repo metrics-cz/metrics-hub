@@ -8,7 +8,7 @@ import { LogoUpload } from '@/components/company/LogoUpload';
 import { ColorSchemeManager } from '@/components/company/ColorSchemeManager';
 import { AuthAndApiSettings } from '@/components/company/AuthAndApiSettings';
 import { ContactDetailsForm } from '@/components/company/ContactDetailsForm';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useActiveCompany } from '@/lib/activeCompany';
 import { isAdminOrHigher } from '@/lib/permissions';
@@ -103,7 +103,7 @@ export default function CompanySettingsPage() {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`/api/company/${companyId}`, {
+      const response = await fetch(`/api/companies/${companyId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +153,7 @@ export default function CompanySettingsPage() {
         throw new Error('Nejste přihlášeni');
       }
 
-      const response = await fetch(`/api/company/${companyId}`, {
+      const response = await fetch(`/api/companies/${companyId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

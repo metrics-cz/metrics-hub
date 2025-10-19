@@ -7,6 +7,44 @@ export interface CachedApiResponse<T> {
   success: boolean;
 }
 
+/**
+ * Common error handler for fetch responses
+ * Handles both JSON and text error responses consistently
+ */
+async function handleFetchError(response: Response, context: string): Promise<never> {
+  console.error(`[cachedApi] API request failed with status ${response.status}`);
+
+  try {
+    const errorData = await response.json();
+    console.error('[cachedApi] Error response data:', errorData);
+
+    const errorMessage = errorData.details || errorData.error || `HTTP ${response.status}`;
+    const errorCode = errorData.errorCode || 'unknown';
+    const hint = errorData.hint || '';
+
+    let fullError = `Failed to ${context}: ${errorMessage}`;
+
+    if (errorCode !== 'unknown') {
+      fullError += ` (Code: ${errorCode})`;
+    }
+
+    if (hint) {
+      fullError += ` (Hint: ${hint})`;
+    }
+
+    throw new Error(fullError);
+  } catch (jsonError) {
+    // If JSON parsing fails, try text response
+    try {
+      const errorText = await response.text();
+      console.error('[cachedApi] Text error response:', errorText);
+      throw new Error(`Failed to ${context} (${response.status}): ${errorText}`);
+    } catch (textError) {
+      throw new Error(`Failed to ${context} (${response.status}): Unknown error`);
+    }
+  }
+}
+
 class CachedApi {
   private async getAuthHeaders(): Promise<Record<string, string>> {
     try {
@@ -34,11 +72,11 @@ class CachedApi {
 
   async fetchCompany(companyId: string): Promise<any> {
     const cacheKey = `company:${companyId}`;
-    
+
     return requestCache.get(cacheKey, async () => {
       try {
         const headers = await this.getAuthHeaders();
-        const response = await fetch(`/api/company/${companyId}`, { headers });
+        const response = await fetch(`/api/companies/${companyId}`, { headers });
         
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Unknown error');
@@ -60,7 +98,7 @@ class CachedApi {
     return requestCache.get(cacheKey, async () => {
       try {
         const headers = await this.getAuthHeaders();
-        const response = await fetch(`/api/company/${companyId}/users/mini`, { headers });
+        const response = await fetch(`/api/companies/${companyId}/users/mini`, { headers });
         
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Unknown error');
@@ -119,7 +157,7 @@ class CachedApi {
   async installApplication(companyId: string, applicationId: string): Promise<any> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`/api/company/${companyId}/applications`, {
+      const response = await fetch(`/api/companies/${companyId}/applications`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ applicationId })
@@ -145,49 +183,17 @@ class CachedApi {
 
   async fetchCompanyApplications(companyId: string): Promise<any[]> {
     const cacheKey = `company-applications:${companyId}`;
-    
+
     return requestCache.get(cacheKey, async () => {
       try {
         console.log(`[cachedApi] Fetching company applications for ${companyId}`);
         const headers = await this.getAuthHeaders();
-        const response = await fetch(`/api/company/${companyId}/applications`, { headers });
-        
+        const response = await fetch(`/api/companies/${companyId}/applications`, { headers });
+
         if (!response.ok) {
-          console.error(`[cachedApi] API request failed with status ${response.status}`);
-          
-          try {
-            // Try to parse as JSON first to get structured error details
-            const errorData = await response.json();
-            console.error('[cachedApi] Error response data:', errorData);
-            
-            // Extract the details field which should now be a proper string
-            const errorMessage = errorData.details || errorData.error || `HTTP ${response.status}`;
-            const errorCode = errorData.errorCode || 'unknown';
-            const hint = errorData.hint || '';
-            
-            const fullError = `Failed to fetch company applications: ${errorMessage}`;
-            
-            if (errorCode !== 'unknown') {
-              throw new Error(`${fullError} (Code: ${errorCode})`);
-            }
-            
-            if (hint) {
-              throw new Error(`${fullError} (Hint: ${hint})`);
-            }
-            
-            throw new Error(fullError);
-          } catch (jsonError) {
-            // If JSON parsing fails, try text response
-            try {
-              const errorText = await response.text();
-              console.error('[cachedApi] Text error response:', errorText);
-              throw new Error(`Failed to fetch company applications (${response.status}): ${errorText}`);
-            } catch (textError) {
-              throw new Error(`Failed to fetch company applications (${response.status}): Unknown error`);
-            }
-          }
+          await handleFetchError(response, 'fetch company applications');
         }
-        
+
         const data = await response.json();
         console.log(`[cachedApi] Successfully fetched ${data.data?.length || 0} applications`);
         return data.success ? data.data : [];
@@ -197,13 +203,7 @@ class CachedApi {
           message: error instanceof Error ? error.message : String(error),
           companyId
         });
-        
-        // Re-throw with preserved message
-        if (error instanceof Error) {
-          throw new Error(error.message);
-        }
-        
-        throw new Error(`Failed to fetch company applications: ${String(error)}`);
+        throw error;
       }
     });
   }
@@ -211,7 +211,7 @@ class CachedApi {
   async uninstallApplication(companyId: string, applicationId: string): Promise<any> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`/api/company/${companyId}/applications/${applicationId}`, {
+      const response = await fetch(`/api/companies/${companyId}/applications/${applicationId}`, {
         method: 'DELETE',
         headers
       });
@@ -237,7 +237,7 @@ class CachedApi {
   async updateApplicationSettings(companyId: string, applicationId: string, settings: any): Promise<any> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`/api/company/${companyId}/applications/${applicationId}/settings`, {
+      const response = await fetch(`/api/companies/${companyId}/applications/${applicationId}/settings`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ settings })
@@ -263,49 +263,17 @@ class CachedApi {
 
   async fetchCompanyIntegrations(companyId: string): Promise<any[]> {
     const cacheKey = `company-integrations:${companyId}`;
-    
+
     return requestCache.get(cacheKey, async () => {
       try {
         console.log(`[cachedApi] Fetching company integrations for ${companyId}`);
         const headers = await this.getAuthHeaders();
-        const response = await fetch(`/api/company/${companyId}/integrations`, { headers });
-        
+        const response = await fetch(`/api/companies/${companyId}/integrations`, { headers });
+
         if (!response.ok) {
-          console.error(`[cachedApi] API request failed with status ${response.status}`);
-          
-          try {
-            // Try to parse as JSON first to get structured error details
-            const errorData = await response.json();
-            console.error('[cachedApi] Error response data:', errorData);
-            
-            // Extract the details field which should now be a proper string
-            const errorMessage = errorData.details || errorData.error || `HTTP ${response.status}`;
-            const errorCode = errorData.errorCode || 'unknown';
-            const hint = errorData.hint || '';
-            
-            const fullError = `Failed to fetch company integrations: ${errorMessage}`;
-            
-            if (errorCode !== 'unknown') {
-              throw new Error(`${fullError} (Code: ${errorCode})`);
-            }
-            
-            if (hint) {
-              throw new Error(`${fullError} (Hint: ${hint})`);
-            }
-            
-            throw new Error(fullError);
-          } catch (jsonError) {
-            // If JSON parsing fails, try text response
-            try {
-              const errorText = await response.text();
-              console.error('[cachedApi] Text error response:', errorText);
-              throw new Error(`Failed to fetch company integrations (${response.status}): ${errorText}`);
-            } catch (textError) {
-              throw new Error(`Failed to fetch company integrations (${response.status}): Unknown error`);
-            }
-          }
+          await handleFetchError(response, 'fetch company integrations');
         }
-        
+
         const data = await response.json();
         console.log(`[cachedApi] Successfully fetched ${data.data?.length || 0} integrations`);
         return data.success ? data.data : [];
@@ -315,13 +283,7 @@ class CachedApi {
           message: error instanceof Error ? error.message : String(error),
           companyId
         });
-        
-        // Re-throw with preserved message
-        if (error instanceof Error) {
-          throw new Error(error.message);
-        }
-        
-        throw new Error(`Failed to fetch company integrations: ${String(error)}`);
+        throw error;
       }
     });
   }
@@ -333,6 +295,29 @@ class CachedApi {
 
   invalidateCompanyIntegrations(companyId: string): void {
     requestCache.invalidate(`company-integrations:${companyId}`);
+  }
+
+  // Integration trigger method
+  async triggerIntegration(companyId: string, integrationId: string, config?: Record<string, any>): Promise<any> {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`/api/companies/${companyId}/integrations/${integrationId}/trigger`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ config: config || {} })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.details || `Failed to trigger integration (${response.status})`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error triggering integration:', error);
+      throw error;
+    }
   }
 }
 

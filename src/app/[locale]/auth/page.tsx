@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import AuthCard from '@/features/auth/AuthCard';
 import { useLocale } from 'next-intl';
-import ThemeToggle from '@/components/ThemeToggle';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 export default function AuthPage() {
   const router = useRouter();

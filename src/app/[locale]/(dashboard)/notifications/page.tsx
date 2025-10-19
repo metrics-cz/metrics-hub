@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useTranslations } from 'next-intl';
 import { Bell, Check, X, ExternalLink, Users, ArrowLeft } from 'lucide-react';

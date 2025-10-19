@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabaseClient';
 import CompanyInitialsIcon from './CompanyInitialsIcon';
 import { validateFileUpload, FileValidationError } from '@/lib/file-security';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useActiveCompany } from '@/lib/activeCompany';
 import { isAdminOrHigher } from '@/lib/permissions';
 

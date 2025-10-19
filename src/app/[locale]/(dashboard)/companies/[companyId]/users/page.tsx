@@ -7,7 +7,7 @@ import SearchBar from '@/components/user/SearchBar';
 import { fetchUsersByCompanyMini } from '@/lib/company/fetchUsersMini';
 import { type CompanyUserMini } from '@/lib/validation/companyUserMiniSchema';
 import { useTranslations } from 'next-intl';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useActiveCompany } from '@/lib/activeCompany';
 import { cachedApi } from '@/lib/cachedApi';

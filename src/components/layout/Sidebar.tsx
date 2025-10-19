@@ -14,15 +14,15 @@ import { useLocale, useTranslations } from 'next-intl';
 import clsx from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useActiveCompany } from '@/lib/activeCompany';
 import { MAIN_NAV, BOTTOM_NAV, type NavItem } from '@/lib/nav';
-import CompanySwitcher from '@/components/CompanySwitcher';
-import BuildInfo from '@/components/BuildInfo';
+import CompanySwitcher from '@/components/company/CompanySwitcher';
+import BuildInfo from '@/components/common/BuildInfo';
 import UserInitialsIcon from '@/components/user/UserInitialsIcon';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import NotificationBell from '@/components/NotificationBell';
-import ThemeToggle from '@/components/ThemeToggle';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import NotificationBell from '@/components/layout/NotificationBell';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 
 function NavLink({

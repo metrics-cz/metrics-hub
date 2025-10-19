@@ -18,8 +18,6 @@ const protectedApiRoutes = [
 ];
 const publicRoutes = [
   '/auth',
-  '/auth/sign-in',
-  '/auth/sign-up',
   '/auth/reset-password',
   '/',
 ];
@@ -76,7 +74,7 @@ async function authMiddleware(request: NextRequest) {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
-        const redirectUrl = new URL('/auth/sign-in', request.url);
+        const redirectUrl = new URL('/auth', request.url);
         redirectUrl.searchParams.set('redirectTo', pathname);
         return NextResponse.redirect(redirectUrl);
       }
@@ -97,7 +95,7 @@ async function authMiddleware(request: NextRequest) {
     }
 
     if (isProtectedRoute) {
-      const redirectUrl = new URL('/auth/sign-in', request.url);
+      const redirectUrl = new URL('/auth', request.url);
       return NextResponse.redirect(redirectUrl);
     }
   }
@@ -119,8 +117,9 @@ export default async function middleware(request: NextRequest) {
   // Add nonce to response headers for use in components
   response.headers.set('X-CSP-Nonce', nonce);
 
-  // Security headers
-  response.headers.set('X-Frame-Options', 'DENY');
+  // Security headers - allow iframe embedding for plugin playground routes only
+  const isPluginPlaygroundRoute = request.nextUrl.pathname.startsWith('/api/plugin-playground/');
+  response.headers.set('X-Frame-Options', isPluginPlaygroundRoute ? 'SAMEORIGIN' : 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');

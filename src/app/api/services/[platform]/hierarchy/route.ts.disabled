@@ -1,0 +1,235 @@
+/**
+ * Universal Service Hierarchy API
+ *
+ * This endpoint provides a standardized way to discover account hierarchies
+ * across all supported marketing platforms using the service provider interface.
+ *
+ * Supports: Google Ads (MCC), Facebook (Business Manager), LinkedIn (Company Manager), etc.
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { ServiceProviderRegistry } from '@/lib/services/ServiceProviderInterface';
+import { GoogleAdsServiceProvider } from '@/lib/services/GoogleAdsServiceProvider';
+
+// Register available service providers
+ServiceProviderRegistry.register('google_ads', GoogleAdsServiceProvider);
+// Future: ServiceProviderRegistry.register('facebook', FacebookServiceProvider);
+// Future: ServiceProviderRegistry.register('linkedin', LinkedInServiceProvider);
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { platform: string } }
+) {
+  try {
+    const { platform } = params;
+    const { searchParams } = new URL(request.url);
+    const companyId = searchParams.get('companyId');
+
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: 'Company ID is required' },
+        { status: 400 }
+      );
+    }
+
+    console.log(`[Service-Hierarchy] Processing ${platform} hierarchy request for company ${companyId}`);
+
+    // Validate platform support
+    const availablePlatforms = ServiceProviderRegistry.getAvailablePlatforms();
+    if (!availablePlatforms.includes(platform)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Platform '${platform}' not supported`,
+          availablePlatforms
+        },
+        { status: 400 }
+      );
+    }
+
+    // Get credentials based on platform
+    const credentials = await getPlatformCredentials(platform, companyId);
+    if (!credentials) {
+      return NextResponse.json(
+        { success: false, error: `No valid credentials found for ${platform}` },
+        { status: 401 }
+      );
+    }
+
+    // Create service provider instance
+    const serviceProvider = ServiceProviderRegistry.create(platform, {
+      platform,
+      companyId,
+      credentials,
+      options: {
+        enableHierarchyTraversal: true,
+        maxDepth: 5,
+        includeDisabledAccounts: false,
+        enhanceGenericNames: true
+      }
+    });
+
+    // Validate credentials
+    const credentialValidation = await serviceProvider.validateCredentials();
+    if (!credentialValidation.valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid or expired credentials',
+          details: credentialValidation
+        },
+        { status: 401 }
+      );
+    }
+
+    // Discover comprehensive account hierarchy
+    console.log(`[Service-Hierarchy] Starting ${platform} account discovery`);
+    const hierarchy = await serviceProvider.discoverAccounts();
+
+    console.log(`[Service-Hierarchy] ${platform} discovery complete:`, {
+      totalAccounts: hierarchy.totalAccounts,
+      rootAccounts: hierarchy.rootAccounts.length,
+      discoveryMethod: hierarchy.discoveryMethod
+    });
+
+    return NextResponse.json({
+      success: true,
+      platform,
+      hierarchy: {
+        accounts: hierarchy.rootAccounts,
+        relationships: Object.fromEntries(hierarchy.relationships),
+        accessMatrix: Object.fromEntries(hierarchy.accessMatrix),
+        totalAccounts: hierarchy.totalAccounts,
+        discoveryMethod: hierarchy.discoveryMethod
+      },
+      metadata: {
+        companyId,
+        discoveredAt: new Date().toISOString(),
+        credentialsValid: true,
+        credentialsExpiresAt: credentialValidation.expiresAt?.toISOString(),
+        scopes: credentialValidation.scopes
+      }
+    });
+
+  } catch (error) {
+    console.error('[Service-Hierarchy] Error:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Failed to discover service hierarchy',
+        platform: params.platform
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { platform: string } }
+) {
+  try {
+    const { platform } = params;
+    const body = await request.json();
+    const { companyId, accountId, dataType, filters, parentAccountId } = body;
+
+    if (!companyId || !accountId || !dataType) {
+      return NextResponse.json(
+        { success: false, error: 'companyId, accountId, and dataType are required' },
+        { status: 400 }
+      );
+    }
+
+    console.log(`[Service-Data] Fetching ${dataType} for ${platform} account ${accountId}`);
+
+    // Get credentials and create service provider
+    const credentials = await getPlatformCredentials(platform, companyId);
+    if (!credentials) {
+      return NextResponse.json(
+        { success: false, error: `No valid credentials found for ${platform}` },
+        { status: 401 }
+      );
+    }
+
+    const serviceProvider = ServiceProviderRegistry.create(platform, {
+      platform,
+      companyId,
+      credentials,
+      options: {
+        enableHierarchyTraversal: true,
+        maxDepth: 5,
+        includeDisabledAccounts: false,
+        enhanceGenericNames: true
+      }
+    });
+
+    // Fetch account data using service provider
+    const dataResponse = await serviceProvider.fetchAccountData({
+      accountId,
+      parentAccountId,
+      dataType,
+      filters
+    });
+
+    console.log(`[Service-Data] ${platform} data fetch complete:`, {
+      accountId,
+      dataType,
+      totalItems: dataResponse.total,
+      accessMethod: dataResponse.accountInfo.accessMethod
+    });
+
+    return NextResponse.json(dataResponse);
+
+  } catch (error) {
+    console.error('[Service-Data] Error:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Failed to fetch service data',
+        platform: params.platform
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Get platform-specific credentials from the database
+ */
+async function getPlatformCredentials(platform: string, companyId: string) {
+  try {
+    // This would typically fetch from your oauth_tokens table
+    // For now, we'll use the existing Google Ads pattern
+
+    if (platform === 'google_ads') {
+      // Get Google OAuth tokens from your existing system
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/company/${companyId}/oauth-tokens`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get OAuth tokens');
+      }
+
+      const tokenData = await response.json();
+
+      return {
+        accessToken: tokenData.google_access_token,
+        refreshToken: tokenData.google_refresh_token,
+        customerId: tokenData.google_customer_id
+      };
+    }
+
+    // Future platform credential handling
+    throw new Error(`Credential handling not implemented for platform: ${platform}`);
+
+  } catch (error) {
+    console.error(`[Service-Hierarchy] Failed to get ${platform} credentials:`, error);
+    return null;
+  }
+}

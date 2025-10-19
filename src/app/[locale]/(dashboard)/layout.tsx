@@ -3,10 +3,10 @@
 import { ReactNode, useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import { CompanyListProvider, useCompanyListLoading } from '@/lib/companyList';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { NotificationProvider } from '@/components/providers/NotificationProvider';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 function LoadingSpinner() {
   return (
