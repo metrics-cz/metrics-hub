@@ -30,10 +30,51 @@ module.exports = {
           900: '#064e3b',
           950: '#022c22',
         },
-        secondary: '#424242',   // tmavě šedá
+        // Removed static 'secondary' to avoid conflict with 'text-secondary' CSS variable
         accent:    '#059669',   // zelená
         'bg-light':'#ffffff',   // čistě bílá
         'bg-dark' :'#0f0f0f',   // velmi tmavě šedá místo černé
+
+        /* ---------- Universal Theme Colors ---------- */
+        // Surface/Background colors (use with bg-, border-, etc.)
+        'base': 'var(--color-bg-base)',
+        'card': 'var(--color-bg-card)',
+        'elevated': 'var(--color-bg-elevated)',
+        'input': 'var(--color-bg-input)',
+        'brand': 'var(--color-bg-brand)',
+        'brand-hover': 'var(--color-bg-brand-hover)',
+        'brand-active': 'var(--color-bg-brand-active)',
+        'hover': 'var(--color-bg-hover)',
+        'hover-strong': 'var(--color-bg-hover-strong)',
+
+        // Text colors (use with text-)
+        'text-primary': 'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-secondary)',
+        'text-muted': 'var(--color-text-muted)',
+        'text-error': 'var(--color-text-error)',
+        'text-accent': 'var(--color-text-accent)',
+        'on-brand': 'var(--color-text-on-brand)',
+        'on-brand-active': 'var(--color-text-on-brand-active)',
+
+        // Border colors
+        'border-default': 'var(--color-border-default)',
+        'border-light': 'var(--color-border-light)',
+        'border-accent': 'var(--color-border-accent)',
+
+        // Divider color
+        'divider': 'var(--color-divider)',
+
+        // Semantic badge colors
+        'badge-success-bg': 'var(--color-badge-success-bg)',
+        'badge-success-text': 'var(--color-badge-success-text)',
+        'badge-info-bg': 'var(--color-badge-info-bg)',
+        'badge-info-text': 'var(--color-badge-info-text)',
+        'badge-warning-bg': 'var(--color-badge-warning-bg)',
+        'badge-warning-text': 'var(--color-badge-warning-text)',
+        'badge-pending-bg': 'var(--color-badge-pending-bg)',
+        'badge-pending-text': 'var(--color-badge-pending-text)',
+        'badge-error-bg': 'var(--color-badge-error-bg)',
+        'badge-error-text': 'var(--color-badge-error-text)',
       },
 
       /* ---------- animace fade-in ---------- */

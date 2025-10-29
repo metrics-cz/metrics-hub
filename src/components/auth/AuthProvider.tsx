@@ -5,112 +5,112 @@ import { supabase } from '@/lib/supabaseClient';
 import { cacheGoogleAvatar } from '@/lib/uploadGoogleAvatar';
 
 type AuthContextValue = {
-  user: Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user'] | null;
-  loading: boolean;
+ user: Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user'] | null;
+ loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  /* -------------------------------------------------------------------- */
-  /* Local state                                                          */
-  /* -------------------------------------------------------------------- */
-  const [user, setUser]     = useState<AuthContextValue['user']>(null);
-  const [loading, setLoading] = useState(true);
+ /* -------------------------------------------------------------------- */
+ /* Local state                             */
+ /* -------------------------------------------------------------------- */
+ const [user, setUser]   = useState<AuthContextValue['user']>(null);
+ const [loading, setLoading] = useState(true);
 
-  /* -------------------------------------------------------------------- */
-  /* 1.  Initial session load                                             */
-  /* -------------------------------------------------------------------- */
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user }, error }) => {
-      if (error) {
-        console.error('AuthProvider: Error getting user:', error);
-        setUser(null);
-      } else {
-        setUser(user ?? null);
-      }
-      setLoading(false);
-    });
-  }, []);
+ /* -------------------------------------------------------------------- */
+ /* 1. Initial session load                       */
+ /* -------------------------------------------------------------------- */
+ useEffect(() => {
+  supabase.auth.getUser().then(({ data: { user }, error }) => {
+   if (error) {
+    console.error('AuthProvider: Error getting user:', error);
+    setUser(null);
+   } else {
+    setUser(user ?? null);
+   }
+   setLoading(false);
+  });
+ }, []);
 
-  /* -------------------------------------------------------------------- */
-  /* 2.  Listen for auth state changes                                    */
-  /* -------------------------------------------------------------------- */
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      let newUser: any = null;
-      
-      // For security, verify the user with the server when signing in
-      if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
-          if (!error && verifiedUser) {
-            newUser = verifiedUser;
-            setUser(verifiedUser);
-          } else {
-            setUser(null);
-          }
-        } catch (error) {
-          console.error('Failed to verify user on sign in:', error);
-          setUser(null);
-        }
-      } else {
-        newUser = session?.user ?? null;
-        setUser(newUser);
-      }
+ /* -------------------------------------------------------------------- */
+ /* 2. Listen for auth state changes                  */
+ /* -------------------------------------------------------------------- */
+ useEffect(() => {
+  const {
+   data: { subscription },
+  } = supabase.auth.onAuthStateChange(async (event, session) => {
+   let newUser: any = null;
+   
+   // For security, verify the user with the server when signing in
+   if (event === 'SIGNED_IN' && session?.user) {
+    try {
+     const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
+     if (!error && verifiedUser) {
+      newUser = verifiedUser;
+      setUser(verifiedUser);
+     } else {
+      setUser(null);
+     }
+    } catch (error) {
+     console.error('Failed to verify user on sign in:', error);
+     setUser(null);
+    }
+   } else {
+    newUser = session?.user ?? null;
+    setUser(newUser);
+   }
 
-      /* ––––––––––––––– Google-avatar cache (runs only once) ––––––––––– */
-      if (
-        newUser &&
-        newUser.user_metadata?.provider === 'google' &&
-        newUser.user_metadata?.avatar_url &&
-        !newUser.user_metadata?.cached_avatar
-      ) {
-        try {
-          const cached = await cacheGoogleAvatar(
-            newUser.id,
-            newUser.user_metadata.avatar_url
-          );
+   /* ––––––––––––––– Google-avatar cache (runs only once) ––––––––––– */
+   if (
+    newUser &&
+    newUser.user_metadata?.provider === 'google' &&
+    newUser.user_metadata?.avatar_url &&
+    !newUser.user_metadata?.cached_avatar
+   ) {
+    try {
+     const cached = await cacheGoogleAvatar(
+      newUser.id,
+      newUser.user_metadata.avatar_url
+     );
 
-          /* A)  store in auth metadata  */
-          await supabase.auth.updateUser({
-            data: { cached_avatar: cached },
-          });
+     /* A) store in auth metadata */
+     await supabase.auth.updateUser({
+      data: { cached_avatar: cached },
+     });
 
-          /* B)  optional public table   */
-          await supabase
-            .from('users')
-            .update({ avatar_url: cached })
-            .eq('id', newUser.id);
+     /* B) optional public table  */
+     await supabase
+      .from('users')
+      .update({ avatar_url: cached })
+      .eq('id', newUser.id);
 
-          /* C)  reflect immediately in local state so UI updates now     */
-          setUser((prev) =>
-            prev ? { ...prev, user_metadata: { ...prev.user_metadata, cached_avatar: cached } } : prev
-          );
-        } catch (err) {
-          console.error('avatar cache failed', err);
-        }
-      }
-    });
+     /* C) reflect immediately in local state so UI updates now   */
+     setUser((prev) =>
+      prev ? { ...prev, user_metadata: { ...prev.user_metadata, cached_avatar: cached } } : prev
+     );
+    } catch (err) {
+     console.error('avatar cache failed', err);
+    }
+   }
+  });
 
-    return () => subscription.unsubscribe();
-  }, []);
+  return () => subscription.unsubscribe();
+ }, []);
 
-  /* -------------------------------------------------------------------- */
-  /* Provider                                                             */
-  /* -------------------------------------------------------------------- */
-  return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+ /* -------------------------------------------------------------------- */
+ /* Provider                               */
+ /* -------------------------------------------------------------------- */
+ return (
+  <AuthContext.Provider value={{ user, loading }}>
+   {children}
+  </AuthContext.Provider>
+ );
 }
 
 /* Simple hook ---------------------------------------------------------- */
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+ const ctx = useContext(AuthContext);
+ if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+ return ctx;
 }

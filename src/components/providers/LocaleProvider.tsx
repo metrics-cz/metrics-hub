@@ -5,17 +5,17 @@ import { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 
 export default function LocaleProvider({
-  children,
-  messages,
-  locale,
+ children,
+ messages,
+ locale,
 }: {
-  children: ReactNode;
-  messages: Record<string, string>;
-  locale: string;
+ children: ReactNode;
+ messages: Record<string, string>;
+ locale: string;
 }) {
-  return (
-    <NextIntlClientProvider messages={messages} locale={locale}>
-      {children}
-    </NextIntlClientProvider>
-  );
+ return (
+  <NextIntlClientProvider messages={messages} locale={locale}>
+   {children}
+  </NextIntlClientProvider>
+ );
 }

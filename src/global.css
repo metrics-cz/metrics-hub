@@ -2,12 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------- Universal Theme Color Variables ---------- */
+@layer base {
+    :root {
+        /* Background colors - Light mode */
+        --color-bg-base: #ffffff;
+        --color-bg-card: #ffffff;
+        --color-bg-elevated: #ffffff;
+        --color-bg-input: #f3f4f6;
+        --color-bg-brand: #059669;
+        --color-bg-brand-hover: #047857;
+        --color-bg-brand-active: #047857;
+        --color-bg-hover: #f3f4f6;
+        --color-bg-hover-strong: #d1d5db;
+
+        /* Text colors - Light mode */
+        --color-text-primary: #111827;
+        --color-text-secondary: #374151;
+        --color-text-muted: #6b7280;
+        --color-text-error: #dc2626;
+        --color-text-accent: #059669;
+        --color-text-on-brand: #ffffff;
+        --color-text-on-brand-active: #ffffff;
+
+        /* Border colors - Light mode */
+        --color-border-default: #d1d5db;
+        --color-border-light: #e5e7eb;
+        --color-border-accent: #059669;
+
+        /* Divider colors - Light mode */
+        --color-divider: #047857;
+
+        /* Semantic badge colors - Light mode */
+        --color-badge-success-bg: #dcfce7;
+        --color-badge-success-text: #15803d;
+        --color-badge-info-bg: #dbeafe;
+        --color-badge-info-text: #1d4ed8;
+        --color-badge-warning-bg: #fef3c7;
+        --color-badge-warning-text: #b45309;
+        --color-badge-pending-bg: #fed7aa;
+        --color-badge-pending-text: #c2410c;
+        --color-badge-error-bg: #fee2e2;
+        --color-badge-error-text: #dc2626;
+    }
+
+    .dark {
+        /* Background colors - Dark mode */
+        --color-bg-base: #4B5563;
+        --color-bg-card: #1f2937;
+        --color-bg-elevated: #374151;
+        --color-bg-input: #1f2937;
+        --color-bg-brand: #374151;
+        --color-bg-brand-hover: #374151;
+        --color-bg-brand-active: rgba(6, 78, 59, 0.2);
+        --color-bg-hover: #374151;
+        --color-bg-hover-strong: #374151;
+
+        /* Text colors - Dark mode */
+        --color-text-primary: #f3f4f6;
+        --color-text-secondary: #d1d5db;
+        --color-text-muted: #9ca3af;
+        --color-text-error: #f87171;
+        --color-text-accent: #34d399;
+        --color-text-on-brand: #ffffff;
+        --color-text-on-brand-active: #6ee7b7;
+
+        /* Border colors - Dark mode */
+        --color-border-default: #4b5563;
+        --color-border-light: #374151;
+        --color-border-accent: #34d399;
+
+        /* Divider colors - Dark mode */
+        --color-divider: #374151;
+
+        /* Semantic badge colors - Dark mode */
+        --color-badge-success-bg: #14532d;
+        --color-badge-success-text: #4ade80;
+        --color-badge-info-bg: #1e3a8a;
+        --color-badge-info-text: #60a5fa;
+        --color-badge-warning-bg: #78350f;
+        --color-badge-warning-text: #fbbf24;
+        --color-badge-pending-bg: #7c2d12;
+        --color-badge-pending-text: #fb923c;
+        --color-badge-error-bg: #7f1d1d;
+        --color-badge-error-text: #f87171;
+    }
+}
+
 /* ---------- Project preflight override ---------- */
 @layer base {
 
     html,
     body {
-        @apply h-full bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-inter;
+        @apply h-full font-inter;
+        background-color: var(--color-bg-base);
+        color: var(--color-text-primary);
     }
 
     /* material-U look pro input + button (fallback, před pluginem forms) */
