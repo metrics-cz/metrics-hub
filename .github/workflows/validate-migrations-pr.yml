@@ -5,6 +5,12 @@ on:
     paths:
       - 'supabase/migrations/**'
 
+# Grant permissions for commenting on PRs
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   validate-pr-migrations:
     name: Validate Migration Changes
@@ -33,11 +39,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Supabase CLI
+      # Use official Supabase CLI action instead of npm global install
+      - name: Setup Supabase CLI
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: |
-          npm install -g supabase@latest
-          supabase --version
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Make validation script executable
         if: steps.changed-files.outputs.any_changed == 'true'

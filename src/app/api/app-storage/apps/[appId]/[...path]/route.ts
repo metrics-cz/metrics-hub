@@ -4,18 +4,22 @@ import AdmZip from 'adm-zip';
 import fs from 'fs/promises';
 import path from 'path';
 import { spawn } from 'child_process';
-import { 
-  createErrorResponse, 
-  logError, 
-  CustomApiError, 
-  NotFoundError, 
-  withErrorHandler 
+import {
+  createErrorResponse,
+  logError,
+  CustomApiError,
+  NotFoundError,
+  withErrorHandler
 } from '@/lib/error-handler';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Create Supabase client at runtime, not build time
+// This prevents "supabaseKey is required" error during Next.js build
+function getSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // MIME type detection based on file extension
 function getMimeType(filePath: string): string {
@@ -611,6 +615,7 @@ async function extractAndInstallApp(appId: string): Promise<string | null> {
     console.log(`Created temp directory: ${tempDir}`);
 
     // List files in the app directory to find the ZIP file
+    const supabase = getSupabaseClient();
     const { data: files, error: listError } = await supabase.storage
       .from('app-storage')
       .list(`apps/${appId}`);

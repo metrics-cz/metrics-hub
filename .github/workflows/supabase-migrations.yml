@@ -24,10 +24,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Supabase CLI
-        run: |
-          npm install -g supabase@latest
-          supabase --version
+      # Use official Supabase CLI action instead of npm global install
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Validate migration files
         run: |
@@ -98,10 +99,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Supabase CLI
-        run: |
-          npm install -g supabase@latest
-          supabase --version
+      # Use official Supabase CLI action instead of npm global install
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Link to Supabase project
         env:
