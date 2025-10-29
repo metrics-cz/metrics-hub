@@ -1,11 +1,11 @@
 export default function PluginPlaygroundLayout({
-  children,
+ children,
 }: {
-  children: React.ReactNode;
+ children: React.ReactNode;
 }) {
-  return (
-    <div className="plugin-playground-layout">
-      {children}
-    </div>
-  );
+ return (
+  <div className="plugin-playground-layout">
+   {children}
+  </div>
+ );
 }

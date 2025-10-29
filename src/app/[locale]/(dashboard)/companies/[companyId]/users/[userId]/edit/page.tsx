@@ -7,16 +7,16 @@ import { type CompanyUserMini } from '@/lib/validation/companyUserMiniSchema';
 
 export default function Page() {
 
-  const [user, setUser] = useState<CompanyUserMini | undefined>(undefined);
-  const { companyId, userId } = useParams<{ companyId: string; userId: string }>();
-  const t = useTranslations();
+ const [user, setUser] = useState<CompanyUserMini | undefined>(undefined);
+ const { companyId, userId } = useParams<{ companyId: string; userId: string }>();
+ const t = useTranslations();
 
 
-    return (
-      <div className="p-10 text-neutral-500">
-        <h1>{t('companies.users.edit.title')}</h1>
+  return (
+   <div className="p-10 text-neutral-500">
+    <h1>{t('companies.users.edit.title')}</h1>
 
-      </div>
-    );
-  }
-  
+   </div>
+  );
+ }
+ 
