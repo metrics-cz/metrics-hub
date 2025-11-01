@@ -169,7 +169,7 @@ export default function IntegrationSettingsPage() {
      <p className="text-secondary text-sm mb-4">{error}</p>
      <button
       onClick={() => router.back()}
-      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200"
+      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200"
      >
       Go Back
      </button>
@@ -298,8 +298,8 @@ export default function IntegrationSettingsPage() {
         />
         <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
          settings.guardPeriod === period.value
-          ? 'border-primary-500 bg-primary-50'
-          : 'border-border-default hover:border-primary-300'
+          ? 'border-emerald-500 bg-emerald-50'
+          : 'border-border-default hover:border-emerald-300'
         }`}>
          <div className="text-center">
           <div className="font-semibold text-sm text-primary">{period.label}</div>
@@ -408,7 +408,7 @@ export default function IntegrationSettingsPage() {
      <button
       onClick={handleSave}
       disabled={saving}
-      className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
+      className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
      >
       <Save className="w-4 h-4" />
       {saving ? 'Saving...' : 'Save Settings'}

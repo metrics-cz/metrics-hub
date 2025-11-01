@@ -149,7 +149,7 @@ export default function UsersPage() {
     <h1 className="text-3xl font-semibold mb-4 text-primary">{t('users.title')}</h1>
     {canAddUsers && !loadingRole && (
      <button
-      className="bg-primary-600 text-white rounded-md p-2 inline-flex items-center gap-2 hover:bg-primary-700 transition-colors"
+      className="bg-emerald-600 text-white rounded-md p-2 inline-flex items-center gap-2 hover:bg-emerald-700 transition-colors"
       onClick={() => setShowModal(true)}
      >
       <Plus />
@@ -162,7 +162,7 @@ export default function UsersPage() {
    
    {loading ? (
     <div className="flex justify-center items-center py-8">
-     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
      <span className="ml-2 text-secondary">Loading users...</span>
     </div>
    ) : (
@@ -238,7 +238,7 @@ function InviteUserModal({
       }}
       onKeyPress={handleKeyPress}
       className={`w-full bg-input text-primary border rounded px-3 py-2 ${emailError ? 'border-red-500' : 'border-border-default'
-       } focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-text-muted`}
+       } focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-text-muted`}
       placeholder="uzivatel@example.com"
       disabled={loading}
      />
@@ -252,7 +252,7 @@ function InviteUserModal({
      <select
       value={role}
       onChange={(e) => setRole(e.target.value)}
-      className="w-full bg-input text-primary border border-border-default rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+      className="w-full bg-input text-primary border border-border-default rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
       disabled={loading}
      >
       <option value="member">{t('users.member')}</option>
@@ -269,7 +269,7 @@ function InviteUserModal({
      <textarea
       value={message}
       onChange={(e) => setMessage(e.target.value)}
-      className="w-full bg-input text-primary border border-border-default rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-text-muted"
+      className="w-full bg-input text-primary border border-border-default rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-text-muted"
       rows={3}
       placeholder="Přidejte osobní zprávu k pozvánce..."
       disabled={loading}
@@ -287,7 +287,7 @@ function InviteUserModal({
      <button
       onClick={handleSubmit}
       disabled={loading || !email}
-      className="px-4 py-2 text-sm bg-primary-600 text-white hover:bg-primary-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[80px]"
+      className="px-4 py-2 text-sm bg-emerald-600 text-white hover:bg-emerald-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[80px]"
      >
       {loading ? (
        <div className="flex items-center justify-center">

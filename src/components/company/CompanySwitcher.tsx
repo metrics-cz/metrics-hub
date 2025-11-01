@@ -43,7 +43,7 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
     onClick={() => {
      if (!collapsed) setOpen((o) => !o);
     }}
-    className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10"
+    className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10 text-on-brand"
    >
     {/* avatar / fallback icon */}
     {active?.logo_url ? (
@@ -80,7 +80,7 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
         onMobileClose?.();
        }}
        className={clsx(
-        'flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10',
+        'flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10 text-primary',
         c.id === companyId && 'bg-white/5'
        )}
       >
@@ -98,7 +98,7 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
        setOpen(false);
        setShowCreate(true);
       }}
-      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10 text-primary"
+      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10 text-accent-text"
      >
       <Plus size={18} />
       {t('companySwitcher.createNewCompany')}
@@ -115,7 +115,7 @@ export default function CompanySwitcher({ collapsed = false, onMobileClose }: Pr
       </Suspense>
       <button
        onClick={() => setShowCreate(false)}
-       className="mt-4 text-sm underline text-primary"
+       className="mt-4 text-sm underline text-secondary"
       >
        {t('companySwitcher.close')}
       </button>

@@ -27,8 +27,8 @@ export function FrequencySelector({ selected, onChange, pricing }: FrequencySele
      <div
       className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
        selected === freq
-        ? 'border-primary-500 bg-primary-50'
-        : 'border-border-default hover:border-primary-300'
+        ? 'border-emerald-500 bg-emerald-50'
+        : 'border-border-default hover:border-emerald-300'
       }`}
      >
       <div className="text-center">

@@ -308,7 +308,7 @@ export default function ProfilePage() {
      <button
       type="submit"
       disabled={savingName}
-      className="col-span-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
+      className="col-span-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
      >
       {t("saveChanges")}
      </button>
@@ -339,7 +339,7 @@ export default function ProfilePage() {
      <button
       type="submit"
       disabled={savingEmail}
-      className="bg-primary-600 hover:bg-primary-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
+      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
      >
       {t("updateEmail")}
      </button>
@@ -371,7 +371,7 @@ export default function ProfilePage() {
      <button
       type="submit"
       disabled={savingPwd}
-      className="bg-primary-600 hover:bg-primary-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
+      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-md py-2 disabled:opacity-50 transition-colors"
      >
       {t("changePasswordButton")}
      </button>

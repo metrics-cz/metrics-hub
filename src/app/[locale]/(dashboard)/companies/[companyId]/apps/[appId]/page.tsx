@@ -123,7 +123,7 @@ export default function IframeAppPage() {
   return (
    <div className="h-full flex items-center justify-center bg-white ">
     <div className="flex flex-col items-center gap-4">
-     <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+     <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
      <p className="text-secondary">Loading application...</p>
     </div>
    </div>
@@ -143,7 +143,7 @@ export default function IframeAppPage() {
      </p>
      <button
       onClick={() => router.push(`/${locale}/companies/${companyId}/apps`)}
-      className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
+      className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors"
      >
       Back to Apps
      </button>
@@ -166,7 +166,7 @@ export default function IframeAppPage() {
      </p>
      <button
       onClick={() => router.push(`/${locale}/companies/${companyId}/apps`)}
-      className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
+      className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors"
      >
       Back to Apps
      </button>
@@ -207,7 +207,7 @@ export default function IframeAppPage() {
       </button>
 
       <div className="flex items-center gap-2">
-       <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+       <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
         <span className="text-accent font-semibold text-sm">
          {application.name.charAt(0).toUpperCase()}
         </span>
@@ -237,7 +237,7 @@ export default function IframeAppPage() {
       onClick={() => setActiveTab('app')}
       className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
        activeTab === 'app'
-        ? 'border-primary-500 text-accent bg-primary-50'
+        ? 'border-emerald-500 text-accent bg-emerald-50'
         : 'border-transparent text-muted hover:text-primary hover:text-secondary hover:border-border-default'
       }`}
      >
@@ -248,7 +248,7 @@ export default function IframeAppPage() {
       onClick={() => setActiveTab('logs')}
       className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
        activeTab === 'logs'
-        ? 'border-primary-500 text-accent bg-primary-50'
+        ? 'border-emerald-500 text-accent bg-emerald-50'
         : 'border-transparent text-muted hover:text-primary hover:text-secondary hover:border-border-default'
       }`}
      >

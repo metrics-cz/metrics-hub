@@ -55,7 +55,7 @@ export default function UserRow({ user }: Props) {
    <td className="px-4 py-3">
     {user.status === 'active' ? (
      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-accent rounded-full">
-      <span className="w-2 h-2 bg-primary-500 rounded-full" />
+      <span className="w-2 h-2 bg-emerald-500 rounded-full" />
       Aktivní
      </span>
     ) : user.status === 'pending' ? (

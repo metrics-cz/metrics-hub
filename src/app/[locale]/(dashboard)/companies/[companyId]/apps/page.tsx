@@ -196,7 +196,7 @@ export default function AppsPage() {
      </p>
      <button
       onClick={() => window.location.reload()}
-      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200"
+      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200"
      >
       Retry
      </button>
@@ -215,7 +215,7 @@ export default function AppsPage() {
      </p>
     </div>
     <button
-     className="bg-primary-600 text-white rounded-lg px-4 py-2.5 hover:bg-primary-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium text-sm"
+     className="bg-emerald-600 text-white rounded-lg px-4 py-2.5 hover:bg-emerald-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium text-sm"
      onClick={() => router.push('/marketplace')}>
      <Plus className="w-4 h-4" />
      {t('addApp')}
@@ -232,7 +232,7 @@ export default function AppsPage() {
        <div
         key={app.id}
         className={`bg-card border border-border-light rounded-xl p-6 hover:shadow-lg transition-all duration-200 ${
-         isIframeApp ? 'cursor-pointer hover:border-primary-500' : ''
+         isIframeApp ? 'cursor-pointer hover:border-emerald-500' : ''
         }`}
         onClick={isIframeApp ? () => handleLaunchApp(app.id) : undefined}
        >
@@ -262,7 +262,7 @@ export default function AppsPage() {
           </div>
          </div>
          <div className="flex items-center gap-1 text-accent">
-          <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
+          <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
           <span className="text-xs font-medium">{t('active')}</span>
          </div>
         </div>
@@ -281,7 +281,7 @@ export default function AppsPage() {
             e.stopPropagation();
             handleLaunchApp(app.id);
            }}
-           className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm"
+           className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm"
            title="Launch App"
           >
            <Play className="w-4 h-4" />

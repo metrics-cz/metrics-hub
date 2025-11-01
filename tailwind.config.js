@@ -17,7 +17,8 @@ module.exports = {
       },
       /* ---------- barvy projektu ---------- */
       colors: {
-        primary: {
+        // Emerald color scale (renamed from primary to avoid conflicts)
+        emerald: {
           50: '#ecfdf5',
           100: '#d1fae5',
           200: '#a7f3d0',
@@ -30,7 +31,7 @@ module.exports = {
           900: '#064e3b',
           950: '#022c22',
         },
-        // Removed static 'secondary' to avoid conflict with 'text-secondary' CSS variable
+        // Static accent color (kept for backward compatibility)
         accent:    '#059669',   // zelená
         'bg-light':'#ffffff',   // čistě bílá
         'bg-dark' :'#0f0f0f',   // velmi tmavě šedá místo černé
@@ -47,17 +48,17 @@ module.exports = {
         'hover': 'var(--color-bg-hover)',
         'hover-strong': 'var(--color-bg-hover-strong)',
 
-        // Text colors (use with text-)
-        'text-primary': 'var(--color-text-primary)',
-        'text-secondary': 'var(--color-text-secondary)',
-        'text-muted': 'var(--color-text-muted)',
-        'text-error': 'var(--color-text-error)',
-        'text-accent': 'var(--color-text-accent)',
+        // Text colors (use with text-) - simplified names without text- prefix
+        'primary': 'var(--color-text-primary)',
+        'secondary': 'var(--color-text-secondary)',
+        'muted': 'var(--color-text-muted)',
+        'error': 'var(--color-text-error)',
+        'accent-text': 'var(--color-text-accent)',
         'on-brand': 'var(--color-text-on-brand)',
         'on-brand-active': 'var(--color-text-on-brand-active)',
 
-        // Border colors
-        'border-default': 'var(--color-border-default)',
+        // Border colors - simplified names without border- prefix
+        'border': 'var(--color-border-default)',
         'border-light': 'var(--color-border-light)',
         'border-accent': 'var(--color-border-accent)',
 

@@ -115,7 +115,7 @@ export default function SignInForm() {
         setResetEmailSent(false);
         setResetEmail('');
        }}
-       className="text-primary-600 hover:text-primary-700 underline"
+       className="text-emerald-600 hover:text-emerald-700 underline"
       >
        Zpět na přihlášení
       </button>
@@ -147,7 +147,7 @@ export default function SignInForm() {
         type="button"
         onClick={handleForgotPassword}
         disabled={loading || !resetEmail}
-        className="flex-1 bg-primary-600 text-white py-2 rounded hover:bg-primary-700 disabled:opacity-50 transition-colors"
+        className="flex-1 bg-emerald-600 text-white py-2 rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors"
        >
         {loading ? 'Odesílám...' : 'Odeslat odkaz'}
        </button>
@@ -178,7 +178,7 @@ export default function SignInForm() {
      <button
       type="button"
       onClick={() => setShowForgotPassword(true)}
-      className="text-sm text-primary-600 hover:text-primary-700 underline"
+      className="text-sm text-emerald-600 hover:text-emerald-700 underline"
      >
       Zapoměli jste heslo?
      </button>
@@ -197,7 +197,7 @@ export default function SignInForm() {
 
    <button
     disabled={loading}
-    className="w-full bg-primary-600 text-white rounded py-2 hover:bg-primary-700 disabled:opacity-50 transition-colors"
+    className="w-full bg-emerald-600 text-white rounded py-2 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
    >
     {loading ? 'Přihlašuji…' : 'Přihlásit se'}
    </button>
