@@ -116,7 +116,7 @@ export default function DashboardPage() {
      </p>
      <button
       onClick={() => window.location.reload()}
-      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
+      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors inline-flex items-center gap-2"
      >
       <RefreshCw className="w-4 h-4" />
       {t('retry')}
@@ -133,13 +133,13 @@ export default function DashboardPage() {
    {/* KPI Widgets */}
    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <Link href={`/companies/${companyId}/integrations`}>
-     <div className="bg-card p-6 rounded-lg border border-border-light hover:border-primary-500/50 transition-colors cursor-pointer shadow-sm">
+     <div className="bg-card p-6 rounded-lg border border-border-light hover:border-emerald-500/50 transition-colors cursor-pointer shadow-sm">
       <div className="flex items-center justify-between">
        <div>
         <p className="text-sm text-muted">{t('activeIntegrations')}</p>
         <p className="text-2xl font-semibold text-primary">{stats.activeIntegrations}</p>
        </div>
-       <div className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center">
+       <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
         <Zap className="w-6 h-6 text-accent" />
        </div>
       </div>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
       <h2 className="text-xl font-semibold text-primary">{t('integrationHealth')}</h2>
       <Link
        href={`/companies/${companyId}/apps`}
-       className="text-accent hover:text-primary-700  text-sm font-medium"
+       className="text-accent hover:text-emerald-700  text-sm font-medium"
       >
        {t('viewAllIntegrations')}
       </Link>
@@ -213,7 +213,7 @@ export default function DashboardPage() {
         onClick={() => setFilter('all')}
         className={`px-3 py-1 text-sm rounded transition-colors ${
          filter === 'all'
-          ? 'bg-primary-600 text-white'
+          ? 'bg-emerald-600 text-white'
           : 'bg-input text-secondary hover:text-primary'
         }`}
        >
@@ -223,7 +223,7 @@ export default function DashboardPage() {
         onClick={() => setFilter('success')}
         className={`px-3 py-1 text-sm rounded transition-colors ${
          filter === 'success'
-          ? 'bg-primary-600 text-white'
+          ? 'bg-emerald-600 text-white'
           : 'bg-input text-secondary hover:text-primary'
         }`}
        >

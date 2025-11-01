@@ -241,7 +241,7 @@ export default function IntegrationsPage() {
      </p>
      <button
       onClick={() => window.location.reload()}
-      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200"
+      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200"
      >
       Retry
      </button>
@@ -261,7 +261,7 @@ export default function IntegrationsPage() {
     </div>
     {canManage && (
      <button
-      className="bg-primary-600 text-white rounded-lg px-4 py-2.5 hover:bg-primary-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium text-sm"
+      className="bg-emerald-600 text-white rounded-lg px-4 py-2.5 hover:bg-emerald-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium text-sm"
       onClick={() => router.push('/marketplace')}>
       <Plus className="w-4 h-4" />
       {t('addIntegration')}
@@ -280,7 +280,7 @@ export default function IntegrationsPage() {
       </p>
       {canManage ? (
        <button
-        className="bg-primary-600 text-white rounded-lg px-6 py-3 hover:bg-primary-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium"
+        className="bg-emerald-600 text-white rounded-lg px-6 py-3 hover:bg-emerald-700 transition-all duration-200 inline-flex items-center gap-2 shadow-sm font-medium"
         onClick={() => router.push('/marketplace')}>
         <Plus className="w-4 h-4" />
         {t('browseMarketplace')}
@@ -351,7 +351,7 @@ export default function IntegrationsPage() {
           <button
            onClick={() => handleRunIntegration(integration)}
            disabled={triggering === integration.id}
-           className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+           className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
            title="Run integration now"
           >
            {triggering === integration.id ? (

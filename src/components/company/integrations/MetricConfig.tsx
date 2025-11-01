@@ -28,7 +28,7 @@ export function MetricConfig({
      type="checkbox"
      checked={enabled}
      onChange={(e) => onEnabledChange(e.target.checked)}
-     className="w-4 h-4 text-primary-600 bg-input border-border-default rounded focus:ring-primary-500 focus:ring-primary-500 focus:ring-2 "
+     className="w-4 h-4 text-emerald-600 bg-input border-border-default rounded focus:ring-emerald-500 focus:ring-emerald-500 focus:ring-2 "
     />
     <span className="text-sm font-medium text-secondary capitalize">
      {name}

@@ -54,7 +54,7 @@ export function NotificationInput({
       type="checkbox"
       checked={enabled}
       onChange={(e) => onEnabledChange(e.target.checked)}
-      className="w-4 h-4 text-primary-600 bg-input border-border-default rounded focus:ring-primary-500 focus:ring-primary-500 focus:ring-2 "
+      className="w-4 h-4 text-emerald-600 bg-input border-border-default rounded focus:ring-emerald-500 focus:ring-emerald-500 focus:ring-2 "
      />
      <span className="text-sm font-medium text-secondary">
       {config.label}
@@ -67,7 +67,7 @@ export function NotificationInput({
      placeholder={config.placeholder}
      value={value}
      onChange={(e) => onValueChange(e.target.value)}
-     className="w-full px-3 py-2 text-sm border border-border-default rounded bg-card text-primary focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+     className="w-full px-3 py-2 text-sm border border-border-default rounded bg-card text-primary focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
     />
    )}
   </div>

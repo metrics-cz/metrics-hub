@@ -233,7 +233,7 @@ export default function MarketplacePage() {
      </p>
      <button
       onClick={() => window.location.reload()}
-      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200"
+      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200"
      >
       Retry
      </button>
@@ -262,12 +262,12 @@ export default function MarketplacePage() {
        placeholder={t('searchPlaceholder')}
        value={searchTerm}
        onChange={(e) => setSearchTerm(e.target.value)}
-       className="w-full pl-10 pr-4 py-3 bg-card border border-border-default rounded-lg text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all duration-200"
+       className="w-full pl-10 pr-4 py-3 bg-card border border-border-default rounded-lg text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all duration-200"
       />
      </div>
      <button
       onClick={() => setShowFilters(!showFilters)}
-      className="flex items-center gap-2 px-4 py-3 bg-card border border-border-default rounded-lg text-primary hover:border-primary-500/50 transition-all duration-200"
+      className="flex items-center gap-2 px-4 py-3 bg-card border border-border-default rounded-lg text-primary hover:border-emerald-500/50 transition-all duration-200"
      >
       <Filter className="w-5 h-5" />
       {t('filters')}
@@ -285,7 +285,7 @@ export default function MarketplacePage() {
          onClick={() => setSelectedCategory(category.id)}
          className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 font-medium ${
           selectedCategory === category.id
-           ? 'bg-primary-600 text-white shadow-sm'
+           ? 'bg-emerald-600 text-white shadow-sm'
            : 'bg-input text-secondary hover:bg-hover-strong'
          }`}
         >
@@ -302,13 +302,13 @@ export default function MarketplacePage() {
     <Tabs.List className="flex gap-2 mb-6 border-b border-border-light">
      <Tabs.Trigger
       value="applications"
-      className="px-4 py-3 text-sm font-medium transition-all duration-200 border-b-2 data-[state=active]:border-primary-600 data-[state=active]:text-primary-600 data-[state=active]:text-accent data-[state=inactive]:border-transparent data-[state=inactive]:text-secondary data-[state=inactive]:text-muted hover:text-primary hover:text-primary"
+      className="px-4 py-3 text-sm font-medium transition-all duration-200 border-b-2 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:text-accent data-[state=inactive]:border-transparent data-[state=inactive]:text-secondary data-[state=inactive]:text-muted hover:text-primary hover:text-primary"
      >
       {t('applications') || 'Applications'}
      </Tabs.Trigger>
      <Tabs.Trigger
       value="integrations"
-      className="px-4 py-3 text-sm font-medium transition-all duration-200 border-b-2 data-[state=active]:border-primary-600 data-[state=active]:text-primary-600 data-[state=active]:text-accent data-[state=inactive]:border-transparent data-[state=inactive]:text-secondary data-[state=inactive]:text-muted hover:text-primary hover:text-primary"
+      className="px-4 py-3 text-sm font-medium transition-all duration-200 border-b-2 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:text-accent data-[state=inactive]:border-transparent data-[state=inactive]:text-secondary data-[state=inactive]:text-muted hover:text-primary hover:text-primary"
      >
       {t('integrations') || 'Integrations'}
      </Tabs.Trigger>
@@ -393,7 +393,7 @@ export default function MarketplacePage() {
            e.stopPropagation();
            setSelectedApp(integration);
           }}
-          className="flex-1 py-2.5 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
+          className="flex-1 py-2.5 px-4 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
          >
           <ShoppingCart className="w-4 h-4" />
           {integration.isPremium ? t('buyNow') : t('install')}
@@ -507,7 +507,7 @@ export default function MarketplacePage() {
            e.stopPropagation();
            setSelectedApp(integration);
           }}
-          className="flex-1 py-2.5 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
+          className="flex-1 py-2.5 px-4 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 font-medium text-sm flex items-center justify-center gap-2"
          >
           <ShoppingCart className="w-4 h-4" />
           {integration.isPremium ? t('buyNow') : t('install')}
@@ -609,7 +609,7 @@ export default function MarketplacePage() {
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
          {selectedApp.features?.map((feature, index) => (
           <li key={index} className="flex items-center gap-2 text-secondary">
-           <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
+           <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
            {feature}
           </li>
          ))}
@@ -642,7 +642,7 @@ export default function MarketplacePage() {
          <button
           onClick={() => handleInstall(selectedApp.id)}
           disabled={installing === selectedApp.id}
-          className="flex-1 py-3 px-6 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2"
+          className="flex-1 py-3 px-6 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2"
          >
           <ShoppingCart className="w-5 h-5" />
           {installing === selectedApp.id 

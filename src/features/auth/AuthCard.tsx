@@ -34,7 +34,7 @@ export default function AuthCard() {
         'flex-1 py-3 text-sm font-medium tracking-wide uppercase transition',
         index === 0 ? 'rounded-tl-2xl' : 'rounded-tr-2xl',
         tab === t
-         ? 'border-b-2 border-primary-600 text-accent'
+         ? 'border-b-2 border-emerald-600 text-accent'
          : 'text-muted hover:text-accent'
        )}
       >

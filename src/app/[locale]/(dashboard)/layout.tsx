@@ -12,7 +12,7 @@ function LoadingSpinner() {
  return (
   <div className="flex h-screen bg-base items-center justify-center">
    <div className="flex flex-col items-center space-y-4">
-    <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+    <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
     <p className="text-secondary text-sm">Loading...</p>
    </div>
   </div>
